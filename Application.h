@@ -93,6 +93,8 @@ private:
 
     void createSwapChain();
 
+    void createImageViews();
+
     bool checkValidationLayerSupport();
 
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
@@ -144,6 +146,8 @@ private:
     VkQueue present_queue;
 
     std::vector<VkImage> m_SwapChainImages;
+
+    std::vector<VkImageView> m_SwapChainImageViews;
 
     VkFormat m_SwapChainImageFormat;
 
