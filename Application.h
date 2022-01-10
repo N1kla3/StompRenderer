@@ -96,6 +96,8 @@ private:
 
     void createImageViews();
 
+    void createRenderPass();
+
     void createGraphicsPipeline();
 
     VkShaderModule createShaderModule(const std::vector<char>& code);
@@ -168,7 +170,10 @@ private:
 
     VkQueue present_queue;
 
+    VkRenderPass m_RenderPass;
     VkPipelineLayout m_PipelineLayout;
+
+    VkPipeline m_GraphicsPipeline;
 
     std::vector<VkImage> m_SwapChainImages;
 
