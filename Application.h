@@ -168,6 +168,8 @@ private:
 
     VkQueue present_queue;
 
+    VkPipelineLayout m_PipelineLayout;
+
     std::vector<VkImage> m_SwapChainImages;
 
     std::vector<VkImageView> m_SwapChainImageViews;
