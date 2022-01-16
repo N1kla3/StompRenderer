@@ -84,6 +84,8 @@ private:
 
     void mainLoop();
 
+    void drawFrame();
+
     void cleanup();
 
     void createInstance();
@@ -99,6 +101,14 @@ private:
     void createRenderPass();
 
     void createGraphicsPipeline();
+
+    void createFramebuffers();
+
+    void createCommandBuffers();
+
+    void createCommandPool();
+
+    void createSemaphores();
 
     VkShaderModule createShaderModule(const std::vector<char>& code);
 
@@ -175,9 +185,18 @@ private:
 
     VkPipeline m_GraphicsPipeline;
 
+    VkCommandPool m_CommandPool;
+
+    VkSemaphore m_ImageAvailableSemaphore;
+    VkSemaphore m_RenderFinishedSemaphore;
+
     std::vector<VkImage> m_SwapChainImages;
 
     std::vector<VkImageView> m_SwapChainImageViews;
+
+    std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+
+    std::vector<VkCommandBuffer> m_CommandBuffers;
 
     VkFormat m_SwapChainImageFormat;
 
