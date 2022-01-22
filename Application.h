@@ -108,7 +108,7 @@ private:
 
     void createCommandPool();
 
-    void createSemaphores();
+    void createSyncObjects();
 
     VkShaderModule createShaderModule(const std::vector<char>& code);
 
@@ -198,14 +198,23 @@ private:
 
     std::vector<VkCommandBuffer> m_CommandBuffers;
 
+    std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+    std::vector<VkSemaphore> m_RenderFinishedSemaphores;
+
+    std::vector<VkFence> m_InFlightFences;
+    std::vector<VkFence> m_ImagesInFlight;
+
     VkFormat m_SwapChainImageFormat;
 
     VkExtent2D m_SwapChainExtent;
+
+    size_t m_CurrentFrame = 0;
 
     VkDebugUtilsMessengerEXT debugMessenger;
 
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
+    const int MAX_FRAMES_IN_FLIGHT = 2;
 
 };
 
