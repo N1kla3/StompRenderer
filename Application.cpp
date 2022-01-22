@@ -829,7 +829,7 @@ void Application::createCommandBuffers()
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        VkRenderPassBeginInfo render_pass_begin_info;
+        VkRenderPassBeginInfo render_pass_begin_info{};
         render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         render_pass_begin_info.renderPass = m_RenderPass;
         render_pass_begin_info.framebuffer = m_SwapChainFramebuffers[i];
