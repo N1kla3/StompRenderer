@@ -448,7 +448,10 @@ VkExtent2D Application::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabil
                 std::min<uint32_t>(capabilities.maxImageExtent.height,
                 actual_extent.height));
 
-        return actual_extent;
+        int h, w;
+        glfwGetFramebufferSize(m_Window, &w, &h);
+        VkExtent2D actualExtent = { static_cast<uint32_t>(w), static_cast<uint32_t>(h) };
+        return actualExtent;
     }
 }
 
@@ -840,7 +843,6 @@ void Application::createCommandBuffers()
         render_pass_begin_info.clearValueCount = 1;
         render_pass_begin_info.pClearValues = &clear_color;
 
-        // TODO debug crash here
         vkCmdBeginRenderPass(m_CommandBuffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
         vkCmdDraw(m_CommandBuffers[i], 3, 1, 0,0);
@@ -934,5 +936,37 @@ void Application::createSyncObjects()
             throw std::runtime_error("failed to create sync objects for a frame");
         }
     }
+}
+
+void Application::recreateSwapChain()
+{
+    vkDeviceWaitIdle(m_LogicalDevice);
+
+    cleanupSwapChain();
+
+    createSwapChain();
+    createImageViews();
+    createRenderPass();
+    createGraphicsPipeline();
+    createFramebuffers();
+    createCommandBuffers();
+}
+
+void Application::cleanupSwapChain()
+{
+    for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
+    {
+        vkDestroyFramebuffer(m_LogicalDevice, m_SwapChainFramebuffers[i], nullptr);
+    }
+    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, static_cast<int32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
+    vkDestroyPipeline(m_LogicalDevice, m_GraphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(m_LogicalDevice, m_PipelineLayout, nullptr);
+    vkDestroyRenderPass(m_LogicalDevice, m_RenderPass, nullptr);
+
+    for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
+    {
+        vkDestroyImageView(m_LogicalDevice, m_SwapChainImageViews[i], nullptr);
+    }
+    vkDestroySwapchainKHR(m_LogicalDevice, m_SwapChain, nullptr);
 }
 

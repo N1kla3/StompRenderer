@@ -110,6 +110,10 @@ private:
 
     void createSyncObjects();
 
+    void recreateSwapChain();
+
+    void cleanupSwapChain();
+
     VkShaderModule createShaderModule(const std::vector<char>& code);
 
     bool checkValidationLayerSupport();
