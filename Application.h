@@ -80,6 +80,8 @@ private:
 
     void initWindow();
 
+    static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+
     void pickPhysicalDevice();
 
     void mainLoop();
@@ -213,6 +215,8 @@ private:
     VkExtent2D m_SwapChainExtent;
 
     size_t m_CurrentFrame = 0;
+
+    bool m_FramebufferResized = false;
 
     VkDebugUtilsMessengerEXT debugMessenger;
 

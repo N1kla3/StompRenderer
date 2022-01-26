@@ -97,8 +97,11 @@ void Application::initWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     m_Window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+
+    glfwSetWindowUserPointer(m_Window, this);
+    glfwSetFramebufferSizeCallback(m_Window, framebufferResizeCallback);
 }
 
 void Application::createInstance()
@@ -859,12 +862,22 @@ void Application::drawFrame()
     vkWaitForFences(m_LogicalDevice, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t image_index;
-    vkAcquireNextImageKHR(
+    VkResult result = vkAcquireNextImageKHR(
             m_LogicalDevice,
             m_SwapChain,
             UINT64_MAX,
             m_ImageAvailableSemaphores[m_CurrentFrame],
             VK_NULL_HANDLE, &image_index);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        recreateSwapChain();
+        return;
+    }
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+    {
+        throw std::runtime_error("Failed to acquire swap chain image!");
+    }
 
     if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
     {
@@ -907,7 +920,16 @@ void Application::drawFrame()
     present_info.pImageIndices = &image_index;
     present_info.pResults = nullptr;
 
-    vkQueuePresentKHR(present_queue, &present_info);
+    result = vkQueuePresentKHR(present_queue, &present_info);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_FramebufferResized)
+    {
+        m_FramebufferResized = false;
+        recreateSwapChain();
+    }
+    else if (result != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to present swap chain image!");
+    }
     vkQueueWaitIdle(present_queue);
 
     m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -940,6 +962,14 @@ void Application::createSyncObjects()
 
 void Application::recreateSwapChain()
 {
+    int width = 0, height = 0;
+    glfwGetFramebufferSize(m_Window, &width, &height);
+    while (width == 0 || height == 0)
+    {
+        glfwGetFramebufferSize(m_Window, &width, &height);
+        glfwWaitEvents();
+    }
+
     vkDeviceWaitIdle(m_LogicalDevice);
 
     cleanupSwapChain();
@@ -970,3 +1000,8 @@ void Application::cleanupSwapChain()
     vkDestroySwapchainKHR(m_LogicalDevice, m_SwapChain, nullptr);
 }
 
+void Application::framebufferResizeCallback(GLFWwindow *window, int width, int height)
+{
+    auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+    app->m_FramebufferResized = true;
+}
