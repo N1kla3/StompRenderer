@@ -134,7 +134,6 @@ void Application::createInstance()
     create_info.enabledExtensionCount = static_cast<uint32_t>(extensions_.size());
     create_info.ppEnabledExtensionNames = extensions_.data();
 
-    create_info.enabledLayerCount = 0;
 
     VkResult result = vkCreateInstance(&create_info, nullptr, &m_Instance);
     if (result != VK_SUCCESS)
@@ -573,12 +572,15 @@ void Application::createGraphicsPipeline()
     VkPipelineShaderStageCreateInfo shaderStage[] = {vertShaderStageInfo, fragShaderStageInfo};
 
     // Vertex input state
+    auto binding_description = Vertex::getBindingDescription();
+    auto attribute_descriptions = Vertex::getAttributeDescriptions();
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.pVertexBindingDescriptions = nullptr;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &binding_description;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size());
+    vertexInputInfo.pVertexAttributeDescriptions = attribute_descriptions.data();
 
     // Input Assembly
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -817,6 +819,7 @@ void Application::createCommandBuffers()
     allocate_info.commandPool = m_CommandPool;
     allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocate_info.commandBufferCount = (uint32_t) m_CommandBuffers.size();
+    allocate_info.pNext = nullptr;
 
     if (vkAllocateCommandBuffers(m_LogicalDevice, &allocate_info, m_CommandBuffers.data()) != VK_SUCCESS)
     {
