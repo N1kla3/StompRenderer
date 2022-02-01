@@ -78,7 +78,7 @@ struct Vertex
 };
 
 const std::vector<Vertex> vertices = {
-        {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
         {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
         {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
 };
@@ -144,6 +144,8 @@ private:
 
     void createFramebuffers();
 
+    void createVertexBuffer();
+
     void createCommandBuffers();
 
     void createCommandPool();
@@ -169,6 +171,8 @@ private:
     void setupDebugMessenger();
 
     bool isDeviceSuitable(VkPhysicalDevice device);
+
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
@@ -233,6 +237,9 @@ private:
 
     VkSemaphore m_ImageAvailableSemaphore;
     VkSemaphore m_RenderFinishedSemaphore;
+
+    VkBuffer m_VertexBuffer;
+    VkDeviceMemory m_VertexBufferMemory;
 
     std::vector<VkImage> m_SwapChainImages;
 
