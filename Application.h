@@ -144,6 +144,7 @@ private:
 
     void createFramebuffers();
 
+    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void createVertexBuffer();
 
     void createCommandBuffers();
@@ -173,6 +174,8 @@ private:
     bool isDeviceSuitable(VkPhysicalDevice device);
 
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
