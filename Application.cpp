@@ -34,6 +34,7 @@ void Application::initVulkan()
     createFramebuffers();
     createCommandPool();
     createVertexBuffer();
+    createIndexBuffer();
     createCommandBuffers();
     createSyncObjects();
 }
@@ -69,6 +70,9 @@ void Application::cleanup()
     {
         DestroyDebugUtilsMessengerEXT(m_Instance, debugMessenger, nullptr);
     }
+    vkDestroyBuffer(m_LogicalDevice, m_IndexBuffer, nullptr);
+    vkFreeMemory(m_LogicalDevice, m_IndexBufferMemory, nullptr);
+
     vkDestroyBuffer(m_LogicalDevice, m_VertexBuffer, nullptr);
     vkFreeMemory(m_LogicalDevice, m_VertexBufferMemory, nullptr);
 
@@ -859,8 +863,9 @@ void Application::createCommandBuffers()
         VkBuffer vertex_buffers[] = { m_VertexBuffer };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertex_buffers, offsets);
+        vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-        vkCmdDraw(m_CommandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0,0);
+        vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
         vkCmdEndRenderPass(m_CommandBuffers[i]);
         if (vkEndCommandBuffer(m_CommandBuffers[i]) != VK_SUCCESS)
         {
@@ -1122,4 +1127,33 @@ void Application::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSiz
     vkQueueWaitIdle(graphics_queue);
 
     vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, 1, &command_buffer);
+}
+
+void Application::createIndexBuffer()
+{
+    VkDeviceSize buffer_size = sizeof(indices[0]) * indices.size();
+
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_buffer_memory;
+    createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            staging_buffer, staging_buffer_memory);
+
+    void* data;
+    vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
+    memcpy(data, indices.data(), (size_t)buffer_size);
+    vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
+
+    createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            m_IndexBuffer, m_IndexBufferMemory);
+
+    copyBuffer(staging_buffer, m_IndexBuffer, buffer_size);
+
+    vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
+    vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
 }
