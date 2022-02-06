@@ -7,6 +7,12 @@
 #include <set>
 #include <algorithm>
 
+#define GLM_FORCE_RADIANS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <chrono>
+
 #ifdef NDEBUG
     const bool enableValidationLayers = false;
 #else
@@ -30,11 +36,13 @@ void Application::initVulkan()
     createSwapChain();
     createImageViews();
     createRenderPass();
+    createDescriptorSetLayout();
     createGraphicsPipeline();
     createFramebuffers();
     createCommandPool();
     createVertexBuffer();
     createIndexBuffer();
+    createUniformBuffers();
     createCommandBuffers();
     createSyncObjects();
 }
@@ -70,6 +78,8 @@ void Application::cleanup()
     {
         DestroyDebugUtilsMessengerEXT(m_Instance, debugMessenger, nullptr);
     }
+
+
     vkDestroyBuffer(m_LogicalDevice, m_IndexBuffer, nullptr);
     vkFreeMemory(m_LogicalDevice, m_IndexBufferMemory, nullptr);
 
@@ -82,6 +92,7 @@ void Application::cleanup()
 
     vkDestroyRenderPass(m_LogicalDevice, m_RenderPass, nullptr);
 
+    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_DescriptorSetLayout, nullptr);
     for (auto imageView : m_SwapChainImageViews)
     {
         vkDestroyImageView(m_LogicalDevice, imageView, nullptr);
@@ -675,8 +686,8 @@ void Application::createGraphicsPipeline()
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
-    pipelineLayoutInfo.pSetLayouts = nullptr;
+    pipelineLayoutInfo.setLayoutCount = 1;
+    pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
     if (vkCreatePipelineLayout(m_LogicalDevice, &pipelineLayoutInfo, nullptr, &m_PipelineLayout)
@@ -903,6 +914,8 @@ void Application::drawFrame()
 
     m_ImagesInFlight[image_index] = m_InFlightFences[m_CurrentFrame];
 
+    updateUniformBuffer(image_index);
+
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -996,6 +1009,7 @@ void Application::recreateSwapChain()
     createRenderPass();
     createGraphicsPipeline();
     createFramebuffers();
+    createUniformBuffers();
     createCommandBuffers();
 }
 
@@ -1015,6 +1029,12 @@ void Application::cleanupSwapChain()
         vkDestroyImageView(m_LogicalDevice, m_SwapChainImageViews[i], nullptr);
     }
     vkDestroySwapchainKHR(m_LogicalDevice, m_SwapChain, nullptr);
+
+    for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+    {
+        vkDestroyBuffer(m_LogicalDevice, m_UniformBuffers[i], nullptr);
+        vkFreeMemory(m_LogicalDevice, m_UniformBuffersMemory[i], nullptr);
+    }
 }
 
 void Application::framebufferResizeCallback(GLFWwindow *window, int width, int height)
@@ -1156,4 +1176,57 @@ void Application::createIndexBuffer()
 
     vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
     vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
+}
+
+void Application::createDescriptorSetLayout()
+{
+    VkDescriptorSetLayoutBinding uboLayoutBinding{};
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    uboLayoutBinding.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutCreateInfo layout_info{};
+    layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layout_info.bindingCount = 1;
+    layout_info.pBindings = &uboLayoutBinding;
+
+    if (vkCreateDescriptorSetLayout(m_LogicalDevice, &layout_info, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to creat descriptor set layout!");
+    }
+}
+
+void Application::createUniformBuffers()
+{
+    VkDeviceSize buffer_size = sizeof(UniformBufferObject);
+
+    m_UniformBuffers.resize(m_SwapChainImages.size());
+    m_UniformBuffersMemory.resize(m_SwapChainImages.size());
+
+    for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+    {
+        createBuffer(buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     m_UniformBuffers[i], m_UniformBuffersMemory[i]);
+    }
+}
+
+void Application::updateUniformBuffer(uint32_t currentImage)
+{
+    static auto startTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+    UniformBufferObject ubo{};
+    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj = glm::perspective(glm::radians(45.f), m_SwapChainExtent.width / (float)m_SwapChainExtent.height, 0.1f, 10.f);
+    ubo.proj[1][1] *= -1;
+
+    void* data;
+    vkMapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+    memcpy(data, &ubo, sizeof(ubo));
+    vkUnmapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage]);
 }

@@ -77,6 +77,13 @@ struct Vertex
     }
 };
 
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
+
 const std::vector<Vertex> vertices = {
         {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
         {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
@@ -150,12 +157,17 @@ private:
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void createVertexBuffer();
     void createIndexBuffer();
+    void createUniformBuffers();
+
+    void updateUniformBuffer(uint32_t currentImage);
 
     void createCommandBuffers();
 
     void createCommandPool();
 
     void createSyncObjects();
+
+    void createDescriptorSetLayout();
 
     void recreateSwapChain();
 
@@ -235,6 +247,7 @@ private:
 
     VkQueue present_queue;
 
+    VkDescriptorSetLayout m_DescriptorSetLayout;
     VkRenderPass m_RenderPass;
     VkPipelineLayout m_PipelineLayout;
 
@@ -250,6 +263,9 @@ private:
 
     VkBuffer m_IndexBuffer;
     VkDeviceMemory m_IndexBufferMemory;
+
+    std::vector<VkBuffer> m_UniformBuffers;
+    std::vector<VkDeviceMemory> m_UniformBuffersMemory;
 
     std::vector<VkImage> m_SwapChainImages;
 
