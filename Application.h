@@ -168,6 +168,9 @@ private:
     void createSyncObjects();
 
     void createDescriptorSetLayout();
+    void createDescriptorPool();
+
+    void createDescriptorSets();
 
     void recreateSwapChain();
 
@@ -254,6 +257,8 @@ private:
     VkPipeline m_GraphicsPipeline;
 
     VkCommandPool m_CommandPool;
+    VkDescriptorPool m_DescriptorPool;
+    std::vector<VkDescriptorSet> m_DescriptorSets;
 
     VkSemaphore m_ImageAvailableSemaphore;
     VkSemaphore m_RenderFinishedSemaphore;
