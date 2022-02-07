@@ -81,6 +81,11 @@ void Application::cleanup()
         DestroyDebugUtilsMessengerEXT(m_Instance, debugMessenger, nullptr);
     }
 
+    for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+    {
+        vkDestroyBuffer(m_LogicalDevice, m_UniformBuffers[i], nullptr);
+        vkFreeMemory(m_LogicalDevice, m_UniformBuffersMemory[i], nullptr);
+    }
 
     vkDestroyBuffer(m_LogicalDevice, m_IndexBuffer, nullptr);
     vkFreeMemory(m_LogicalDevice, m_IndexBufferMemory, nullptr);
@@ -94,7 +99,10 @@ void Application::cleanup()
 
     vkDestroyRenderPass(m_LogicalDevice, m_RenderPass, nullptr);
 
+    vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_DescriptorSetLayout, nullptr);
+    // TODO normal garbage collection
+
     for (auto imageView : m_SwapChainImageViews)
     {
         vkDestroyImageView(m_LogicalDevice, imageView, nullptr);
