@@ -171,6 +171,12 @@ private:
                      VkImage& image, VkDeviceMemory& imageMemory);
     void createTextureImage();
 
+    void createTextureImageView();
+
+    VkImageView createImageView(VkImage image, VkFormat format);
+
+    void createTextureSampler();
+
     void createSyncObjects();
 
     void createDescriptorSetLayout();
@@ -284,6 +290,8 @@ private:
 
     VkImage m_TextureImage;
     VkDeviceMemory m_TextureImageMemory;
+    VkImageView m_TextureImageView;
+    VkSampler m_TextureSampler;
 
     std::vector<VkBuffer> m_UniformBuffers;
     std::vector<VkDeviceMemory> m_UniformBuffersMemory;
