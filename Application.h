@@ -165,6 +165,12 @@ private:
 
     void createCommandPool();
 
+    void createImage(uint32_t width, uint32_t height, VkFormat format,
+                     VkImageTiling tiling,
+                     VkImageUsageFlags usage, VkMemoryPropertyFlags  properties,
+                     VkImage& image, VkDeviceMemory& imageMemory);
+    void createTextureImage();
+
     void createSyncObjects();
 
     void createDescriptorSetLayout();
@@ -182,6 +188,9 @@ private:
 
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
+    VkCommandBuffer beginSingleTimeCommands();
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 
     VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
@@ -195,6 +204,10 @@ private:
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
+    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
@@ -268,6 +281,9 @@ private:
 
     VkBuffer m_IndexBuffer;
     VkDeviceMemory m_IndexBufferMemory;
+
+    VkImage m_TextureImage;
+    VkDeviceMemory m_TextureImageMemory;
 
     std::vector<VkBuffer> m_UniformBuffers;
     std::vector<VkDeviceMemory> m_UniformBuffersMemory;
