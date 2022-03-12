@@ -49,7 +49,7 @@ namespace
 
 struct Vertex
 {
-    glm::vec2 pos;
+    glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 tex_coord;
 
@@ -67,7 +67,7 @@ struct Vertex
         std::array<VkVertexInputAttributeDescription, 3> attribute_descriptions{};
         attribute_descriptions[0].binding = 0;
         attribute_descriptions[0].location = 0;
-        attribute_descriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+        attribute_descriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
         attribute_descriptions[0].offset = offsetof(Vertex, pos);
 
         attribute_descriptions[1].binding = 0;
@@ -92,13 +92,19 @@ struct UniformBufferObject
 };
 
 const std::vector<Vertex> vertices = {
-        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        { {-0.5, 0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        { {-0.5, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+
+        {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+        { {-0.5, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
-const std::vector<uint16_t> indices = { 0, 1, 2, 2, 3, 0 };
+const std::vector<uint16_t> indices = { 0, 1, 2, 2, 3, 0,
+                                        4, 5, 6, 6, 7, 4};
 
 class Application {
 
@@ -172,6 +178,8 @@ private:
 
     void createCommandPool();
 
+    void createDepthResources();
+
     void createImage(uint32_t width, uint32_t height, VkFormat format,
                      VkImageTiling tiling,
                      VkImageUsageFlags usage, VkMemoryPropertyFlags  properties,
@@ -180,7 +188,7 @@ private:
 
     void createTextureImageView();
 
-    VkImageView createImageView(VkImage image, VkFormat format);
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
     void createTextureSampler();
 
@@ -215,6 +223,10 @@ private:
     bool isDeviceSuitable(VkPhysicalDevice device);
 
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    VkFormat findDepthFormat();
+    bool hasStencilComponent(VkFormat format);
 
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -316,6 +328,10 @@ private:
 
     std::vector<VkFence> m_InFlightFences;
     std::vector<VkFence> m_ImagesInFlight;
+
+    VkImage m_DepthImage;
+    VkDeviceMemory m_DepthImageMemory;
+    VkImageView m_DepthImageView;
 
     VkFormat m_SwapChainImageFormat;
 
