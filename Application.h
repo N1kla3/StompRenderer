@@ -8,11 +8,15 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+
 #include <iostream>
 #include "fstream"
 #include <stdexcept>
 #include <cstdlib>
 #include <vector>
+#include <unordered_map>
 #include <optional>
 #include "array"
 #include <glm/glm.hpp>
@@ -82,7 +86,25 @@ struct Vertex
 
         return attribute_descriptions;
     }
+
+    bool operator==(const Vertex& other) const
+    {
+        return pos == other.pos && color == other.color && tex_coord == other.tex_coord;
+    }
 };
+
+namespace std {
+    template<>
+    struct hash<Vertex>
+    {
+        size_t operator()(Vertex const& vertex) const
+        {
+            return ((hash<glm::vec3>()(vertex.pos) ^
+                    (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+                    (hash<glm::vec2>()(vertex.tex_coord) << 1);
+        }
+    };
+}
 
 struct UniformBufferObject
 {
@@ -91,6 +113,7 @@ struct UniformBufferObject
     glm::mat4 proj;
 };
 
+/*
 const std::vector<Vertex> vertices = {
         {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
         {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
@@ -105,6 +128,13 @@ const std::vector<Vertex> vertices = {
 
 const std::vector<uint16_t> indices = { 0, 1, 2, 2, 3, 0,
                                         4, 5, 6, 6, 7, 4};
+*/
+
+const uint32_t WIDTH = 800;
+const uint32_t HEIGHT = 600;
+
+const std::string MODEL_PATH = "../models/vikingroom.obj";
+const std::string TEXTURE_PATH = "../textures/viking.png";
 
 class Application {
 
@@ -168,6 +198,7 @@ private:
     void createFramebuffers();
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+    void loadModel();
     void createVertexBuffer();
     void createIndexBuffer();
     void createUniformBuffers();
@@ -301,6 +332,9 @@ private:
     VkSemaphore m_ImageAvailableSemaphore;
     VkSemaphore m_RenderFinishedSemaphore;
 
+    std::vector<Vertex> m_Vertices;
+    std::vector<uint32_t> m_Indices;
+    std::unordered_map<Vertex, uint32_t> m_UniqueVertices;
     VkBuffer m_VertexBuffer;
     VkDeviceMemory m_VertexBufferMemory;
 

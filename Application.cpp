@@ -16,6 +16,8 @@
 
 #include "stb_image.h"
 
+#include <tiny_obj_loader.h>
+
 #ifdef NDEBUG
     const bool enableValidationLayers = false;
 #else
@@ -47,6 +49,7 @@ void Application::initVulkan()
     createTextureImage();
     createTextureImageView();
     createTextureSampler();
+    loadModel();
     createVertexBuffer();
     createIndexBuffer();
     createUniformBuffers();
@@ -918,10 +921,10 @@ void Application::createCommandBuffers()
         VkBuffer vertex_buffers[] = { m_VertexBuffer };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertex_buffers, offsets);
-        vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
         vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
-        vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<uint32_t>(m_Indices.size()), 1, 0, 0, 0);
         vkCmdEndRenderPass(m_CommandBuffers[i]);
         if (vkEndCommandBuffer(m_CommandBuffers[i]) != VK_SUCCESS)
         {
@@ -1128,7 +1131,7 @@ void Application::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMe
 
 void Application::createVertexBuffer()
 {
-    VkDeviceSize buffer_size = sizeof(vertices[0]) * vertices.size();
+    VkDeviceSize buffer_size = sizeof(m_Vertices[0]) * m_Vertices.size();
 
     VkBuffer staging_buffer;
     VkDeviceMemory staging_buffer_memory;
@@ -1140,7 +1143,7 @@ void Application::createVertexBuffer()
 
     void* data;
     vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-    memcpy(data, vertices.data(), (size_t)buffer_size);
+    memcpy(data, m_Vertices.data(), (size_t)buffer_size);
     vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
 
     createBuffer(
@@ -1182,7 +1185,7 @@ void Application::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSiz
 
 void Application::createIndexBuffer()
 {
-    VkDeviceSize buffer_size = sizeof(indices[0]) * indices.size();
+    VkDeviceSize buffer_size = sizeof(m_Indices[0]) * m_Indices.size();
 
     VkBuffer staging_buffer;
     VkDeviceMemory staging_buffer_memory;
@@ -1194,7 +1197,7 @@ void Application::createIndexBuffer()
 
     void* data;
     vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-    memcpy(data, indices.data(), (size_t)buffer_size);
+    memcpy(data, m_Indices.data(), (size_t)buffer_size);
     vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
 
     createBuffer(
@@ -1261,8 +1264,8 @@ void Application::updateUniformBuffer(uint32_t currentImage)
 
     UniformBufferObject ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.f), m_SwapChainExtent.width / (float)m_SwapChainExtent.height, 0.1f, 10.f);
+    ubo.view = glm::lookAt(glm::vec3(20.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.proj = glm::perspective(glm::radians(90.f), m_SwapChainExtent.width / (float)m_SwapChainExtent.height, 0.1f, 100.f);
     ubo.proj[1][1] *= -1;
 
     void* data;
@@ -1345,7 +1348,8 @@ void Application::createDescriptorSets()
 void Application::createTextureImage()
 {
     int tex_width, tex_height, tex_channels;
-    stbi_uc* pixels = stbi_load("../textures/mando.jpg", &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
+    //stbi_uc* pixels = stbi_load("../textures/mando.jpg", &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
     VkDeviceSize image_size = tex_width * tex_height * 4;
 
     if (!pixels)
@@ -1648,4 +1652,44 @@ VkFormat Application::findDepthFormat()
 bool Application::hasStencilComponent(VkFormat format)
 {
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
+void Application::loadModel()
+{
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str()))
+    {
+        throw std::runtime_error(warn + err);
+    }
+
+    for (const auto& shape : shapes)
+    {
+        for (const auto& index : shape.mesh.indices)
+        {
+            Vertex vertex{};
+
+            vertex.pos = {
+                    attrib.vertices[3 * index.vertex_index + 0],
+                    attrib.vertices[3 * index.vertex_index + 1],
+                    attrib.vertices[3 * index.vertex_index + 2]
+            };
+            vertex.tex_coord = {
+                    attrib.texcoords[2 * index.texcoord_index + 0],
+                    1 - attrib.texcoords[2 * index.texcoord_index + 1]
+            };
+            vertex.color = {1.0f, 1.0f, 1.0f};
+
+            if (m_UniqueVertices.count(vertex) == 0)
+            {
+                m_UniqueVertices[vertex] = static_cast<uint32_t>(m_Vertices.size());
+                m_Vertices.push_back(vertex);
+            }
+
+            m_Indices.push_back(m_UniqueVertices[vertex]);
+        }
+    }
 }
