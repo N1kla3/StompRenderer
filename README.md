@@ -7,3 +7,4 @@
 - stb_image
 - Imgui
 - tinyobjloader
+- spdlog
