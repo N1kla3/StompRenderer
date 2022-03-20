@@ -8,6 +8,7 @@ find_package(Vulkan REQUIRED)
 add_subdirectory(glfw-3.3.4)
 add_subdirectory(glm)
 add_subdirectory(tinyobjloader-master)
+add_subdirectory(spdlog)
 
 include_directories(imgui-master)
 include_directories(imgui-master/backends)
@@ -32,14 +33,5 @@ add_executable(renderer main.cpp Renderer.cpp Renderer.h stb_image.h stb_image.c
         imgui-master/backends/imgui_impl_glfw.h
         imgui-master/backends/imgui_impl_glfw.cpp
         )
-add_executable(examp imgui-master/examples/example_glfw_vulkan/main.cpp
-        imgui-master/backends/imgui_impl_vulkan.h
-        imgui-master/backends/imgui_impl_vulkan.cpp
-        imgui-master/backends/imgui_impl_glfw.h
-        imgui-master/backends/imgui_impl_glfw.cpp
-        )
 target_compile_definitions(renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui)
-
-target_compile_definitions(examp PRIVATE VK_USE_PLATFORM_WIN32_KHR)
-target_link_libraries(examp Vulkan::Vulkan glfw  imgui)
+target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog)

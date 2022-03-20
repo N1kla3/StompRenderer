@@ -3,11 +3,22 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
-
+#include <spdlog/sinks/basic_file_sink.h>
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 #include "Renderer.h"
 
 int main()
 {
+    std::vector<spdlog::sink_ptr> sinks;
+    sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/log.txt"));
+    sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+    auto RenderingLog = std::make_shared<spdlog::logger>("Rendering", begin(sinks), end(sinks));
+    auto UILog = std::make_shared<spdlog::logger>("UI", begin(sinks), end(sinks));
+    spdlog::register_logger(RenderingLog);
+    spdlog::register_logger(UILog);
+    spdlog::set_pattern("[%D %H:%M:%S %z][thread %t]%^[%n][%l]%v%$");
+
     Renderer application;
     try{
         application.run();
@@ -17,28 +28,3 @@ int main()
     }
     return EXIT_SUCCESS;
 }
-
-/*
-int main() {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
-
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-
-    std::cout << extensionCount << "extensions supported\n";
-
-    glm::mat4 matrix;
-    glm::vec4 vec;
-    auto test = matrix *  vec;
-
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
-    }
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-}
-*/
