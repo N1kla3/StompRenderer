@@ -4,11 +4,11 @@
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 
-#include "Application.h"
+#include "Renderer.h"
 
 int main()
 {
-    Application application;
+    Renderer application;
     try{
         application.run();
     } catch (const std::exception& e){

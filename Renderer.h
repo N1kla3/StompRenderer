@@ -20,6 +20,8 @@
 #include <optional>
 #include "array"
 #include <glm/glm.hpp>
+#include "imgui.h"
+#include "backends/imgui_impl_vulkan.h"
 
 namespace
 {
@@ -136,7 +138,7 @@ const uint32_t HEIGHT = 600;
 const std::string MODEL_PATH = "../models/vikingroom.obj";
 const std::string TEXTURE_PATH = "../textures/viking.png";
 
-class Application {
+class Renderer {
 
 
     struct QueueFamilyIndices
@@ -162,6 +164,7 @@ public:
     {
         initWindow();
         initVulkan();
+        InitializeImgui();
         mainLoop();
         cleanup();
     }
@@ -233,6 +236,14 @@ private:
     void recreateSwapChain();
 
     void cleanupSwapChain();
+
+    void createImguiContext();
+    void InitializeImgui();
+    void createImguiRenderPass();
+
+    void createImguiCommandPools();
+    void createImguiCommandBuffers();
+    void createImguiFramebuffers();
 
     VkShaderModule createShaderModule(const std::vector<char>& code);
 
@@ -376,6 +387,14 @@ private:
     bool m_FramebufferResized = false;
 
     VkDebugUtilsMessengerEXT debugMessenger;
+
+    ImGui_ImplVulkanH_Window m_MainWindowData;
+
+    VkRenderPass m_ImguiRenderPass;
+    VkCommandPool m_ImguiCommandPool;
+    std::vector<VkCommandBuffer> m_ImguiCommandBuffers;
+    std::vector<VkFramebuffer> m_ImguiFramebuffers;
+    VkDescriptorPool m_ImguiDescriptorPool;
 
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
