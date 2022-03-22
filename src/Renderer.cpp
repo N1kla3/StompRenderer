@@ -556,9 +556,9 @@ void Renderer::createImageViews()
 
 void Renderer::createGraphicsPipeline()
 {
-    auto vertShaderCode = readFile("../vert.spv");
+    auto vertShaderCode = readFile("../SPRV/vert.spv");
     std::cout << "size of vertex " << vertShaderCode.size() << "\n";
-    auto fragShaderCode = readFile("../frag.spv");
+    auto fragShaderCode = readFile("../SPRV/frag.spv");
     std::cout << "size of fragment " << fragShaderCode.size() << "\n";
 
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
