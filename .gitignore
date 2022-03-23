@@ -6,3 +6,6 @@
 /imgui-master/
 /googletest/
 /spdlog/
+SPRV
+cmake_build
+logs
