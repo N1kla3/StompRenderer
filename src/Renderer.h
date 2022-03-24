@@ -243,6 +243,7 @@ private:
 
     void createImguiCommandPools();
     void createImguiCommandBuffers();
+    void createImguiCommandBufferAtIndex(uint32_t ImageIndex);
     void createImguiFramebuffers();
 
     VkShaderModule createShaderModule(const std::vector<char>& code);

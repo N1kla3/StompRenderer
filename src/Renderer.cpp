@@ -932,20 +932,8 @@ void Renderer::drawFrame()
     }
     else
     {
-        for (auto framebuffer : m_ImguiFramebuffers) {
-            vkDestroyFramebuffer(m_LogicalDevice, framebuffer, nullptr);
-        }
-
-        vkDestroyRenderPass(m_LogicalDevice, m_ImguiRenderPass, nullptr);
-
-        vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, m_ImguiCommandBuffers.data());
-        vkDestroyCommandPool(m_LogicalDevice, m_ImguiCommandPool, nullptr);
-
-        createImguiRenderPass();
-        createImguiFramebuffers();
-        createImguiCommandPools();
-        createImguiCommandBuffers();
-        // Todo single image
+        vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, &m_ImguiCommandBuffers[image_index]);
+        createImguiCommandBufferAtIndex(image_index);
     }
 
     if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
@@ -1907,5 +1895,53 @@ void Renderer::createImguiFramebuffers()
         {
             throw std::runtime_error("Failed to create imgui framebuffer");
         }
+    }
+}
+
+void Renderer::createImguiCommandBufferAtIndex(uint32_t Index)
+{
+    VkCommandBufferAllocateInfo buffer_info{};
+    buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    buffer_info.commandPool = m_ImguiCommandPool;
+    buffer_info.commandBufferCount = 1;
+    vkAllocateCommandBuffers(m_LogicalDevice, &buffer_info, &m_ImguiCommandBuffers[Index]);
+
+    VkClearValue clear_value{};
+    clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
+
+    VkRenderPassBeginInfo begin_info{};
+    begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    begin_info.renderPass = m_ImguiRenderPass;
+    begin_info.framebuffer = m_ImguiFramebuffers[Index];
+    begin_info.renderArea.extent.width = m_SwapChainExtent.width;
+    begin_info.renderArea.extent.height = m_SwapChainExtent.height;
+    begin_info.clearValueCount = 1;
+    begin_info.pClearValues = &clear_value;
+
+    VkCommandBufferBeginInfo buffer_begin_info{};
+    buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    buffer_begin_info.flags = 0;
+    buffer_begin_info.pInheritanceInfo = nullptr;
+
+    if (vkBeginCommandBuffer(m_ImguiCommandBuffers[Index], &buffer_begin_info) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to begin recording imgui command buffer!");
+    }
+
+    vkCmdBeginRenderPass(m_ImguiCommandBuffers[Index], &begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow();
+    ImGui::ShowUserGuide();
+    ImGui::Render();
+
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[Index]);
+    vkCmdEndRenderPass(m_ImguiCommandBuffers[Index]);
+    if (vkEndCommandBuffer(m_ImguiCommandBuffers[Index]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to record command buffer");
     }
 }
