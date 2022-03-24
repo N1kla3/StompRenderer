@@ -56,10 +56,10 @@ list(TRANSFORM SOURCE PREPEND "src/")
 enable_testing()
 
 add_executable(renderer src/main.cpp ${SOURCE} ${IMGUI})
-target_compile_definitions(renderer PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+target_compile_definitions(renderer PRIVATE)
 target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog)
 
 add_executable(tests ${TESTS} ${SOURCE} ${IMGUI})
 add_test(NAME RendererTests COMMAND tests)
-target_compile_definitions(tests PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+target_compile_definitions(tests PRIVATE)
 target_link_libraries(tests gtest gtest_main imgui Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog)
