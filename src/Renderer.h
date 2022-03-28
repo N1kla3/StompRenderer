@@ -115,26 +115,6 @@ struct UniformBufferObject
     glm::mat4 proj;
 };
 
-/*
-const std::vector<Vertex> vertices = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        { {-0.5, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
-        {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        { {-0.5, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-};
-
-const std::vector<uint16_t> indices = { 0, 1, 2, 2, 3, 0,
-                                        4, 5, 6, 6, 7, 4};
-*/
-
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
-
 const std::string MODEL_PATH = "../models/vikingroom.obj";
 const std::string TEXTURE_PATH = "../textures/viking.png";
 
@@ -214,7 +194,7 @@ private:
 
     void createDepthResources();
 
-    void createImage(uint32_t width, uint32_t height, VkFormat format,
+    void createImage(uint32_t width, uint32_t height, uint32_t mip_levels, VkFormat format,
                      VkImageTiling tiling,
                      VkImageUsageFlags usage, VkMemoryPropertyFlags  properties,
                      VkImage& image, VkDeviceMemory& imageMemory);
@@ -222,7 +202,7 @@ private:
 
     void createTextureImageView();
 
-    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels);
 
     void createTextureSampler();
 
@@ -261,6 +241,8 @@ private:
 
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
+    void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+
     void setupDebugMessenger();
 
     bool isDeviceSuitable(VkPhysicalDevice device);
@@ -273,7 +255,8 @@ private:
 
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-    void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+    void transitionImageLayout(
+            VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mip_levels);
 
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
@@ -389,13 +372,13 @@ private:
 
     VkDebugUtilsMessengerEXT debugMessenger;
 
-    ImGui_ImplVulkanH_Window m_MainWindowData;
-
     VkRenderPass m_ImguiRenderPass;
     VkCommandPool m_ImguiCommandPool;
     std::vector<VkCommandBuffer> m_ImguiCommandBuffers;
     std::vector<VkFramebuffer> m_ImguiFramebuffers;
     VkDescriptorPool m_ImguiDescriptorPool;
+
+    uint32_t m_MipLevels;
 
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
