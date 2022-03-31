@@ -194,11 +194,10 @@ private:
 
     void createDepthResources();
 
-    void createImage(uint32_t width, uint32_t height, uint32_t mip_levels, VkFormat format,
-                     VkImageTiling tiling,
-                     VkImageUsageFlags usage, VkMemoryPropertyFlags  properties,
-                     VkImage& image, VkDeviceMemory& imageMemory);
+    void createImage(uint32_t width, uint32_t height, uint32_t mip_levels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, VkSampleCountFlagBits numSamples);
     void createTextureImage();
+
+    void createColorResources();
 
     void createTextureImageView();
 
@@ -265,6 +264,8 @@ private:
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
     std::vector<const char*> getRequiredExtensions();
+
+    VkSampleCountFlagBits getMaxUsableSampleCount();
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -341,6 +342,10 @@ private:
     VkImageView m_TextureImageView;
     VkSampler m_TextureSampler;
 
+    VkImage m_ColorImage;
+    VkDeviceMemory m_ColorImageMemory;
+    VkImageView m_ColorImageView;
+
     std::vector<VkBuffer> m_UniformBuffers;
     std::vector<VkDeviceMemory> m_UniformBuffersMemory;
 
@@ -379,6 +384,8 @@ private:
     VkDescriptorPool m_ImguiDescriptorPool;
 
     uint32_t m_MipLevels;
+
+    VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
     const uint32_t WIDTH = 800;
     const uint32_t HEIGHT = 600;
