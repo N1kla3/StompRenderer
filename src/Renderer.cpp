@@ -54,8 +54,9 @@ void Renderer::initVulkan()
     createTextureImageView();
     createTextureSampler();
     loadModel();
-    createVertexBuffer();
-    createIndexBuffer();
+    loadModel();
+    createVertexBuffers();
+    createIndexBuffers();
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -91,11 +92,24 @@ void Renderer::cleanup()
     {
         DestroyDebugUtilsMessengerEXT(m_Instance, debugMessenger, nullptr);
     }
-    vkDestroyBuffer(m_LogicalDevice, m_IndexBuffer, nullptr);
-    vkFreeMemory(m_LogicalDevice, m_IndexBufferMemory, nullptr);
 
-    vkDestroyBuffer(m_LogicalDevice, m_VertexBuffer, nullptr);
-    vkFreeMemory(m_LogicalDevice, m_VertexBufferMemory, nullptr);
+    for (VkBuffer buffer : m_IndexBuffers)
+    {
+        vkDestroyBuffer(m_LogicalDevice, buffer, nullptr);
+    }
+    for (VkDeviceMemory memory : m_IndexBufferMemories)
+    {
+        vkFreeMemory(m_LogicalDevice, memory, nullptr);
+    }
+
+    for (VkBuffer buffer : m_VertexBuffers)
+    {
+        vkDestroyBuffer(m_LogicalDevice, buffer, nullptr);
+    }
+    for (VkDeviceMemory memory : m_VertexBufferMemories)
+    {
+        vkFreeMemory(m_LogicalDevice, memory, nullptr);
+    }
 
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_DescriptorSetLayout, nullptr);
 
@@ -590,8 +604,8 @@ void Renderer::createGraphicsPipeline()
     VkPipelineShaderStageCreateInfo shaderStage[] = {vertShaderStageInfo, fragShaderStageInfo};
 
     // Vertex input state
-    auto binding_description = Vertex::getBindingDescription();
-    auto attribute_descriptions = Vertex::getAttributeDescriptions();
+    auto binding_description = omp::Vertex::getBindingDescription();
+    auto attribute_descriptions = omp::Vertex::getAttributeDescriptions();
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -915,13 +929,20 @@ void Renderer::createCommandBuffers()
         vkCmdBeginRenderPass(m_CommandBuffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
         vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-        VkBuffer vertex_buffers[] = { m_VertexBuffer };
-        VkDeviceSize offsets[] = { 0 };
-        vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, vertex_buffers, offsets);
-        vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        //createVertexBuffers();
+        //createIndexBuffers();
 
-        vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
-        vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<uint32_t>(m_Indices.size()), 1, 0, 0, 0);
+        VkDeviceSize offsets[] = { 0 };
+
+        for (size_t index = 0; index < m_CurrentScene.GetModels().size(); index++)
+        {
+            vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, m_VertexBuffers.data(), offsets);
+            vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
+
+            vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
+            vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<uint32_t>(m_CurrentScene.GetModels()[index].GetIndices().size()), 1, 0, 0, 0);
+        }
+
         vkCmdEndRenderPass(m_CommandBuffers[i]);
         if (vkEndCommandBuffer(m_CommandBuffers[i]) != VK_SUCCESS)
         {
@@ -1155,33 +1176,42 @@ void Renderer::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemor
     vkBindBufferMemory(m_LogicalDevice, buffer, bufferMemory, 0);
 }
 
-void Renderer::createVertexBuffer()
+void Renderer::createVertexBuffers()
 {
-    VkDeviceSize buffer_size = sizeof(m_Vertices[0]) * m_Vertices.size();
+    VkDeviceSize buffer_size{};
 
-    VkBuffer staging_buffer;
-    VkDeviceMemory staging_buffer_memory;
-    createBuffer(
-            buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            staging_buffer, staging_buffer_memory);
+    for (size_t index = 0; index < m_CurrentScene.GetModels().size(); index++)
+    {
+        omp::Model Model = m_CurrentScene.GetModels()[index];
 
-    void* data;
-    vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-    memcpy(data, m_Vertices.data(), (size_t)buffer_size);
-    vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
+        buffer_size = sizeof(Model.GetVertices()[0]) * Model.GetVertices().size();
 
-    createBuffer(
-            buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            m_VertexBuffer, m_VertexBufferMemory);
+        VkBuffer staging_buffer;
+        VkDeviceMemory staging_buffer_memory;
+        createBuffer(
+                buffer_size,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                staging_buffer, staging_buffer_memory);
 
-    copyBuffer(staging_buffer, m_VertexBuffer, buffer_size);
+        void* data;
+        vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
+        memcpy(data, Model.GetVertices().data(), (size_t)buffer_size);
+        vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
 
-    vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
-    vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
+        CreateVertexBufferAndMemoryAtIndex(index);
+
+        createBuffer(
+                buffer_size,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                m_VertexBuffers[index], m_VertexBufferMemories[index]);
+
+        copyBuffer(staging_buffer, m_VertexBuffers[index], buffer_size);
+
+        vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
+        vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
+    }
 }
 
 uint32_t Renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -1209,33 +1239,39 @@ void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize s
     endSingleTimeCommands(command_buffer);
 }
 
-void Renderer::createIndexBuffer()
+void Renderer::createIndexBuffers()
 {
-    VkDeviceSize buffer_size = sizeof(m_Indices[0]) * m_Indices.size();
+    for (size_t index = 0; index < m_CurrentScene.GetModels().size(); index++)
+    {
+        omp::Model model = m_CurrentScene.GetModels()[index];
+        VkDeviceSize buffer_size = sizeof(model.GetIndices()[0]) * model.GetIndices().size();
 
-    VkBuffer staging_buffer;
-    VkDeviceMemory staging_buffer_memory;
-    createBuffer(
-            buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            staging_buffer, staging_buffer_memory);
+        VkBuffer staging_buffer;
+        VkDeviceMemory staging_buffer_memory;
+        createBuffer(
+                buffer_size,
+                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                staging_buffer, staging_buffer_memory);
 
-    void* data;
-    vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-    memcpy(data, m_Indices.data(), (size_t)buffer_size);
-    vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
+        void* data;
+        vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
+        memcpy(data, model.GetIndices().data(), (size_t)buffer_size);
+        vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
 
-    createBuffer(
-            buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            m_IndexBuffer, m_IndexBufferMemory);
+        CreateIndexBufferAndMemoryAtIndex(index);
 
-    copyBuffer(staging_buffer, m_IndexBuffer, buffer_size);
+        createBuffer(
+                buffer_size,
+                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                m_IndexBuffers[index], m_IndexBufferMemories[index]);
 
-    vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
-    vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
+        copyBuffer(staging_buffer, m_IndexBuffers[index], buffer_size);
+
+        vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
+        vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
+    }
 }
 
 void Renderer::createDescriptorSetLayout()
@@ -1695,11 +1731,15 @@ void Renderer::loadModel()
         throw std::runtime_error(warn + err);
     }
 
+    m_UniqueVertices.clear();
+
+    omp::Model loaded_model;
+
     for (const auto& shape : shapes)
     {
         for (const auto& index : shape.mesh.indices)
         {
-            Vertex vertex{};
+            omp::Vertex vertex{};
 
             vertex.pos = {
                     attrib.vertices[3 * index.vertex_index + 0],
@@ -1714,13 +1754,15 @@ void Renderer::loadModel()
 
             if (m_UniqueVertices.count(vertex) == 0)
             {
-                m_UniqueVertices[vertex] = static_cast<uint32_t>(m_Vertices.size());
-                m_Vertices.push_back(vertex);
+                m_UniqueVertices[vertex] = static_cast<uint32_t>(loaded_model.GetVertices().size());
+                loaded_model.AddVertex(vertex);
             }
 
-            m_Indices.push_back(m_UniqueVertices[vertex]);
+            loaded_model.AddIndex(m_UniqueVertices[vertex]);
         }
     }
+
+    m_CurrentScene.AddModelToScene(loaded_model);
 }
 
 void Renderer::createImguiContext()
@@ -2108,4 +2150,42 @@ void Renderer::createColorResources()
                 m_MSAASamples);
     m_ColorImageView = createImageView(m_ColorImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
+}
+
+void Renderer::CreateVertexBufferAndMemoryAtIndex(size_t index)
+{
+    if (m_VertexBuffers.size() >= index)
+    {
+        while (m_VertexBuffers.size() != index + 1)
+        {
+            m_VertexBuffers.push_back({});
+        }
+    }
+
+    if (m_VertexBufferMemories.size() >= index)
+    {
+        while (m_VertexBufferMemories.size() != index + 1)
+        {
+            m_VertexBufferMemories.push_back({});
+        }
+    }
+}
+
+void Renderer::CreateIndexBufferAndMemoryAtIndex(size_t index)
+{
+    if (m_IndexBuffers.size() >= index)
+    {
+        while (m_IndexBuffers.size() != index + 1)
+        {
+            m_IndexBuffers.push_back({});
+        }
+    }
+
+    if (m_IndexBufferMemories.size() >= index)
+    {
+        while (m_IndexBufferMemories.size() != index + 1)
+        {
+            m_IndexBufferMemories.push_back({});
+        }
+    }
 }

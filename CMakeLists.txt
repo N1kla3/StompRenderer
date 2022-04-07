@@ -20,6 +20,10 @@ include_directories(imgui-master/backends)
 set(SOURCE
         Renderer.cpp
         Renderer.h
+        Model.h
+        Model.cpp
+        Scene.h
+        Scene.cpp
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp

@@ -23,6 +23,8 @@
 #include "imgui.h"
 #include "backends/imgui_impl_vulkan.h"
 
+#include "Scene.h"
+
 namespace
 {
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
@@ -51,61 +53,6 @@ namespace
             func(instance, debugMessenger, pAllocator);
         }
     }
-}
-
-struct Vertex
-{
-    glm::vec3 pos;
-    glm::vec3 color;
-    glm::vec2 tex_coord;
-
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription binding_description{};
-        binding_description.binding = 0;
-        binding_description.stride = sizeof(Vertex);
-        binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-        return binding_description;
-    }
-
-    static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions()
-    {
-        std::array<VkVertexInputAttributeDescription, 3> attribute_descriptions{};
-        attribute_descriptions[0].binding = 0;
-        attribute_descriptions[0].location = 0;
-        attribute_descriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attribute_descriptions[0].offset = offsetof(Vertex, pos);
-
-        attribute_descriptions[1].binding = 0;
-        attribute_descriptions[1].location = 1;
-        attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attribute_descriptions[1].offset = offsetof(Vertex, color);
-
-        attribute_descriptions[2].binding = 0;
-        attribute_descriptions[2].location = 2;
-        attribute_descriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-        attribute_descriptions[2].offset = offsetof(Vertex, tex_coord);
-
-        return attribute_descriptions;
-    }
-
-    bool operator==(const Vertex& other) const
-    {
-        return pos == other.pos && color == other.color && tex_coord == other.tex_coord;
-    }
-};
-
-namespace std {
-    template<>
-    struct hash<Vertex>
-    {
-        size_t operator()(Vertex const& vertex) const
-        {
-            return ((hash<glm::vec3>()(vertex.pos) ^
-                    (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-                    (hash<glm::vec2>()(vertex.tex_coord) << 1);
-        }
-    };
 }
 
 struct UniformBufferObject
@@ -139,6 +86,8 @@ class Renderer {
         std::vector<VkPresentModeKHR> present_modes;
     };
 
+    // Methods //
+    // ======= //
 public:
     void run()
     {
@@ -182,8 +131,8 @@ private:
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void loadModel();
-    void createVertexBuffer();
-    void createIndexBuffer();
+    void createVertexBuffers();
+    void createIndexBuffers();
     void createUniformBuffers();
 
     void updateUniformBuffer(uint32_t currentImage);
@@ -267,6 +216,9 @@ private:
 
     VkSampleCountFlagBits getMaxUsableSampleCount();
 
+    void CreateVertexBufferAndMemoryAtIndex(size_t index);
+    void CreateIndexBufferAndMemoryAtIndex(size_t index);
+
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
             VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -296,10 +248,11 @@ private:
         file.close();
         return buffer;
     }
-
-    VkSurfaceKHR m_Surface;
-
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
+
+    // State //
+    // ===== //
+    VkSurfaceKHR m_Surface;
 
     GLFWwindow* m_Window = nullptr;
 
@@ -325,17 +278,13 @@ private:
     VkDescriptorPool m_DescriptorPool;
     std::vector<VkDescriptorSet> m_DescriptorSets;
 
-    VkSemaphore m_ImageAvailableSemaphore;
-    VkSemaphore m_RenderFinishedSemaphore;
+    std::unordered_map<omp::Vertex, uint32_t> m_UniqueVertices;
 
-    std::vector<Vertex> m_Vertices;
-    std::vector<uint32_t> m_Indices;
-    std::unordered_map<Vertex, uint32_t> m_UniqueVertices;
-    VkBuffer m_VertexBuffer;
-    VkDeviceMemory m_VertexBufferMemory;
+    std::vector<VkBuffer> m_VertexBuffers;
+    std::vector<VkDeviceMemory> m_VertexBufferMemories;
 
-    VkBuffer m_IndexBuffer;
-    VkDeviceMemory m_IndexBufferMemory;
+    std::vector<VkBuffer> m_IndexBuffers;
+    std::vector<VkDeviceMemory> m_IndexBufferMemories;
 
     VkImage m_TextureImage;
     VkDeviceMemory m_TextureImageMemory;
@@ -366,6 +315,8 @@ private:
     VkImage m_DepthImage;
     VkDeviceMemory m_DepthImageMemory;
     VkImageView m_DepthImageView;
+
+    omp::Scene m_CurrentScene;
 
     VkFormat m_SwapChainImageFormat;
 
