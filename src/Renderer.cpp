@@ -55,8 +55,9 @@ void Renderer::initVulkan()
     createTextureSampler();
     loadModel();
     loadModel();
-    createVertexBuffers();
-    createIndexBuffers();
+    loadModel();
+    //createVertexBuffers();
+    //createIndexBuffers();
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -697,12 +698,18 @@ void Renderer::createGraphicsPipeline()
     dynamicState.dynamicStateCount = 2;
     dynamicState.pDynamicStates = dynamicStates;
 
+    // Push constant for model
+    VkPushConstantRange constant_range{};
+    constant_range.size = sizeof(omp::ModelPushConstant);
+    constant_range.offset = 0;
+    constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &m_DescriptorSetLayout;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &constant_range;
     if (vkCreatePipelineLayout(m_LogicalDevice, &pipelineLayoutInfo, nullptr, &m_PipelineLayout)
         != VK_SUCCESS)
     {
@@ -876,7 +883,7 @@ void Renderer::createCommandPool()
     VkCommandPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     pool_info.queueFamilyIndex = queue_family_indices.graphics_family.value();
-    pool_info.flags = 0;
+    pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
     if (vkCreateCommandPool(m_LogicalDevice, &pool_info, nullptr, &m_CommandPool) != VK_SUCCESS)
     {
@@ -902,52 +909,58 @@ void Renderer::createCommandBuffers()
 
     for (size_t i = 0; i < m_CommandBuffers.size(); i++)
     {
-        VkCommandBufferBeginInfo begin_info{};
-        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        begin_info.flags = 0;
-        begin_info.pInheritanceInfo = nullptr;
+        createCommandBufferForImage(i);
+    }
+}
 
-        if (vkBeginCommandBuffer(m_CommandBuffers[i], &begin_info) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to begin recording command buffer!");
-        }
+void Renderer::createCommandBufferForImage(size_t inIndex)
+{
+    VkCommandBufferBeginInfo begin_info{};
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin_info.flags = 0;
+    begin_info.pInheritanceInfo = nullptr;
 
-        VkRenderPassBeginInfo render_pass_begin_info{};
-        render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        render_pass_begin_info.renderPass = m_RenderPass;
-        render_pass_begin_info.framebuffer = m_SwapChainFramebuffers[i];
-        render_pass_begin_info.renderArea.offset = {0, 0};
-        render_pass_begin_info.renderArea.extent = m_SwapChainExtent;
+    if (vkBeginCommandBuffer(m_CommandBuffers[inIndex], &begin_info) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
 
-        std::array<VkClearValue, 2> clear_values{};
-        clear_values[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
-        clear_values[1].depthStencil = {1.0f, 0};
+    VkRenderPassBeginInfo render_pass_begin_info{};
+    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_pass_begin_info.renderPass = m_RenderPass;
+    render_pass_begin_info.framebuffer = m_SwapChainFramebuffers[inIndex];
+    render_pass_begin_info.renderArea.offset = {0, 0};
+    render_pass_begin_info.renderArea.extent = m_SwapChainExtent;
 
-        render_pass_begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
-        render_pass_begin_info.pClearValues = clear_values.data();
+    std::array<VkClearValue, 2> clear_values{};
+    clear_values[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+    clear_values[1].depthStencil = {1.0f, 0};
 
-        vkCmdBeginRenderPass(m_CommandBuffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
+    render_pass_begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
+    render_pass_begin_info.pClearValues = clear_values.data();
 
-        //createVertexBuffers();
-        //createIndexBuffers();
+    vkCmdBeginRenderPass(m_CommandBuffers[inIndex], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
-        VkDeviceSize offsets[] = { 0 };
+    VkDeviceSize offsets[] = { 0 };
 
-        for (size_t index = 0; index < m_CurrentScene.GetModels().size(); index++)
-        {
-            vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, m_VertexBuffers.data(), offsets);
-            vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
+    for (size_t index = 0; index < m_CurrentScene.GetModels().size(); index++)
+    {
+        vkCmdBindVertexBuffers(m_CommandBuffers[inIndex], 0, 1, &m_VertexBuffers[index], offsets);
+        vkCmdBindIndexBuffer(m_CommandBuffers[inIndex], m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
 
-            vkCmdBindDescriptorSets(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[i], 0, nullptr);
-            vkCmdDrawIndexed(m_CommandBuffers[i], static_cast<uint32_t>(m_CurrentScene.GetModels()[index].GetIndices().size()), 1, 0, 0, 0);
-        }
+        omp::ModelPushConstant constant;
+        constant.model = m_CurrentScene.GetModels()[index].GetTransform();
+        vkCmdPushConstants(m_CommandBuffers[inIndex], m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(omp::ModelPushConstant), &constant);
 
-        vkCmdEndRenderPass(m_CommandBuffers[i]);
-        if (vkEndCommandBuffer(m_CommandBuffers[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to record command buffer");
-        }
+        vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[inIndex], 0, nullptr);
+        vkCmdDrawIndexed(m_CommandBuffers[inIndex], static_cast<uint32_t>(m_CurrentScene.GetModels()[index].GetIndices().size()), 1, 0, 0, 0);
+    }
+
+    vkCmdEndRenderPass(m_CommandBuffers[inIndex]);
+    if (vkEndCommandBuffer(m_CommandBuffers[inIndex]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to record command buffer");
     }
 }
 
@@ -976,6 +989,7 @@ void Renderer::drawFrame()
     {
         vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, &m_ImguiCommandBuffers[image_index]);
         createImguiCommandBufferAtIndex(image_index);
+        createCommandBufferForImage(image_index);
     }
 
     if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
@@ -1214,6 +1228,63 @@ void Renderer::createVertexBuffers()
     }
 }
 
+void Renderer::loadModelToBuffer(const omp::Model &model)
+{
+    VkDeviceSize buffer_size = sizeof(model.GetVertices()[0]) * model.GetVertices().size();
+
+    // Vertex buffer
+    size_t index = m_VertexBuffers.size();
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_buffer_memory;
+    createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            staging_buffer, staging_buffer_memory);
+
+    void* data;
+    vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
+    memcpy(data, model.GetVertices().data(), (size_t)buffer_size);
+    vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
+
+    CreateVertexBufferAndMemoryAtIndex(index);
+
+    createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            m_VertexBuffers[index], m_VertexBufferMemories[index]);
+
+    copyBuffer(staging_buffer, m_VertexBuffers[index], buffer_size);
+
+    vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
+    vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
+
+    // Index buffer
+    createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            staging_buffer, staging_buffer_memory);
+
+    vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
+    memcpy(data, model.GetIndices().data(), (size_t)buffer_size);
+    vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
+
+    CreateIndexBufferAndMemoryAtIndex(index);
+
+    createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            m_IndexBuffers[index], m_IndexBufferMemories[index]);
+
+    copyBuffer(staging_buffer, m_IndexBuffers[index], buffer_size);
+
+    vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
+    vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
+}
+
 uint32_t Renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
     VkPhysicalDeviceMemoryProperties memory_properties;
@@ -1325,7 +1396,6 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     UniformBufferObject ubo{};
-    ubo.model = glm::mat4{1};//glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     ubo.view = glm::lookAt(glm::vec3(20.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     ubo.proj = glm::perspective(glm::radians(90.f), (float)m_SwapChainExtent.width / (float)m_SwapChainExtent.height, 0.1f, 100.f);
     ubo.proj[1][1] *= -1;
@@ -1762,6 +1832,7 @@ void Renderer::loadModel()
         }
     }
 
+    loadModelToBuffer(loaded_model);
     m_CurrentScene.AddModelToScene(loaded_model);
 }
 

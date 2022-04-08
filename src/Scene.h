@@ -20,7 +20,7 @@ public:
     // ======= //
     void AddModelToScene(const omp::Model& ModelToAdd);
 
-    const std::vector<omp::Model>& GetModels() const;
+    std::vector<omp::Model>& GetModels();
     bool IsDirty() const { return m_StateDirty; }
     void ConfirmRendering() { m_StateDirty = true; };
 };

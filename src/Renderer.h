@@ -57,7 +57,6 @@ namespace
 
 struct UniformBufferObject
 {
-    glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
 };
@@ -132,12 +131,14 @@ private:
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void loadModel();
     void createVertexBuffers();
+    void loadModelToBuffer(const omp::Model& model);
     void createIndexBuffers();
     void createUniformBuffers();
 
     void updateUniformBuffer(uint32_t currentImage);
 
     void createCommandBuffers();
+    void createCommandBufferForImage(size_t index);
 
     void createCommandPool();
 

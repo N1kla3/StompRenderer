@@ -11,7 +11,13 @@
 namespace omp{
     class Model;
     struct Vertex;
+    struct ModelPushConstant;
 }
+
+struct omp::ModelPushConstant
+{
+    glm::mat4 model;
+};
 
 struct omp::Vertex
 {
@@ -73,7 +79,7 @@ class omp::Model
 public:
     // Lifecycle //
     // ========= //
-    Model() = default;
+    Model();
     ~Model() = default;
 
 private:
@@ -90,9 +96,9 @@ private:
 public:
     // Methods //
     // ======= //
-    void RotateModel();
-    void MoveModel();
-    void ScaleModel();
+    void RotateModel(float angle, const glm::vec3& rotationAxis);
+    void MoveModel(const glm::vec3& translation);
+    void ScaleModel(const glm::vec3& scale);
     void SetTransform();
 
     void AddVertex(const omp::Vertex& InVertex);

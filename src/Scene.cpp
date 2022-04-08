@@ -1,6 +1,6 @@
 #include "Scene.h"
 
-const std::vector<omp::Model>& omp::Scene::GetModels() const
+std::vector<omp::Model>& omp::Scene::GetModels()
 {
     return m_Models;
 }
