@@ -8,7 +8,26 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "Renderer.h"
 
+void InitializeLogs();
+
 int main()
+{
+    InitializeLogs();
+    Renderer application;
+
+    try
+    {
+        application.run();
+    }
+    catch (const std::exception& e)
+    {
+        spdlog::get("Rendering")->error(e.what());
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+
+void InitializeLogs()
 {
     std::vector<spdlog::sink_ptr> sinks;
     sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/log.txt"));
@@ -18,13 +37,4 @@ int main()
     spdlog::register_logger(RenderingLog);
     spdlog::register_logger(UILog);
     spdlog::set_pattern("[%D %H:%M:%S %z][thread %t]%^[%n][%l]%v%$");
-
-    Renderer application;
-    try{
-        application.run();
-    } catch (const std::exception& e){
-        spdlog::get("Rendering")->error(e.what());
-        return EXIT_FAILURE;
-    }
-    return EXIT_SUCCESS;
 }
