@@ -1,8 +1,12 @@
 #include "Model.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 omp::Model::Model()
     : m_Name("NONE")
-    , m_Transform(glm::mat4(1.f))
+    , m_Translation(glm::vec3{1.f})
+    , m_Rotation(glm::vec3{0.f})
+    , m_Scale(glm::vec3{1.f})
 {
 
 }
@@ -27,6 +31,7 @@ void omp::Model::AddIndices(const std::vector<uint32_t> &InIndices)
     m_Indices = InIndices;
 }
 
+/*
 void omp::Model::RotateModel(float angle, const glm::vec3& rotationAxis)
 {
     m_Transform = glm::rotate(m_Transform, angle, rotationAxis);
@@ -45,4 +50,28 @@ void omp::Model::ScaleModel(const glm::vec3& scale)
 void omp::Model::SetTransform()
 {
 
+}
+ */
+
+glm::vec3& omp::Model::GetPosition()
+{
+    return m_Translation;
+}
+
+glm::vec3& omp::Model::GetRotation()
+{
+    return m_Rotation;
+}
+
+glm::vec3& omp::Model::GetScale()
+{
+    return m_Scale;
+}
+
+glm::mat4 omp::Model::GetTransform() const
+{
+    glm::mat4 rotation = glm::toMat4(glm::quat(m_Rotation));
+    return glm::translate(glm::mat4(1.0f), m_Translation)
+           * rotation
+           * glm::scale(glm::mat4(1.0f), m_Scale);
 }

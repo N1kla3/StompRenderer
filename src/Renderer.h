@@ -24,6 +24,9 @@
 #include "backends/imgui_impl_vulkan.h"
 
 #include "Scene.h"
+#include "UI/ViewPort.h"
+#include "UI/EntityPanel.h"
+#include "UI/ScenePanel.h"
 
 namespace
 {
@@ -88,6 +91,7 @@ class Renderer {
     // Methods //
     // ======= //
 public:
+    Renderer();
     void run()
     {
         initWindow();
@@ -127,9 +131,10 @@ private:
     void createGraphicsPipeline();
 
     void createFramebuffers();
+    void createFramebufferAtImage(size_t index);
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-    void loadModel();
+    void loadModel(const std::string &Name);
     void createVertexBuffers();
     void loadModelToBuffer(const omp::Model& model);
     void createIndexBuffers();
@@ -173,7 +178,11 @@ private:
     void createImguiCommandPools();
     void createImguiCommandBuffers();
     void createImguiCommandBufferAtIndex(uint32_t ImageIndex);
+    void renderAllUi();
+    void createImguiWidgets();
     void createImguiFramebuffers();
+
+    void onViewportResize(size_t imageIndex);
 
     VkShaderModule createShaderModule(const std::vector<char>& code);
 
@@ -275,7 +284,7 @@ private:
 
     VkPipeline m_GraphicsPipeline;
 
-    VkCommandPool m_CommandPool;
+    VkCommandPool m_CommandPools;
     VkDescriptorPool m_DescriptorPool;
     std::vector<VkDescriptorSet> m_DescriptorSets;
 
@@ -317,7 +326,13 @@ private:
     VkDeviceMemory m_DepthImageMemory;
     VkImageView m_DepthImageView;
 
-    omp::Scene m_CurrentScene;
+    std::shared_ptr<omp::Scene> m_CurrentScene;
+    // Todo: maybe multiple later
+    // todo: event driven
+    std::shared_ptr<omp::ViewPort> m_RenderViewport;
+    std::shared_ptr<omp::ScenePanel> m_ScenePanel;
+
+    std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 
     VkFormat m_SwapChainImageFormat;
 
@@ -339,8 +354,8 @@ private:
 
     VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-    const uint32_t WIDTH = 800;
-    const uint32_t HEIGHT = 600;
+    const uint32_t WIDTH = 1920;
+    const uint32_t HEIGHT = 1080;
     const int MAX_FRAMES_IN_FLIGHT = 2;
 
 };

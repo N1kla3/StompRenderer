@@ -16,6 +16,9 @@
 
 #include "stb_image.h"
 #include "backends/imgui_impl_glfw.h"
+#include "UI/MainLayer.h"
+#include "UI/EntityPanel.h"
+#include "UI/ScenePanel.h"
 
 #include <tiny_obj_loader.h>
 
@@ -34,6 +37,12 @@ namespace
     const std::vector<const char*> DeviceExtensions{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 }
 
+Renderer::Renderer()
+    : m_CurrentScene(std::make_shared<omp::Scene>())
+{
+
+}
+
 void Renderer::initVulkan()
 {
     createInstance();
@@ -43,6 +52,7 @@ void Renderer::initVulkan()
     createLogicalDevice();
     createSwapChain();
     createImageViews();
+    createImguiWidgets();
     createRenderPass();
     createDescriptorSetLayout();
     createGraphicsPipeline();
@@ -53,9 +63,9 @@ void Renderer::initVulkan()
     createTextureImage();
     createTextureImageView();
     createTextureSampler();
-    loadModel();
-    loadModel();
-    loadModel();
+    loadModel("First");
+    loadModel("Second");
+    loadModel("Third");
     //createVertexBuffers();
     //createIndexBuffers();
     createUniformBuffers();
@@ -63,6 +73,7 @@ void Renderer::initVulkan()
     createDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
+
 }
 
 void Renderer::mainLoop()
@@ -87,7 +98,7 @@ void Renderer::cleanup()
 
     cleanupSwapChain();
 
-    vkDestroyCommandPool(m_LogicalDevice, m_CommandPool, nullptr);
+    vkDestroyCommandPool(m_LogicalDevice, m_CommandPools, nullptr);
 
     if (enableValidationLayers)
     {
@@ -808,12 +819,12 @@ void Renderer::createRenderPass()
     VkAttachmentDescription color_attachment_resolve{};
     color_attachment_resolve.format = m_SwapChainImageFormat;
     color_attachment_resolve.samples = VK_SAMPLE_COUNT_1_BIT;
-    color_attachment_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     color_attachment_resolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment_resolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment_resolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    color_attachment_resolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    color_attachment_resolve.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentReference color_attachment_resolve_ref{};
     color_attachment_resolve_ref.attachment = 2;
@@ -857,22 +868,27 @@ void Renderer::createFramebuffers()
 
     for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
     {
-        std::array<VkImageView, 3> attachments = { m_ColorImageView, m_DepthImageView, m_SwapChainImageViews[i] };
+        createFramebufferAtImage(i);
+    }
+}
 
-        VkFramebufferCreateInfo frame_buffer_info{};
-        frame_buffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        frame_buffer_info.renderPass = m_RenderPass;
-        frame_buffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());
-        frame_buffer_info.pAttachments = attachments.data();
-        frame_buffer_info.width = m_SwapChainExtent.width;
-        frame_buffer_info.height = m_SwapChainExtent.height;
-        frame_buffer_info.layers = 1;
+void Renderer::createFramebufferAtImage(size_t index)
+{
+    std::array<VkImageView, 3> attachments = { m_ColorImageView, m_DepthImageView, m_SwapChainImageViews[index] };
 
-        if (vkCreateFramebuffer(m_LogicalDevice, &frame_buffer_info, nullptr, &m_SwapChainFramebuffers[i])
-            != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create framebuffer!");
-        }
+    VkFramebufferCreateInfo frame_buffer_info{};
+    frame_buffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    frame_buffer_info.renderPass = m_RenderPass;
+    frame_buffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());
+    frame_buffer_info.pAttachments = attachments.data();
+    frame_buffer_info.width = m_RenderViewport->GetSize().x;//m_SwapChainExtent.width/2;
+    frame_buffer_info.height = m_RenderViewport->GetSize().y;//m_SwapChainExtent.height/2;
+    frame_buffer_info.layers = 1;
+
+    if (vkCreateFramebuffer(m_LogicalDevice, &frame_buffer_info, nullptr, &m_SwapChainFramebuffers[index])
+        != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create framebuffer!");
     }
 }
 
@@ -885,7 +901,7 @@ void Renderer::createCommandPool()
     pool_info.queueFamilyIndex = queue_family_indices.graphics_family.value();
     pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if (vkCreateCommandPool(m_LogicalDevice, &pool_info, nullptr, &m_CommandPool) != VK_SUCCESS)
+    if (vkCreateCommandPool(m_LogicalDevice, &pool_info, nullptr, &m_CommandPools) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create command pool");
     }
@@ -897,7 +913,7 @@ void Renderer::createCommandBuffers()
 
     VkCommandBufferAllocateInfo allocate_info;
     allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocate_info.commandPool = m_CommandPool;
+    allocate_info.commandPool = m_CommandPools;
     allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocate_info.commandBufferCount = (uint32_t) m_CommandBuffers.size();
     allocate_info.pNext = nullptr;
@@ -915,6 +931,15 @@ void Renderer::createCommandBuffers()
 
 void Renderer::createCommandBufferForImage(size_t inIndex)
 {
+    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, 1, &m_CommandBuffers[inIndex]);
+
+    VkCommandBufferAllocateInfo buffer_info{};
+    buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    buffer_info.commandPool = m_CommandPools;
+    buffer_info.commandBufferCount = 1;
+    vkAllocateCommandBuffers(m_LogicalDevice, &buffer_info, &m_CommandBuffers[inIndex]);
+
     VkCommandBufferBeginInfo begin_info{};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     begin_info.flags = 0;
@@ -929,32 +954,44 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_begin_info.renderPass = m_RenderPass;
     render_pass_begin_info.framebuffer = m_SwapChainFramebuffers[inIndex];
-    render_pass_begin_info.renderArea.offset = {0, 0};
-    render_pass_begin_info.renderArea.extent = m_SwapChainExtent;
+    render_pass_begin_info.renderArea.offset.x = m_RenderViewport->GetOffset().x;
+    render_pass_begin_info.renderArea.offset.y = m_RenderViewport->GetOffset().y;
+    render_pass_begin_info.renderArea.extent.height = m_RenderViewport->GetSize().y;//m_SwapChainExtent.height/2;
+    render_pass_begin_info.renderArea.extent.width = m_RenderViewport->GetSize().x;//m_SwapChainExtent.width/2;
 
     std::array<VkClearValue, 2> clear_values{};
-    clear_values[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+    clear_values[0].color = {0.0f, 1.0f, 0.0f, 0.5f};
     clear_values[1].depthStencil = {1.0f, 0};
 
     render_pass_begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
     render_pass_begin_info.pClearValues = clear_values.data();
 
+    VkViewport viewport;
+    viewport.x = m_RenderViewport->GetOffset().x;
+    viewport.y = m_RenderViewport->GetOffset().y;
+    viewport.height = m_RenderViewport->GetSize().y;
+    viewport.width = m_RenderViewport->GetSize().x;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
     vkCmdBeginRenderPass(m_CommandBuffers[inIndex], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
+    vkCmdSetViewport(m_CommandBuffers[inIndex], 0, 1, &viewport);
+
     VkDeviceSize offsets[] = { 0 };
 
-    for (size_t index = 0; index < m_CurrentScene.GetModels().size(); index++)
+    for (size_t index = 0; index < m_CurrentScene->GetModels().size(); index++)
     {
         vkCmdBindVertexBuffers(m_CommandBuffers[inIndex], 0, 1, &m_VertexBuffers[index], offsets);
         vkCmdBindIndexBuffer(m_CommandBuffers[inIndex], m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
 
         omp::ModelPushConstant constant;
-        constant.model = m_CurrentScene.GetModels()[index].GetTransform();
+        constant.model = m_CurrentScene->GetModels()[index]->GetTransform();
         vkCmdPushConstants(m_CommandBuffers[inIndex], m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(omp::ModelPushConstant), &constant);
 
         vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[inIndex], 0, nullptr);
-        vkCmdDrawIndexed(m_CommandBuffers[inIndex], static_cast<uint32_t>(m_CurrentScene.GetModels()[index].GetIndices().size()), 1, 0, 0, 0);
+        vkCmdDrawIndexed(m_CommandBuffers[inIndex], static_cast<uint32_t>(m_CurrentScene->GetModels()[index]->GetIndices().size()), 1, 0, 0, 0);
     }
 
     vkCmdEndRenderPass(m_CommandBuffers[inIndex]);
@@ -987,10 +1024,11 @@ void Renderer::drawFrame()
     }
     else
     {
-        vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, &m_ImguiCommandBuffers[image_index]);
+        //vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, &m_ImguiCommandBuffers[image_index]);
         createImguiCommandBufferAtIndex(image_index);
         createCommandBufferForImage(image_index);
     }
+    onViewportResize(image_index);
 
     if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
     {
@@ -1012,7 +1050,7 @@ void Renderer::drawFrame()
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
 
-    std::array<VkCommandBuffer, 2> command_buffers{ m_CommandBuffers[image_index], m_ImguiCommandBuffers[image_index] };
+    std::array<VkCommandBuffer, 2> command_buffers{ m_ImguiCommandBuffers[image_index], m_CommandBuffers[image_index] };
     submit_info.commandBufferCount = 2;
     submit_info.pCommandBuffers = command_buffers.data();
 
@@ -1126,7 +1164,7 @@ void Renderer::cleanupSwapChain()
     {
         vkDestroyFramebuffer(m_LogicalDevice, m_SwapChainFramebuffers[i], nullptr);
     }
-    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, static_cast<int32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
+    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, static_cast<int32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
     vkDestroyPipeline(m_LogicalDevice, m_GraphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_LogicalDevice, m_PipelineLayout, nullptr);
     vkDestroyRenderPass(m_LogicalDevice, m_RenderPass, nullptr);
@@ -1194,11 +1232,11 @@ void Renderer::createVertexBuffers()
 {
     VkDeviceSize buffer_size{};
 
-    for (size_t index = 0; index < m_CurrentScene.GetModels().size(); index++)
+    for (size_t index = 0; index < m_CurrentScene->GetModels().size(); index++)
     {
-        omp::Model Model = m_CurrentScene.GetModels()[index];
+        std::shared_ptr<omp::Model> Model = m_CurrentScene->GetModels()[index];
 
-        buffer_size = sizeof(Model.GetVertices()[0]) * Model.GetVertices().size();
+        buffer_size = sizeof(Model->GetVertices()[0]) * Model->GetVertices().size();
 
         VkBuffer staging_buffer;
         VkDeviceMemory staging_buffer_memory;
@@ -1210,7 +1248,7 @@ void Renderer::createVertexBuffers()
 
         void* data;
         vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-        memcpy(data, Model.GetVertices().data(), (size_t)buffer_size);
+        memcpy(data, Model->GetVertices().data(), (size_t)buffer_size);
         vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
 
         CreateVertexBufferAndMemoryAtIndex(index);
@@ -1261,6 +1299,9 @@ void Renderer::loadModelToBuffer(const omp::Model &model)
     vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
 
     // Index buffer
+    index = m_IndexBuffers.size();
+    buffer_size = sizeof(model.GetIndices()[0]) * model.GetIndices().size();
+
     createBuffer(
             buffer_size,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -1312,10 +1353,10 @@ void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize s
 
 void Renderer::createIndexBuffers()
 {
-    for (size_t index = 0; index < m_CurrentScene.GetModels().size(); index++)
+    for (size_t index = 0; index < m_CurrentScene->GetModels().size(); index++)
     {
-        omp::Model model = m_CurrentScene.GetModels()[index];
-        VkDeviceSize buffer_size = sizeof(model.GetIndices()[0]) * model.GetIndices().size();
+        std::shared_ptr<omp::Model> model = m_CurrentScene->GetModels()[index];
+        VkDeviceSize buffer_size = sizeof(model->GetIndices()[0]) * model->GetIndices().size();
 
         VkBuffer staging_buffer;
         VkDeviceMemory staging_buffer_memory;
@@ -1327,7 +1368,7 @@ void Renderer::createIndexBuffers()
 
         void* data;
         vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-        memcpy(data, model.GetIndices().data(), (size_t)buffer_size);
+        memcpy(data, model->GetIndices().data(), (size_t)buffer_size);
         vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
 
         CreateIndexBufferAndMemoryAtIndex(index);
@@ -1397,7 +1438,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
 
     UniformBufferObject ubo{};
     ubo.view = glm::lookAt(glm::vec3(20.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    ubo.proj = glm::perspective(glm::radians(90.f), (float)m_SwapChainExtent.width / (float)m_SwapChainExtent.height, 0.1f, 100.f);
+    ubo.proj = glm::perspective(glm::radians(90.f), (float)m_RenderViewport->GetSize().x / (float)m_RenderViewport->GetSize().y, 0.1f, 100.f);
     ubo.proj[1][1] *= -1;
 
     void* data;
@@ -1569,7 +1610,7 @@ VkCommandBuffer Renderer::beginSingleTimeCommands()
     VkCommandBufferAllocateInfo alloc_info{};
     alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandPool = m_CommandPool;
+    alloc_info.commandPool = m_CommandPools;
     alloc_info.commandBufferCount = 1;
 
     VkCommandBuffer command_buffer;
@@ -1594,7 +1635,7 @@ void Renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 
     vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
     vkQueueWaitIdle(graphics_queue);
-    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, 1, &commandBuffer);
+    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, 1, &commandBuffer);
 }
 
 void Renderer::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mip_levels)
@@ -1789,7 +1830,7 @@ bool Renderer::hasStencilComponent(VkFormat format)
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-void Renderer::loadModel()
+void Renderer::loadModel(const std::string &Name)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -1832,8 +1873,9 @@ void Renderer::loadModel()
         }
     }
 
+    loaded_model.SetName(Name);
     loadModelToBuffer(loaded_model);
-    m_CurrentScene.AddModelToScene(loaded_model);
+    m_CurrentScene->AddModelToScene(loaded_model);
 }
 
 void Renderer::createImguiContext()
@@ -1843,6 +1885,7 @@ void Renderer::createImguiContext()
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     //io.Fonts->Build();
     ImGui::StyleColorsDark();
 }
@@ -1904,12 +1947,12 @@ void Renderer::createImguiRenderPass()
     VkAttachmentDescription attachment{};
     attachment.format = m_SwapChainImageFormat;
     attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference color_attachment{};
     color_attachment.attachment = 0;
@@ -1972,7 +2015,7 @@ void Renderer::createImguiCommandBuffers()
     for (size_t i = 0; i < size; i++)
     {
         VkClearValue clear_value{};
-        clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
+        clear_value.color = {0.6f, 0.4f, 0.0f, 1.0f};
 
         VkRenderPassBeginInfo begin_info{};
         begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1998,8 +2041,7 @@ void Renderer::createImguiCommandBuffers()
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        ImGui::ShowDemoWindow();
-        ImGui::ShowUserGuide();
+        renderAllUi();
         ImGui::Render();
 
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[i]);
@@ -2035,6 +2077,8 @@ void Renderer::createImguiFramebuffers()
 
 void Renderer::createImguiCommandBufferAtIndex(uint32_t Index)
 {
+    vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, &m_ImguiCommandBuffers[Index]);
+
     VkCommandBufferAllocateInfo buffer_info{};
     buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -2069,8 +2113,7 @@ void Renderer::createImguiCommandBufferAtIndex(uint32_t Index)
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGui::ShowDemoWindow();
-    ImGui::ShowUserGuide();
+    renderAllUi();
     ImGui::Render();
 
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[Index]);
@@ -2260,3 +2303,34 @@ void Renderer::CreateIndexBufferAndMemoryAtIndex(size_t index)
         }
     }
 }
+
+void Renderer::renderAllUi()
+{
+    for (auto& unit : m_Widgets)
+    {
+        unit->renderUI();
+    }
+    ImGui::ShowDemoWindow();
+}
+
+void Renderer::createImguiWidgets()
+{
+    // ORDER IS IMPORTANT DOCK NODES GO FIRST
+
+    m_Widgets.emplace_back(new omp::MainLayer());
+    m_RenderViewport = std::make_shared<omp::ViewPort>();
+    m_Widgets.emplace_back(m_RenderViewport);
+    auto entity = std::make_shared<omp::EntityPanel>();
+    m_Widgets.emplace_back(entity);
+    m_ScenePanel = std::make_shared<omp::ScenePanel>(entity);
+    m_ScenePanel->SetScene(m_CurrentScene);
+    m_Widgets.emplace_back(m_ScenePanel);
+}
+
+void Renderer::onViewportResize(size_t imageIndex)
+{
+    vkDestroyFramebuffer(m_LogicalDevice, m_SwapChainFramebuffers[imageIndex], nullptr);
+    createFramebufferAtImage(imageIndex);
+    createCommandBufferForImage(imageIndex);
+}
+

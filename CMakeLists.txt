@@ -14,8 +14,8 @@ add_subdirectory(googletest)
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-include_directories(imgui-master)
-include_directories(imgui-master/backends)
+include_directories(imgui-docking)
+include_directories(imgui-docking/backends)
 
 set(SOURCE
         Renderer.cpp
@@ -24,6 +24,16 @@ set(SOURCE
         Model.cpp
         Scene.h
         Scene.cpp
+        UI/ImguiUnit.h
+        UI/ImguiUnit.cpp
+        UI/ViewPort.cpp
+        UI/ViewPort.h
+        UI/MainLayer.h
+        UI/MainLayer.cpp
+        UI/ScenePanel.cpp
+        UI/ScenePanel.h
+        UI/EntityPanel.cpp
+        UI/EntityPanel.h
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp
@@ -34,24 +44,24 @@ set(TESTS
         )
 
 set(IMGUI
-        imgui-master/backends/imgui_impl_vulkan.h
-        imgui-master/backends/imgui_impl_vulkan.cpp
-        imgui-master/backends/imgui_impl_glfw.h
-        imgui-master/backends/imgui_impl_glfw.cpp
+        imgui-docking/backends/imgui_impl_vulkan.h
+        imgui-docking/backends/imgui_impl_vulkan.cpp
+        imgui-docking/backends/imgui_impl_glfw.h
+        imgui-docking/backends/imgui_impl_glfw.cpp
         )
 
 add_library(imgui
-        imgui-master/imgui.h
-        imgui-master/imgui.cpp
-        imgui-master/imconfig.h
-        imgui-master/imgui_demo.cpp
-        imgui-master/imgui_draw.cpp
-        imgui-master/imgui_internal.h
-        imgui-master/imgui_tables.cpp
-        imgui-master/imgui_widgets.cpp
-        imgui-master/imstb_rectpack.h
-        imgui-master/imstb_textedit.h
-        imgui-master/imstb_truetype.h
+        imgui-docking/imgui.h
+        imgui-docking/imgui.cpp
+        imgui-docking/imconfig.h
+        imgui-docking/imgui_demo.cpp
+        imgui-docking/imgui_draw.cpp
+        imgui-docking/imgui_internal.h
+        imgui-docking/imgui_tables.cpp
+        imgui-docking/imgui_widgets.cpp
+        imgui-docking/imstb_rectpack.h
+        imgui-docking/imstb_textedit.h
+        imgui-docking/imstb_truetype.h
         )
 
 list(TRANSFORM TESTS PREPEND "tests/")

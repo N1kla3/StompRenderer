@@ -87,7 +87,9 @@ private:
     // ===== //
     std::string m_Name;
 
-    glm::mat4 m_Transform;
+    glm::vec3 m_Translation;
+    glm::vec3 m_Rotation;
+    glm::vec3 m_Scale;
 
     std::vector<Vertex> m_Vertices;
 
@@ -96,20 +98,25 @@ private:
 public:
     // Methods //
     // ======= //
-    void RotateModel(float angle, const glm::vec3& rotationAxis);
-    void MoveModel(const glm::vec3& translation);
-    void ScaleModel(const glm::vec3& scale);
-    void SetTransform();
+    //void RotateModel(float angle, const glm::vec3& rotationAxis);
+    //void MoveModel(const glm::vec3& translation);
+    //void ScaleModel(const glm::vec3& scale);
+    //void SetTransform();
 
+    void SetName(const std::string& inName) { m_Name = inName; }
     void AddVertex(const omp::Vertex& InVertex);
     void AddVertices(const std::vector<Vertex>& InVertices);
     void AddIndex(uint32_t InIndex);
     void AddIndices(const std::vector<uint32_t>& InIndices);
 
     const std::string& GetName() const { return m_Name; }
-    const glm::mat4& GetTransform() const { return m_Transform; }
+    glm::mat4 GetTransform() const;
     const std::vector<Vertex>& GetVertices() const { return m_Vertices; }
     const std::vector<uint32_t>& GetIndices() const { return m_Indices; }
+
+    glm::vec3& GetPosition();
+    glm::vec3& GetRotation();
+    glm::vec3& GetScale();
 };
 
 
