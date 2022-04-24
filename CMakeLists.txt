@@ -24,6 +24,12 @@ set(SOURCE
         Model.cpp
         Scene.h
         Scene.cpp
+        Texture.h
+        Texture.cpp
+        MaterialManager.h
+        MaterialManager.cpp
+        Material.h
+        Material.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
@@ -34,6 +40,10 @@ set(SOURCE
         UI/ScenePanel.h
         UI/EntityPanel.cpp
         UI/EntityPanel.h
+        UI/ContentBrowser.h
+        UI/ContentBrowser.cpp
+        UI/MaterialPanel.h
+        UI/MaterialPanel.cpp
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp
@@ -76,4 +86,4 @@ target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui 
 add_executable(tests ${TESTS} ${SOURCE} ${IMGUI})
 add_test(NAME RendererTests COMMAND tests)
 target_compile_definitions(tests PRIVATE)
-target_link_libraries(tests gtest gtest_main imgui Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog)
+target_link_libraries(tests gtest gtest_main Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog)
