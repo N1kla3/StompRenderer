@@ -47,6 +47,8 @@ set(SOURCE
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp
+        Logs.h
+        Logs.cpp
         )
 
 set(TESTS

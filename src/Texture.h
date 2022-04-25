@@ -11,6 +11,7 @@ class Texture
     uint32_t m_MipLevels;
 
 public:
+    Texture() = default;
     explicit Texture(const std::string& path);
 
     void LoadTexture(const std::string& path);
