@@ -10,6 +10,7 @@ omp::Texture::Texture(const std::string &path)
 
 void omp::Texture::LoadTexture(const std::string &path)
 {
+    m_ContentPath = path;
     int tex_width, tex_height, tex_channels;
     m_Pixels = stbi_load(path.c_str(), &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
     m_Size = tex_width * tex_height * 4;
