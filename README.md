@@ -5,10 +5,11 @@
 - glfw 3.3.4
 - Vulkan
 - stb_image
-- Imgui
+- Imgui - docking branch
 - tinyobjloader
 - spdlog
 - googletest
+- nlohmann/json version 3.10.5
 
 ## Compile shaders
 [Install glslc](https://vulkan-tutorial.com/Development_environment#page_Shader-Compiler) on linux

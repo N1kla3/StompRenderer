@@ -22,7 +22,7 @@
 
 #include <tiny_obj_loader.h>
 
-#include <spdlog/spdlog.h>
+#include "Logs.h"
 
 #ifdef NDEBUG
     const bool enableValidationLayers = false;
@@ -200,10 +200,10 @@ void Renderer::createInstance()
     std::vector<VkExtensionProperties> extensions(ext_count);
     vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, extensions.data());
 
-    spdlog::get("Rendering")->info("Available extensions");
+    INFO(Rendering, "Available extensions");
     for (const auto& ext : extensions)
     {
-        spdlog::get("Rendering")->info(ext.extensionName);
+        INFO(Rendering, ext.extensionName);
     }
 
     if (enableValidationLayers && !checkValidationLayerSupport())
@@ -589,9 +589,9 @@ void Renderer::createImageViews()
 void Renderer::createGraphicsPipeline()
 {
     auto vertShaderCode = readFile("../SPRV/vert.spv");
-    spdlog::get("Rendering")->info("Size of vertex " + std::to_string(vertShaderCode.size()));
+    INFO(Rendering, "Size of vertex " + std::to_string(vertShaderCode.size()));
     auto fragShaderCode = readFile("../SPRV/frag.spv");
-    spdlog::get("Rendering")->info("Size of fragment " + std::to_string(fragShaderCode.size()));
+    INFO(Rendering, "Size of fragment " + std::to_string(fragShaderCode.size()));
 
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
@@ -633,6 +633,7 @@ void Renderer::createGraphicsPipeline()
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     // Viewport and scissors
+    // NOT USED, using dynamic viewport
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -647,8 +648,8 @@ void Renderer::createGraphicsPipeline()
 
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 1;
-    viewportState.pViewports = &viewport;
+    viewportState.viewportCount = 0;
+    viewportState.pViewports = 0;//&viewport;
     viewportState.scissorCount = 1;
     viewportState.pScissors = &scissor;
 
@@ -751,7 +752,7 @@ void Renderer::createGraphicsPipeline()
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pDepthStencilState = &depth_stencil;
     pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.pDynamicState = nullptr;
+    pipelineInfo.pDynamicState = &dynamicState;
 
     pipelineInfo.layout = m_PipelineLayout;
     pipelineInfo.renderPass = m_RenderPass;
@@ -975,9 +976,8 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
     viewport.maxDepth = 1.0f;
 
     vkCmdBeginRenderPass(m_CommandBuffers[inIndex], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
-
     vkCmdSetViewport(m_CommandBuffers[inIndex], 0, 1, &viewport);
+    vkCmdBindPipeline(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipeline);
 
     VkDeviceSize offsets[] = { 0 };
 

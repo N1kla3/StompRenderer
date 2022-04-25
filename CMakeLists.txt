@@ -10,6 +10,7 @@ add_subdirectory(glm)
 add_subdirectory(tinyobjloader-master)
 add_subdirectory(spdlog)
 add_subdirectory(googletest)
+add_subdirectory(json)
 
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src)
@@ -24,6 +25,12 @@ set(SOURCE
         Model.cpp
         Scene.h
         Scene.cpp
+        Texture.h
+        Texture.cpp
+        MaterialManager.h
+        MaterialManager.cpp
+        Material.h
+        Material.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
@@ -34,9 +41,15 @@ set(SOURCE
         UI/ScenePanel.h
         UI/EntityPanel.cpp
         UI/EntityPanel.h
+        UI/ContentBrowser.h
+        UI/ContentBrowser.cpp
+        UI/MaterialPanel.h
+        UI/MaterialPanel.cpp
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp
+        Logs.h
+        Logs.cpp
         )
 
 set(TESTS
@@ -71,9 +84,9 @@ enable_testing()
 
 add_executable(renderer src/main.cpp ${SOURCE} ${IMGUI})
 target_compile_definitions(renderer PRIVATE)
-target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog)
+target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json)
 
 add_executable(tests ${TESTS} ${SOURCE} ${IMGUI})
 add_test(NAME RendererTests COMMAND tests)
 target_compile_definitions(tests PRIVATE)
-target_link_libraries(tests gtest gtest_main imgui Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog)
+target_link_libraries(tests gtest gtest_main Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json)
