@@ -32,5 +32,7 @@ public:
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     bool hasStencilComponent(VkFormat format);
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels);
+
+    friend class MaterialManager;
 };
 } // omp

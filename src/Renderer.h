@@ -27,6 +27,7 @@
 #include "UI/ViewPort.h"
 #include "UI/EntityPanel.h"
 #include "UI/ScenePanel.h"
+#include "MaterialManager.h"
 
 namespace
 {
@@ -181,6 +182,8 @@ private:
     void renderAllUi();
     void createImguiWidgets();
     void createImguiFramebuffers();
+
+    void createMaterialManager();
 
     void onViewportResize(size_t imageIndex);
 
@@ -349,6 +352,9 @@ private:
     std::vector<VkCommandBuffer> m_ImguiCommandBuffers;
     std::vector<VkFramebuffer> m_ImguiFramebuffers;
     VkDescriptorPool m_ImguiDescriptorPool;
+
+    std::unique_ptr<omp::MaterialManager> m_MaterialManager;
+    std::shared_ptr<omp::VulkanHelper> m_VulkanHelper;
 
     uint32_t m_MipLevels;
 

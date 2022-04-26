@@ -122,3 +122,14 @@ void omp::Texture::createImageView()
     m_TextureImageView = m_VkHelper.lock()->createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_MipLevels);
 }
 
+void omp::Texture::FullLoad(const std::string &path)
+{
+    LoadTextureToCPU(path);
+    LoadToGPU();
+}
+
+void omp::Texture::LazyLoad(const std::string &path)
+{
+    LoadTextureToCPU(path);
+}
+

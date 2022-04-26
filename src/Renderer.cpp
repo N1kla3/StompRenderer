@@ -57,6 +57,7 @@ void Renderer::initVulkan()
     createDescriptorSetLayout();
     createGraphicsPipeline();
     createCommandPool();
+    createMaterialManager();
     createColorResources();
     createDepthResources();
     createFramebuffers();
@@ -66,6 +67,7 @@ void Renderer::initVulkan()
     loadModel("First");
     loadModel("Second");
     loadModel("Third");
+    m_MaterialManager->LoadTextureInstantly("../textures/viking.png");
     //createVertexBuffers();
     //createIndexBuffers();
     createUniformBuffers();
@@ -96,6 +98,7 @@ void Renderer::cleanup()
         vkDestroyFence(m_LogicalDevice, m_InFlightFences[i], nullptr);
     }
 
+    m_MaterialManager.reset();
     cleanupSwapChain();
 
     vkDestroyCommandPool(m_LogicalDevice, m_CommandPools, nullptr);
@@ -2332,5 +2335,11 @@ void Renderer::onViewportResize(size_t imageIndex)
     vkDestroyFramebuffer(m_LogicalDevice, m_SwapChainFramebuffers[imageIndex], nullptr);
     createFramebufferAtImage(imageIndex);
     createCommandBufferForImage(imageIndex);
+}
+
+void Renderer::createMaterialManager()
+{
+    m_VulkanHelper = std::make_shared<omp::VulkanHelper>(m_LogicalDevice, m_PhysDevice, m_CommandPools, graphics_queue);
+    m_MaterialManager = std::make_unique<omp::MaterialManager>(m_VulkanHelper);
 }
 
