@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <memory>
 #include "Texture.h"
+#include "imgui_impl_vulkan.h"
 #include "stb_image.h"
 
 omp::Texture::Texture(VkDevice device, VkPhysicalDevice physDevice, const std::shared_ptr<VulkanHelper> &helper)
@@ -22,7 +23,7 @@ void omp::Texture::Destroy()
 
 uint64_t omp::Texture::GetTextureId() const
 {
-    return 0;
+    return m_Id;
 }
 
 void omp::Texture::LoadTextureToCPU(const std::string &path)
@@ -50,6 +51,8 @@ void omp::Texture::LoadToGPU()
     createSampler();
     createImage();
     createImageView();
+
+    //m_Id = ImGui_ImplVulkan_AddTexture(m_TextureSampler, m_TextureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     m_LoadedToGPU = true;
 }

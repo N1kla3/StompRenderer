@@ -155,11 +155,7 @@ private:
 
     void createColorResources();
 
-    void createTextureImageView();
-
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels);
-
-    void createTextureSampler();
 
     void createSyncObjects();
 
@@ -299,10 +295,7 @@ private:
     std::vector<VkBuffer> m_IndexBuffers;
     std::vector<VkDeviceMemory> m_IndexBufferMemories;
 
-    VkImage m_TextureImage;
-    VkDeviceMemory m_TextureImageMemory;
-    VkImageView m_TextureImageView;
-    VkSampler m_TextureSampler;
+    std::shared_ptr<omp::Texture> m_DefaultTexture;
 
     VkImage m_ColorImage;
     VkDeviceMemory m_ColorImageMemory;

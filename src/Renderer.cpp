@@ -62,12 +62,9 @@ void Renderer::initVulkan()
     createDepthResources();
     createFramebuffers();
     createTextureImage();
-    createTextureImageView();
-    createTextureSampler();
     loadModel("First");
     loadModel("Second");
     loadModel("Third");
-    m_MaterialManager->LoadTextureInstantly("../textures/viking.png");
     //createVertexBuffers();
     //createIndexBuffers();
     createUniformBuffers();
@@ -127,11 +124,6 @@ void Renderer::cleanup()
     }
 
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_DescriptorSetLayout, nullptr);
-
-    vkDestroySampler(m_LogicalDevice, m_TextureSampler, nullptr);
-    vkDestroyImageView(m_LogicalDevice, m_TextureImageView, nullptr);
-    vkDestroyImage(m_LogicalDevice, m_TextureImage, nullptr);
-    vkFreeMemory(m_LogicalDevice, m_TextureImageMemory, nullptr);
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -1496,8 +1488,8 @@ void Renderer::createDescriptorSets()
 
         VkDescriptorImageInfo image_info{};
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        image_info.imageView = m_TextureImageView;
-        image_info.sampler = m_TextureSampler;
+        image_info.imageView = m_DefaultTexture->GetImageView();
+        image_info.sampler = m_DefaultTexture->GetSampler();
 
         std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1523,45 +1515,9 @@ void Renderer::createDescriptorSets()
 
 void Renderer::createTextureImage()
 {
-    int tex_width, tex_height, tex_channels;
-    stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &tex_width, &tex_height, &tex_channels, STBI_rgb_alpha);
-    VkDeviceSize image_size = tex_width * tex_height * 4;
-
-    // TODO: someday we will have multiple textures and models
-    m_MipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(tex_width, tex_height)))) + 1;
-
-    if (!pixels)
-    {
-        throw std::runtime_error("Failed to load texture image!");
-    }
-
-    VkBuffer staging_buffer;
-    VkDeviceMemory staging_buffer_memory;
-    createBuffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                 staging_buffer, staging_buffer_memory);
-
-    void* data;
-    vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, image_size, 0, &data);
-    memcpy(data, pixels, static_cast<size_t>(image_size));
-    vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
-
-    stbi_image_free(pixels);
-
-    createImage(tex_width, tex_height, m_MipLevels, VK_FORMAT_R8G8B8A8_SRGB,
-                VK_IMAGE_TILING_OPTIMAL,
-                VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory, VK_SAMPLE_COUNT_1_BIT);
-
-    transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
-    copyBufferToImage(staging_buffer, m_TextureImage, static_cast<uint32_t>(tex_width), static_cast<uint32_t>(tex_height));
-    //transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-    //                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
-    generateMipmaps(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, tex_width, tex_height, m_MipLevels);
-
-    vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
-    vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
+    // TODO
+    m_MaterialManager->LoadTextureInstantly(TEXTURE_PATH);
+    m_DefaultTexture = m_MaterialManager->GetTexture(TEXTURE_PATH);
 }
 
 void Renderer::createImage(
@@ -1730,11 +1686,6 @@ void Renderer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width,
     endSingleTimeCommands(command_buffer);
 }
 
-void Renderer::createTextureImageView()
-{
-    m_TextureImageView = createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_MipLevels);
-
-}
 
 VkImageView Renderer::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels)
 {
@@ -1756,38 +1707,6 @@ VkImageView Renderer::createImageView(VkImage image, VkFormat format, VkImageAsp
     }
 
     return image_view;
-}
-
-void Renderer::createTextureSampler()
-{
-    VkSamplerCreateInfo sampler_info{};
-    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-    sampler_info.magFilter = VK_FILTER_LINEAR;
-    sampler_info.minFilter = VK_FILTER_LINEAR;
-
-    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-    sampler_info.anisotropyEnable = VK_TRUE;
-    sampler_info.maxAnisotropy = 16;
-
-    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-
-    sampler_info.unnormalizedCoordinates = VK_FALSE;
-
-    sampler_info.compareEnable = VK_FALSE;
-    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
-
-    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-    sampler_info.mipLodBias = 0.f;
-    sampler_info.minLod = 0;
-    sampler_info.maxLod = static_cast<float>(m_MipLevels);
-
-    if (vkCreateSampler(m_LogicalDevice, &sampler_info, nullptr, &m_TextureSampler) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create sampler");
-    }
 }
 
 void Renderer::createDepthResources()
@@ -2313,6 +2232,14 @@ void Renderer::renderAllUi()
     {
         unit->renderUI();
     }
+    return;
+    ImGui::Begin("Imagessss");
+    if (m_MaterialManager->GetTexture("../textures/viking.png"))
+        ImGui::Image(
+                (ImTextureID)(m_MaterialManager->GetTexture("../textures/viking.png")->GetTextureId()), {100, 100});
+
+    ImGui::End();
+
     ImGui::ShowDemoWindow();
 }
 

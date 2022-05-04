@@ -29,6 +29,8 @@ class Texture
     VkImageView m_TextureImageView;
     VkSampler m_TextureSampler;
 
+    VkDescriptorSet m_Id;
+
     std::weak_ptr<VulkanHelper> m_VkHelper;
 
 public:
@@ -39,6 +41,9 @@ public:
 
     void Destroy();
     uint64_t GetTextureId() const;
+    VkImageView GetImageView() const { return m_TextureImageView; }
+    VkImage GetImage() const { return m_TextureImage; }
+    VkSampler GetSampler() const { return m_TextureSampler; }
 
 protected:
     // Subroutines //

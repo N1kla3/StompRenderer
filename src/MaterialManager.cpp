@@ -1,4 +1,5 @@
 #include "MaterialManager.h"
+#include "Logs.h"
 
 omp::MaterialManager::MaterialManager(const std::shared_ptr<VulkanHelper> &helper)
     : m_VkHelper(helper)
@@ -34,5 +35,6 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::GetTexture(const std::string
     {
         return m_Textures.at(path);
     }
+    WARN(Rendering, "Texture do not exists: " + path);
     return nullptr;
 }
