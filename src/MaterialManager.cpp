@@ -15,18 +15,20 @@ omp::MaterialManager::~MaterialManager()
     }
 }
 
-void omp::MaterialManager::LoadTextureInstantly(const std::string &path)
+std::shared_ptr<omp::Texture> omp::MaterialManager::LoadTextureInstantly(const std::string &path)
 {
     auto texture_ptr = std::make_shared<Texture>(m_VkHelper.lock()->m_LogicalDevice, m_VkHelper.lock()->m_PhysDevice, m_VkHelper.lock());
     texture_ptr->FullLoad(path);
     m_Textures.insert({path, texture_ptr});
+    return texture_ptr;
 }
 
-void omp::MaterialManager::LoadTextureLazily(const std::string &path)
+std::shared_ptr<omp::Texture> omp::MaterialManager::LoadTextureLazily(const std::string &path)
 {
     auto texture_ptr = std::make_shared<Texture>(m_VkHelper.lock()->m_LogicalDevice, m_VkHelper.lock()->m_PhysDevice, m_VkHelper.lock());
     texture_ptr->LazyLoad(path);
     m_Textures.insert({path, texture_ptr});
+    return texture_ptr;
 }
 
 std::shared_ptr<omp::Texture> omp::MaterialManager::GetTexture(const std::string &path) const

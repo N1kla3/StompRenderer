@@ -62,6 +62,7 @@ void Renderer::initVulkan()
     createDepthResources();
     createFramebuffers();
     createTextureImage();
+    InitializeImgui();
     loadModel("First");
     loadModel("Second");
     loadModel("Third");
@@ -956,7 +957,7 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
     render_pass_begin_info.renderArea.extent.width = m_RenderViewport->GetSize().x;//m_SwapChainExtent.width/2;
 
     std::array<VkClearValue, 2> clear_values{};
-    clear_values[0].color = {0.0f, 1.0f, 0.0f, 0.5f};
+    clear_values[0].color = CLEAR_COLOR;
     clear_values[1].depthStencil = {1.0f, 0};
 
     render_pass_begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
@@ -1515,9 +1516,7 @@ void Renderer::createDescriptorSets()
 
 void Renderer::createTextureImage()
 {
-    // TODO
-    m_MaterialManager->LoadTextureInstantly(TEXTURE_PATH);
-    m_DefaultTexture = m_MaterialManager->GetTexture(TEXTURE_PATH);
+    m_DefaultTexture = m_MaterialManager->LoadTextureLazily(TEXTURE_PATH);
 }
 
 void Renderer::createImage(
@@ -1937,7 +1936,7 @@ void Renderer::createImguiCommandBuffers()
     for (size_t i = 0; i < size; i++)
     {
         VkClearValue clear_value{};
-        clear_value.color = {0.6f, 0.4f, 0.0f, 1.0f};
+        clear_value.color = CLEAR_COLOR;
 
         VkRenderPassBeginInfo begin_info{};
         begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -2009,7 +2008,7 @@ void Renderer::createImguiCommandBufferAtIndex(uint32_t Index)
     vkAllocateCommandBuffers(m_LogicalDevice, &buffer_info, &m_ImguiCommandBuffers[Index]);
 
     VkClearValue clear_value{};
-    clear_value.color = {0.0f, 0.0f, 0.0f, 1.0f};
+    clear_value.color = CLEAR_COLOR;
 
     VkRenderPassBeginInfo begin_info{};
     begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -2232,7 +2231,8 @@ void Renderer::renderAllUi()
     {
         unit->renderUI();
     }
-    return;
+
+    // TODO remove
     ImGui::Begin("Imagessss");
     if (m_MaterialManager->GetTexture("../textures/viking.png"))
         ImGui::Image(

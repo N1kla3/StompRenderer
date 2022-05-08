@@ -21,8 +21,13 @@ void omp::Texture::Destroy()
     vkFreeMemory(m_LogicalDevice, m_TextureImageMemory, nullptr);
 }
 
-uint64_t omp::Texture::GetTextureId() const
+uint64_t omp::Texture::GetTextureId()
 {
+    if (!m_LoadedToGPU)
+    {
+        m_LoadedToGPU = true;
+        LoadToGPU();
+    }
     return m_Id;
 }
 
@@ -52,7 +57,7 @@ void omp::Texture::LoadToGPU()
     createImage();
     createImageView();
 
-    //m_Id = ImGui_ImplVulkan_AddTexture(m_TextureSampler, m_TextureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    m_Id = ImGui_ImplVulkan_AddTexture(m_TextureSampler, m_TextureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     m_LoadedToGPU = true;
 }

@@ -40,7 +40,7 @@ public:
     void LazyLoad(const std::string& path);
 
     void Destroy();
-    uint64_t GetTextureId() const;
+    uint64_t GetTextureId();
     VkImageView GetImageView() const { return m_TextureImageView; }
     VkImage GetImage() const { return m_TextureImage; }
     VkSampler GetSampler() const { return m_TextureSampler; }
