@@ -31,6 +31,8 @@ set(SOURCE
         MaterialManager.cpp
         Material.h
         Material.cpp
+        VulkanHelper.h
+        VulkanHelper.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp

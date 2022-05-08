@@ -27,6 +27,7 @@
 #include "UI/ViewPort.h"
 #include "UI/EntityPanel.h"
 #include "UI/ScenePanel.h"
+#include "MaterialManager.h"
 
 namespace
 {
@@ -66,6 +67,7 @@ struct UniformBufferObject
 
 const std::string MODEL_PATH = "../models/vikingroom.obj";
 const std::string TEXTURE_PATH = "../textures/viking.png";
+const VkClearColorValue CLEAR_COLOR = {0.52f, 0.48f, 0.52f, 1.0f};
 
 class Renderer {
 
@@ -96,7 +98,6 @@ public:
     {
         initWindow();
         initVulkan();
-        InitializeImgui();
         mainLoop();
         cleanup();
     }
@@ -154,11 +155,7 @@ private:
 
     void createColorResources();
 
-    void createTextureImageView();
-
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels);
-
-    void createTextureSampler();
 
     void createSyncObjects();
 
@@ -181,6 +178,8 @@ private:
     void renderAllUi();
     void createImguiWidgets();
     void createImguiFramebuffers();
+
+    void createMaterialManager();
 
     void onViewportResize(size_t imageIndex);
 
@@ -296,10 +295,7 @@ private:
     std::vector<VkBuffer> m_IndexBuffers;
     std::vector<VkDeviceMemory> m_IndexBufferMemories;
 
-    VkImage m_TextureImage;
-    VkDeviceMemory m_TextureImageMemory;
-    VkImageView m_TextureImageView;
-    VkSampler m_TextureSampler;
+    std::shared_ptr<omp::Texture> m_DefaultTexture;
 
     VkImage m_ColorImage;
     VkDeviceMemory m_ColorImageMemory;
@@ -349,6 +345,9 @@ private:
     std::vector<VkCommandBuffer> m_ImguiCommandBuffers;
     std::vector<VkFramebuffer> m_ImguiFramebuffers;
     VkDescriptorPool m_ImguiDescriptorPool;
+
+    std::unique_ptr<omp::MaterialManager> m_MaterialManager;
+    std::shared_ptr<omp::VulkanHelper> m_VulkanHelper;
 
     uint32_t m_MipLevels;
 
