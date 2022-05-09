@@ -1517,6 +1517,7 @@ void Renderer::createDescriptorSets()
 void Renderer::createTextureImage()
 {
     m_DefaultTexture = m_MaterialManager->LoadTextureLazily(TEXTURE_PATH);
+    m_MaterialManager->LoadTextureLazily("../textures/mando.jpg");
 }
 
 void Renderer::createImage(
@@ -2237,6 +2238,9 @@ void Renderer::renderAllUi()
     if (m_MaterialManager->GetTexture("../textures/viking.png"))
         ImGui::Image(
                 (ImTextureID)(m_MaterialManager->GetTexture("../textures/viking.png")->GetTextureId()), {100, 100});
+    if (m_MaterialManager->GetTexture("../textures/mando.jpg"))
+        ImGui::Image(
+                (ImTextureID)(m_MaterialManager->GetTexture("../textures/mando.jpg")->GetTextureId()), {100, 100});
 
     ImGui::End();
 

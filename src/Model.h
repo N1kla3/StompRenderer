@@ -3,6 +3,7 @@
 #include "glm/vec2.hpp"
 #include "glm/vec3.hpp"
 #include "glm/glm.hpp"
+#include "Material.h"
 #include <array>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
@@ -94,6 +95,8 @@ private:
     std::vector<Vertex> m_Vertices;
 
     std::vector<uint32_t> m_Indices;
+
+    std::shared_ptr<Material> m_Material;
 
 public:
     // Methods //

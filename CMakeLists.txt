@@ -33,6 +33,8 @@ set(SOURCE
         Material.cpp
         VulkanHelper.h
         VulkanHelper.cpp
+        Shader.h
+        Shader.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
