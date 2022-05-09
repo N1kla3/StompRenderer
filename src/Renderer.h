@@ -296,6 +296,7 @@ private:
     std::vector<VkDeviceMemory> m_IndexBufferMemories;
 
     std::shared_ptr<omp::Texture> m_DefaultTexture;
+    std::shared_ptr<omp::Material> m_DefaultMaterial;
 
     VkImage m_ColorImage;
     VkDeviceMemory m_ColorImageMemory;
