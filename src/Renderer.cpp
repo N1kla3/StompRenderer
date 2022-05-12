@@ -66,6 +66,12 @@ void Renderer::initVulkan()
     loadModel("First");
     loadModel("Second");
     loadModel("Third");
+    loadModel("First1");
+    loadModel("Second1");
+    loadModel("Third1");
+    loadModel("First2");
+    loadModel("Second2");
+    loadModel("Third2");
     //createVertexBuffers();
     //createIndexBuffers();
     createUniformBuffers();
@@ -979,14 +985,26 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
 
     for (size_t index = 0; index < m_CurrentScene->GetModels().size(); index++)
     {
+        auto& current_model = m_CurrentScene->GetModels()[index];
+        auto current_mat = current_model->GetMaterial();
+
         vkCmdBindVertexBuffers(m_CommandBuffers[inIndex], 0, 1, &m_VertexBuffers[index], offsets);
         vkCmdBindIndexBuffer(m_CommandBuffers[inIndex], m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
 
         omp::ModelPushConstant constant;
-        constant.model = m_CurrentScene->GetModels()[index]->GetTransform();
+        constant.model = current_model->GetTransform();
         vkCmdPushConstants(m_CommandBuffers[inIndex], m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(omp::ModelPushConstant), &constant);
 
-        vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DescriptorSets[inIndex], 0, nullptr);
+
+        if (current_mat->IsInitialized())
+        {
+            vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &current_mat->GetDescriptorSet()[inIndex], 0, nullptr);
+        }
+        else
+        {
+            createDescriptorSetsForMaterial(current_model->GetMaterial());
+            vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_PipelineLayout, 0, 1, &m_DefaultMaterial->GetDescriptorSet()[inIndex], 0, nullptr);
+        }
         vkCmdDrawIndexed(m_CommandBuffers[inIndex], static_cast<uint32_t>(m_CurrentScene->GetModels()[index]->GetIndices().size()), 1, 0, 0, 0);
     }
 
@@ -1447,16 +1465,16 @@ void Renderer::createDescriptorPool()
 {
     std::array<VkDescriptorPoolSize, 2> pool_sizes{};
     pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    pool_sizes[0].descriptorCount = static_cast<uint32_t>(m_SwapChainImages.size());
+    pool_sizes[0].descriptorCount = 1000;static_cast<uint32_t>(m_SwapChainImages.size());
 
     pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pool_sizes[1].descriptorCount = static_cast<uint32_t>(m_SwapChainImages.size());
+    pool_sizes[1].descriptorCount = 1000;static_cast<uint32_t>(m_SwapChainImages.size());
 
     VkDescriptorPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
-    pool_info.maxSets = static_cast<uint32_t>(m_SwapChainImages.size());
+    pool_info.maxSets = 1000;static_cast<uint32_t>(m_SwapChainImages.size());
 
     if (vkCreateDescriptorPool(m_LogicalDevice, &pool_info, nullptr, &m_DescriptorPool) != VK_SUCCESS)
     {
@@ -1514,10 +1532,64 @@ void Renderer::createDescriptorSets()
     }
 }
 
+void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Material> &material)
+{
+    // TODO: multiple later
+    std::vector<VkDescriptorSet> DS;
+    std::vector<VkDescriptorSetLayout> layouts(m_SwapChainImages.size(), m_DescriptorSetLayout);
+
+    VkDescriptorSetAllocateInfo allocate_info{};
+    allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocate_info.descriptorPool = m_DescriptorPool;
+    allocate_info.descriptorSetCount = static_cast<uint32_t>(m_SwapChainImages.size());
+    allocate_info.pSetLayouts = layouts.data();
+
+    DS.resize(m_SwapChainImages.size());
+    if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, DS.data()) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate descriptor sets!");
+    }
+
+    // TODO performance
+    for (size_t index = 0; index < m_SwapChainImages.size(); index++)
+    {
+        VkDescriptorBufferInfo buffer_info{};
+        buffer_info.buffer = m_UniformBuffers[index];
+        buffer_info.offset = 0;
+        buffer_info.range = sizeof(UniformBufferObject);
+
+        std::vector<VkWriteDescriptorSet> descriptor_writes{};
+        auto material_sets = material->GetDescriptorWriteSets();
+        descriptor_writes.resize(material_sets.size() + 1);
+
+        descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_writes[0].dstSet = DS[index];
+        descriptor_writes[0].dstBinding = 0;
+        descriptor_writes[0].dstArrayElement = 0;
+        descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptor_writes[0].descriptorCount = 1;
+        descriptor_writes[0].pBufferInfo = &buffer_info;
+
+        for (size_t index_write = 0; index_write < material_sets.size(); index_write++)
+        {
+            descriptor_writes[index_write + 1] = material_sets[index_write];
+            descriptor_writes[index_write + 1].dstSet = DS[index];
+        }
+
+        vkUpdateDescriptorSets(m_LogicalDevice,
+                               static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
+    }
+
+    material->SetDescriptorSet(DS);
+}
+
 void Renderer::createTextureImage()
 {
     m_DefaultTexture = m_MaterialManager->LoadTextureLazily(TEXTURE_PATH);
     m_MaterialManager->LoadTextureLazily("../textures/mando.jpg");
+
+    m_DefaultMaterial = std::make_shared<omp::Material>();
+    m_DefaultMaterial->AddTexture({1, m_DefaultTexture});
 }
 
 void Renderer::createImage(
@@ -1796,6 +1868,7 @@ void Renderer::loadModel(const std::string &Name)
     }
 
     loaded_model.SetName(Name);
+    loaded_model.SetMaterial(m_DefaultMaterial);
     loadModelToBuffer(loaded_model);
     m_CurrentScene->AddModelToScene(loaded_model);
 }

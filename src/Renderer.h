@@ -163,6 +163,7 @@ private:
     void createDescriptorPool();
 
     void createDescriptorSets();
+    void createDescriptorSetsForMaterial(const std::shared_ptr<omp::Material> &material);
 
     void recreateSwapChain();
 

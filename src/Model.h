@@ -107,12 +107,14 @@ public:
     //void SetTransform();
 
     void SetName(const std::string& inName) { m_Name = inName; }
+    void SetMaterial(const std::shared_ptr<Material>& InMaterial) { m_Material = InMaterial; }
     void AddVertex(const omp::Vertex& InVertex);
     void AddVertices(const std::vector<Vertex>& InVertices);
     void AddIndex(uint32_t InIndex);
     void AddIndices(const std::vector<uint32_t>& InIndices);
 
     const std::string& GetName() const { return m_Name; }
+    std::shared_ptr<Material> GetMaterial() { return m_Material; }
     glm::mat4 GetTransform() const;
     const std::vector<Vertex>& GetVertices() const { return m_Vertices; }
     const std::vector<uint32_t>& GetIndices() const { return m_Indices; }
