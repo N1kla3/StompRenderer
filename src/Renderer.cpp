@@ -2324,14 +2324,17 @@ void Renderer::createImguiWidgets()
 {
     // ORDER IS IMPORTANT DOCK NODES GO FIRST
 
-    m_Widgets.emplace_back(new omp::MainLayer());
     m_RenderViewport = std::make_shared<omp::ViewPort>();
-    m_Widgets.emplace_back(m_RenderViewport);
-    auto entity = std::make_shared<omp::EntityPanel>();
-    m_Widgets.emplace_back(entity);
+    auto material_panel = std::make_shared<omp::MaterialPanel>();
+    auto entity = std::make_shared<omp::EntityPanel>(material_panel);
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity);
     m_ScenePanel->SetScene(m_CurrentScene);
-    m_Widgets.emplace_back(m_ScenePanel);
+
+    m_Widgets.push_back(std::make_shared<omp::MainLayer>());
+    m_Widgets.push_back(m_RenderViewport);
+    m_Widgets.push_back(std::move(entity));
+    m_Widgets.push_back(std::move(material_panel));
+    m_Widgets.push_back(m_ScenePanel);
 }
 
 void Renderer::onViewportResize(size_t imageIndex)

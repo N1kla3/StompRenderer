@@ -1,7 +1,13 @@
 #include "Material.h"
+#include "Logs.h"
 
 void omp::Material::AddTexture(const TextureData &Data)
 {
+    if (m_Textures.size() >= MAX_TEXTURES)
+    {
+        WARN(Rendering, "Reached limit of textures for material");
+    }
+
     m_IsDirty = true;
     m_IsInitialized = false;
 
@@ -56,4 +62,9 @@ void omp::Material::SetDescriptorSet(const std::vector<VkDescriptorSet>& DS)
 std::vector<VkDescriptorSet>& omp::Material::GetDescriptorSet()
 {
     return m_DescriptorSets;
+}
+
+std::vector<TextureData> omp::Material::GetTextureData() const
+{
+    return m_Textures;
 }

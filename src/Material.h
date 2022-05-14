@@ -26,6 +26,8 @@ public:
     void AddTexture(const TextureData& Data);
     void RemoveTexture(const TextureData& Data);
 
+    std::vector<TextureData> GetTextureData() const;
+
     void SetDescriptorSet(const std::vector<VkDescriptorSet>& DS);
     std::vector<VkDescriptorSet>& GetDescriptorSet();
 
