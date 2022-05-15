@@ -37,6 +37,9 @@ set(SOURCE
         Shader.cpp
         FileDialog.h
         FileDialog.cpp
+        ISaveable.h
+        Asset.h
+        Asset.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
@@ -51,6 +54,7 @@ set(SOURCE
         UI/ContentBrowser.cpp
         UI/MaterialPanel.h
         UI/MaterialPanel.cpp
+        UI/AssetRepresentation.h
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp
