@@ -1,6 +1,11 @@
 #include "EntityPanel.h"
 #include "imgui.h"
 
+omp::EntityPanel::EntityPanel(const std::shared_ptr<MaterialPanel> &materialPanel)
+{
+    m_MaterialPanelRef = materialPanel;
+}
+
 void omp::EntityPanel::renderUI()
 {
     ImGui::Begin("Entity Panel");
@@ -32,4 +37,9 @@ void omp::EntityPanel::renderUI()
 void omp::EntityPanel::SetModel(const std::shared_ptr<omp::Model> &model)
 {
     m_Model = model;
+    auto mat_panel = m_MaterialPanelRef.lock();
+    if (mat_panel)
+    {
+        mat_panel->setMaterial(model->GetMaterial());
+    }
 }

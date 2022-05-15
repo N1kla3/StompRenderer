@@ -45,6 +45,8 @@ public:
     VkImage GetImage() const { return m_TextureImage; }
     VkSampler GetSampler() const { return m_TextureSampler; }
 
+    std::string GetPath() const { return m_ContentPath; }
+
 protected:
     // Subroutines //
     // =========== //

@@ -25,8 +25,8 @@ uint64_t omp::Texture::GetTextureId()
 {
     if (!m_LoadedToGPU)
     {
-        m_LoadedToGPU = true;
         LoadToGPU();
+        m_LoadedToGPU = true;
     }
     return m_Id;
 }
@@ -53,6 +53,11 @@ void omp::Texture::LoadTextureToCPU(const std::string &path)
 
 void omp::Texture::LoadToGPU()
 {
+    if (m_LoadedToGPU)
+    {
+        return;
+    }
+
     createSampler();
     createImage();
     createImageView();
