@@ -40,6 +40,8 @@ set(SOURCE
         ISaveable.h
         Asset.h
         Asset.cpp
+        AssetManager.h
+        AssetManager.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp

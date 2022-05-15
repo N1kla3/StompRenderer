@@ -16,9 +16,13 @@ public:
     virtual void saveAssetToFile(const std::string& path) override;
     virtual void loadAssetFromFile(const std::string &path) override;
 
+    void SetName(const std::string& inName) { m_Name = inName; }
+
     // This is the only places to store data
-    inline static const std::string TEXTURES_FOLDER = "../textures";
-    inline static const std::string ASSET_FOLDER = "../assets";
-    inline static const std::string MODELS_FOLDER = "../models";
+    inline static const std::string TEXTURES_FOLDER = "../textures/";
+    inline static const std::string ASSET_FOLDER = "../assets/";
+    inline static const std::string MODELS_FOLDER = "../models/";
+
+    inline static const std::string ASSET_FORMAT = ".ass";
 };
 }
