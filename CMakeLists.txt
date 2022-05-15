@@ -35,6 +35,8 @@ set(SOURCE
         VulkanHelper.cpp
         Shader.h
         Shader.cpp
+        FileDialog.h
+        FileDialog.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
