@@ -2,18 +2,18 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "VulkanHelper.h"
+#include "VulkanContext.h"
 #include "Texture.h"
 
 namespace omp{
 class MaterialManager
 {
-    std::weak_ptr<VulkanHelper> m_VkHelper;
+    std::weak_ptr<VulkanContext> m_VkHelper;
 
     std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
 
 public:
-    explicit MaterialManager(const std::shared_ptr<VulkanHelper>& helper);
+    explicit MaterialManager(const std::shared_ptr<VulkanContext>& helper);
     ~MaterialManager();
 
     std::shared_ptr<omp::Texture> LoadTextureInstantly(const std::string& path);

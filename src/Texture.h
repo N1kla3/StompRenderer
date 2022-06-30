@@ -2,7 +2,7 @@
 #include <string>
 #include "vulkan/vulkan.h"
 #include "stb_image.h"
-#include "VulkanHelper.h"
+#include "VulkanContext.h"
 
 namespace omp{
 /**
@@ -31,10 +31,10 @@ class Texture
 
     VkDescriptorSet m_Id;
 
-    std::weak_ptr<VulkanHelper> m_VkHelper;
+    std::weak_ptr<VulkanContext> m_VulkanContext;
 
 public:
-    Texture(VkDevice device, VkPhysicalDevice physDevice, const std::shared_ptr<VulkanHelper> &helper);
+    Texture(VkDevice device, VkPhysicalDevice physDevice, const std::shared_ptr<VulkanContext> &helper);
 
     void FullLoad(const std::string& path);
     void LazyLoad(const std::string& path);

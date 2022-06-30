@@ -1,5 +1,6 @@
 #include "Material.h"
 #include "Logs.h"
+#include "UI/MaterialRepresentation.h"
 
 void omp::Material::AddTexture(const TextureData &Data)
 {
@@ -67,4 +68,10 @@ std::vector<VkDescriptorSet>& omp::Material::GetDescriptorSet()
 std::vector<TextureData> omp::Material::GetTextureData() const
 {
     return m_Textures;
+}
+
+void omp::Material::initialize()
+{
+    // TODO handle default texture if null
+    m_AssetRepresentation = std::make_shared<MaterialRepresentation>(m_Textures[0].Texture);
 }

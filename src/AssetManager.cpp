@@ -8,7 +8,7 @@
 
 using namespace std::filesystem;
 
-omp::AssetManager::AssetManager(const std::shared_ptr<VulkanHelper> &inHelper)
+omp::AssetManager::AssetManager(const std::shared_ptr<VulkanContext> &inHelper)
     : m_VkHelper(inHelper)
 {
 

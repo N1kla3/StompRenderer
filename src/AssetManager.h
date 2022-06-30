@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "VulkanHelper.h"
+#include "VulkanContext.h"
 #include "Asset.h"
 
 namespace omp{
@@ -12,9 +12,9 @@ class AssetManager
 private:
     std::unordered_map<std::string, std::shared_ptr<Asset>> m_Assets;
 
-    std::shared_ptr<VulkanHelper> m_VkHelper;
+    std::shared_ptr<VulkanContext> m_VkHelper;
 public:
-    AssetManager(const std::shared_ptr<VulkanHelper>& inHelper);
+    AssetManager(const std::shared_ptr<VulkanContext>& inHelper);
 
     template<class T>
     void createAsset(const std::string& inName);

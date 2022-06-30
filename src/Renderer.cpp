@@ -2346,7 +2346,7 @@ void Renderer::onViewportResize(size_t imageIndex)
 
 void Renderer::createMaterialManager()
 {
-    m_VulkanHelper = std::make_shared<omp::VulkanHelper>(m_LogicalDevice, m_PhysDevice, m_CommandPools, graphics_queue);
+    m_VulkanHelper = std::make_shared<omp::VulkanContext>(m_LogicalDevice, m_PhysDevice, m_CommandPools, graphics_queue);
     m_MaterialManager = std::make_unique<omp::MaterialManager>(m_VulkanHelper);
 }
 

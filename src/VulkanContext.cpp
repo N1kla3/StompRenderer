@@ -1,7 +1,8 @@
-#include "VulkanHelper.h"
+#include "VulkanContext.h"
 #include <stdexcept>
+#include <vector>
 
-omp::VulkanHelper::VulkanHelper(VkDevice device, VkPhysicalDevice physDevice, VkCommandPool pool, VkQueue graphicsQueue)
+omp::VulkanContext::VulkanContext(VkDevice device, VkPhysicalDevice physDevice, VkCommandPool pool, VkQueue graphicsQueue)
     : m_LogicalDevice(device)
     , m_PhysDevice(physDevice)
     , m_CommandPools(pool)
@@ -9,7 +10,7 @@ omp::VulkanHelper::VulkanHelper(VkDevice device, VkPhysicalDevice physDevice, Vk
 {
 
 }
-void omp::VulkanHelper::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+void omp::VulkanContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
     VkBufferCreateInfo buffer_info{};
     buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -38,7 +39,7 @@ void omp::VulkanHelper::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage
     vkBindBufferMemory(m_LogicalDevice, buffer, bufferMemory, 0);
 }
 
-uint32_t omp::VulkanHelper::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+uint32_t omp::VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
     VkPhysicalDeviceMemoryProperties memory_properties;
     vkGetPhysicalDeviceMemoryProperties(m_PhysDevice, &memory_properties);
@@ -53,7 +54,7 @@ uint32_t omp::VulkanHelper::findMemoryType(uint32_t typeFilter, VkMemoryProperty
     throw std::runtime_error("failed to find suitable memory type");
 }
 
-void omp::VulkanHelper::createImage(
+void omp::VulkanContext::createImage(
         uint32_t width, uint32_t height, uint32_t mip_levels,
         VkFormat format, VkImageTiling tiling,
         VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
@@ -97,7 +98,7 @@ void omp::VulkanHelper::createImage(
     vkBindImageMemory(m_LogicalDevice, image, imageMemory, 0);
 }
 
-void omp::VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mip_levels)
+void omp::VulkanContext::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mip_levels)
 {
     VkCommandBuffer command_buffer = beginSingleTimeCommands();
 
@@ -164,7 +165,7 @@ void omp::VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, Vk
     endSingleTimeCommands(command_buffer);
 }
 
-void omp::VulkanHelper::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+void omp::VulkanContext::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
     VkCommandBuffer command_buffer = beginSingleTimeCommands();
 
@@ -186,7 +187,7 @@ void omp::VulkanHelper::copyBufferToImage(VkBuffer buffer, VkImage image, uint32
     endSingleTimeCommands(command_buffer);
 }
 
-void omp::VulkanHelper::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
+void omp::VulkanContext::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
 {
     VkFormatProperties format_properties;
     vkGetPhysicalDeviceFormatProperties(m_PhysDevice, imageFormat, &format_properties);
@@ -280,7 +281,7 @@ void omp::VulkanHelper::generateMipmaps(VkImage image, VkFormat imageFormat, int
     endSingleTimeCommands(command_buffer);
 }
 
-VkCommandBuffer omp::VulkanHelper::beginSingleTimeCommands()
+VkCommandBuffer omp::VulkanContext::beginSingleTimeCommands()
 {
     VkCommandBufferAllocateInfo alloc_info{};
     alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -299,7 +300,7 @@ VkCommandBuffer omp::VulkanHelper::beginSingleTimeCommands()
     return command_buffer;
 }
 
-void omp::VulkanHelper::endSingleTimeCommands(VkCommandBuffer commandBuffer)
+void omp::VulkanContext::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 {
     vkEndCommandBuffer(commandBuffer);
 
@@ -313,12 +314,12 @@ void omp::VulkanHelper::endSingleTimeCommands(VkCommandBuffer commandBuffer)
     vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, 1, &commandBuffer);
 }
 
-bool omp::VulkanHelper::hasStencilComponent(VkFormat format)
+bool omp::VulkanContext::hasStencilComponent(VkFormat format)
 {
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-VkImageView omp::VulkanHelper::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels)
+VkImageView omp::VulkanContext::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels)
 {
     VkImageViewCreateInfo view_info{};
     view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -338,4 +339,19 @@ VkImageView omp::VulkanHelper::createImageView(VkImage image, VkFormat format, V
     }
 
     return image_view;
+}
+
+VkShaderModule omp::VulkanContext::createShaderModule(const std::vector<char>& code)
+{
+    VkShaderModuleCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    create_info.codeSize = code.size();
+    create_info.pCode = reinterpret_cast<const uint32_t*>(code.data());
+    VkShaderModule shader_module;
+    if (vkCreateShaderModule(m_LogicalDevice, &create_info, nullptr, &shader_module)
+        != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create shader module");
+    }
+    return shader_module;
 }
