@@ -1,11 +1,13 @@
 #pragma once
+
+#include <vector>
 #include "vulkan/vulkan.h"
 
 namespace omp{
 /**
  * Class to help with vulkan routine functions
  */
-class VulkanHelper
+class VulkanContext
 {
     VkDevice m_LogicalDevice;
     VkPhysicalDevice m_PhysDevice;
@@ -13,7 +15,7 @@ class VulkanHelper
     VkQueue graphics_queue;
     // TODO replace occurences in Renderer.cpp
 public:
-    VulkanHelper(VkDevice device, VkPhysicalDevice physDevice, VkCommandPool pool, VkQueue graphicsQueue);
+    VulkanContext(VkDevice device, VkPhysicalDevice physDevice, VkCommandPool pool, VkQueue graphicsQueue);
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -32,6 +34,8 @@ public:
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
     bool hasStencilComponent(VkFormat format);
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels);
+
+    VkShaderModule createShaderModule(const std::vector<char>& code);
 
     friend class MaterialManager;
 };

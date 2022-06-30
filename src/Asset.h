@@ -7,7 +7,7 @@
 namespace omp{
 class Asset : public ISaveable
 {
-private:
+protected:
     std::string m_Name;
     std::shared_ptr<AssetRepresentation> m_AssetRepresentation;
 public:

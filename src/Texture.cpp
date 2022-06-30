@@ -5,10 +5,10 @@
 #include "imgui_impl_vulkan.h"
 #include "stb_image.h"
 
-omp::Texture::Texture(VkDevice device, VkPhysicalDevice physDevice, const std::shared_ptr<VulkanHelper> &helper)
+omp::Texture::Texture(VkDevice device, VkPhysicalDevice physDevice, const std::shared_ptr<VulkanContext> &helper)
     : m_LogicalDevice(device)
     , m_PhysDevice(physDevice)
-    , m_VkHelper(helper)
+    , m_VulkanContext(helper)
 {
 
 }
@@ -103,9 +103,9 @@ void omp::Texture::createImage()
 {
     VkBuffer staging_buffer;
     VkDeviceMemory staging_buffer_memory;
-    m_VkHelper.lock()->createBuffer(m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+    m_VulkanContext.lock()->createBuffer(m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                    staging_buffer, staging_buffer_memory);
+                                         staging_buffer, staging_buffer_memory);
 
     void* data;
     vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, m_Size, 0, &data);
@@ -114,17 +114,17 @@ void omp::Texture::createImage()
 
     stbi_image_free(m_Pixels);
 
-    m_VkHelper.lock()->createImage(m_Width, m_Height, m_MipLevels, VK_FORMAT_R8G8B8A8_SRGB,
-                                   VK_IMAGE_TILING_OPTIMAL,
+    m_VulkanContext.lock()->createImage(m_Width, m_Height, m_MipLevels, VK_FORMAT_R8G8B8A8_SRGB,
+                                        VK_IMAGE_TILING_OPTIMAL,
                                    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory, VK_SAMPLE_COUNT_1_BIT);
+                                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory, VK_SAMPLE_COUNT_1_BIT);
 
-    m_VkHelper.lock()->transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-                                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
-    m_VkHelper.lock()->copyBufferToImage(staging_buffer, m_TextureImage, static_cast<uint32_t>(m_Width), static_cast<uint32_t>(m_Height));
+    m_VulkanContext.lock()->transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
+                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
+    m_VulkanContext.lock()->copyBufferToImage(staging_buffer, m_TextureImage, static_cast<uint32_t>(m_Width), static_cast<uint32_t>(m_Height));
     //transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
     //                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
-    m_VkHelper.lock()->generateMipmaps(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, m_Width, m_Height, m_MipLevels);
+    m_VulkanContext.lock()->generateMipmaps(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, m_Width, m_Height, m_MipLevels);
 
     vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
     vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
@@ -132,7 +132,7 @@ void omp::Texture::createImage()
 
 void omp::Texture::createImageView()
 {
-    m_TextureImageView = m_VkHelper.lock()->createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_MipLevels);
+    m_TextureImageView = m_VulkanContext.lock()->createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_MipLevels);
 }
 
 void omp::Texture::FullLoad(const std::string &path)

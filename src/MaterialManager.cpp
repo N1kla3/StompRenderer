@@ -1,7 +1,7 @@
 #include "MaterialManager.h"
 #include "Logs.h"
 
-omp::MaterialManager::MaterialManager(const std::shared_ptr<VulkanHelper> &helper)
+omp::MaterialManager::MaterialManager(const std::shared_ptr<VulkanContext> &helper)
     : m_VkHelper(helper)
 {
 

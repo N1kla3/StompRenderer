@@ -349,7 +349,7 @@ private:
     VkDescriptorPool m_ImguiDescriptorPool;
 
     std::unique_ptr<omp::MaterialManager> m_MaterialManager;
-    std::shared_ptr<omp::VulkanHelper> m_VulkanHelper;
+    std::shared_ptr<omp::VulkanContext> m_VulkanHelper;
 
     uint32_t m_MipLevels;
 

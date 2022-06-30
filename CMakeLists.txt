@@ -31,8 +31,8 @@ set(SOURCE
         MaterialManager.cpp
         Material.h
         Material.cpp
-        VulkanHelper.h
-        VulkanHelper.cpp
+        VulkanContext.h
+        VulkanContext.cpp
         Shader.h
         Shader.cpp
         FileDialog.h
@@ -57,6 +57,10 @@ set(SOURCE
         UI/MaterialPanel.h
         UI/MaterialPanel.cpp
         UI/AssetRepresentation.h
+        UI/ModelRepresentation.h
+        UI/ModelRepresentation.cpp
+        UI/MaterialRepresentation.h
+        UI/MaterialRepresentation.cpp
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp

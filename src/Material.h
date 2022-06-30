@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 #include "Texture.h"
+#include "Asset.h"
 
 struct TextureData
 {
@@ -10,7 +11,7 @@ struct TextureData
 };
 
 namespace omp{
-class Material
+class Material : public Asset
 {
     std::vector<TextureData> m_Textures;
 
@@ -34,6 +35,8 @@ public:
     std::vector<VkWriteDescriptorSet> GetDescriptorWriteSets();
 
     bool IsInitialized() const noexcept { return m_IsInitialized; }
+
+    virtual void initialize() override;
 
     static constexpr int MAX_TEXTURES = 1;
 };
