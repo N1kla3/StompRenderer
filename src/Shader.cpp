@@ -1,4 +1,5 @@
 #include <fstream>
+#include <optional>
 #include "Shader.h"
 #include "Logs.h"
 
@@ -14,6 +15,8 @@ omp::Shader::Shader(
 
     VkShaderModule vertShaderModule = m_Context->createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = m_Context->createShaderModule(fragShaderCode);
+    m_ShaderModules[0] = vertShaderModule;
+    m_ShaderModules[1] = fragShaderModule;
 
     // Vertex shader
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
@@ -32,7 +35,7 @@ omp::Shader::Shader(
     fragShaderStageInfo.pName = "main";
 
     // Stages
-    VkPipelineShaderStageCreateInfo shaderStage[] = {vertShaderStageInfo, fragShaderStageInfo};
+    m_ShaderStages = {vertShaderStageInfo, fragShaderStageInfo};
 }
 
 std::vector<char> omp::Shader::readFile(const std::string &filename)
@@ -51,4 +54,12 @@ std::vector<char> omp::Shader::readFile(const std::string &filename)
 
     file.close();
     return buffer;
+}
+
+omp::Shader::~Shader()
+{
+    for (auto moduel : m_ShaderModules)
+    {
+        m_Context->destroyShaderModule(moduel);
+    }
 }

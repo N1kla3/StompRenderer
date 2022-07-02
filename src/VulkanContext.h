@@ -36,6 +36,9 @@ public:
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels);
 
     VkShaderModule createShaderModule(const std::vector<char>& code);
+    void destroyShaderModule(VkShaderModule module);
+
+    void SetCommandPool(VkCommandPool pool) { m_CommandPools = pool; }
 
     friend class MaterialManager;
 };

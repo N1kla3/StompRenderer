@@ -28,6 +28,7 @@
 #include "UI/EntityPanel.h"
 #include "UI/ScenePanel.h"
 #include "MaterialManager.h"
+#include "Shader.h"
 
 namespace
 {
@@ -324,6 +325,8 @@ private:
     VkDeviceMemory m_DepthImageMemory;
     VkImageView m_DepthImageView;
 
+    std::shared_ptr<omp::Shader> m_CurrentShader;
+
     std::shared_ptr<omp::Scene> m_CurrentScene;
     // Todo: maybe multiple later
     // todo: event driven
@@ -349,7 +352,7 @@ private:
     VkDescriptorPool m_ImguiDescriptorPool;
 
     std::unique_ptr<omp::MaterialManager> m_MaterialManager;
-    std::shared_ptr<omp::VulkanContext> m_VulkanHelper;
+    std::shared_ptr<omp::VulkanContext> m_VulkanContext;
 
     uint32_t m_MipLevels;
 

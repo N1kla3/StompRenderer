@@ -355,3 +355,8 @@ VkShaderModule omp::VulkanContext::createShaderModule(const std::vector<char>& c
     }
     return shader_module;
 }
+
+void omp::VulkanContext::destroyShaderModule(VkShaderModule module)
+{
+    vkDestroyShaderModule(m_LogicalDevice, module, nullptr);
+}

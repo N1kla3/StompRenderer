@@ -412,6 +412,8 @@ void Renderer::createLogicalDevice()
 
     vkGetDeviceQueue(m_LogicalDevice, indices.graphics_family.value(), 0, &graphics_queue);
     vkGetDeviceQueue(m_LogicalDevice, indices.present_family.value(), 0, &present_queue);
+
+    m_VulkanContext = std::make_shared<omp::VulkanContext>(m_LogicalDevice, m_PhysDevice, m_CommandPools, graphics_queue);
 }
 
 void Renderer::createSurface()
@@ -590,32 +592,7 @@ void Renderer::createImageViews()
 
 void Renderer::createGraphicsPipeline()
 {
-    auto vertShaderCode = readFile("../SPRV/vert.spv");
-    INFO(Rendering, "Size of vertex " + std::to_string(vertShaderCode.size()));
-    auto fragShaderCode = readFile("../SPRV/frag.spv");
-    INFO(Rendering, "Size of fragment " + std::to_string(fragShaderCode.size()));
-
-    VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
-    VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
-
-    // Vertex shader
-    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-
-    vertShaderStageInfo.module = vertShaderModule;
-    vertShaderStageInfo.pName = "main";
-
-    // Fragment shader
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-    fragShaderStageInfo.module = fragShaderModule;
-    fragShaderStageInfo.pName = "main";
-
-    // Stages
-    VkPipelineShaderStageCreateInfo shaderStage[] = {vertShaderStageInfo, fragShaderStageInfo};
+    m_CurrentShader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vert.spv", "../SPRV/frag.spv");
 
     // Vertex input state
     auto binding_description = omp::Vertex::getBindingDescription();
@@ -744,8 +721,8 @@ void Renderer::createGraphicsPipeline()
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = 2;
-    pipelineInfo.pStages = shaderStage;
+    pipelineInfo.stageCount = m_CurrentShader->GetStagesCount();
+    pipelineInfo.pStages = m_CurrentShader->GetShaderStages().data();
 
     pipelineInfo.pVertexInputState = &vertexInputInfo;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
@@ -769,9 +746,7 @@ void Renderer::createGraphicsPipeline()
         throw std::runtime_error("Failed to create graphics pipeline!");
     }
 
-    // last lines ->
-    vkDestroyShaderModule(m_LogicalDevice, fragShaderModule, nullptr);
-    vkDestroyShaderModule(m_LogicalDevice, vertShaderModule, nullptr);
+    m_CurrentShader.reset();
 }
 
 VkShaderModule Renderer::createShaderModule(const std::vector<char>& code)
@@ -2346,7 +2321,7 @@ void Renderer::onViewportResize(size_t imageIndex)
 
 void Renderer::createMaterialManager()
 {
-    m_VulkanHelper = std::make_shared<omp::VulkanContext>(m_LogicalDevice, m_PhysDevice, m_CommandPools, graphics_queue);
-    m_MaterialManager = std::make_unique<omp::MaterialManager>(m_VulkanHelper);
+    m_VulkanContext->SetCommandPool(m_CommandPools);
+    m_MaterialManager = std::make_unique<omp::MaterialManager>(m_VulkanContext);
 }
 
