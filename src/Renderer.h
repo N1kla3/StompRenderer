@@ -200,8 +200,6 @@ private:
 
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
-    void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
-
     void setupDebugMessenger();
 
     bool isDeviceSuitable(VkPhysicalDevice device);
@@ -216,8 +214,6 @@ private:
 
     void transitionImageLayout(
             VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mip_levels);
-
-    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
@@ -353,8 +349,6 @@ private:
 
     std::unique_ptr<omp::MaterialManager> m_MaterialManager;
     std::shared_ptr<omp::VulkanContext> m_VulkanContext;
-
-    uint32_t m_MipLevels;
 
     VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 

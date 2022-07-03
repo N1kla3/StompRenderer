@@ -749,21 +749,6 @@ void Renderer::createGraphicsPipeline()
     m_CurrentShader.reset();
 }
 
-VkShaderModule Renderer::createShaderModule(const std::vector<char>& code)
-{
-    VkShaderModuleCreateInfo create_info{};
-    create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    create_info.codeSize = code.size();
-    create_info.pCode = reinterpret_cast<const uint32_t*>(code.data());
-    VkShaderModule shader_module;
-    if (vkCreateShaderModule(m_LogicalDevice , &create_info, nullptr, &shader_module)
-        != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create shader module");
-    }
-    return shader_module;
-}
-
 void Renderer::createRenderPass()
 {
     VkAttachmentDescription colorAttachment{};
@@ -1217,44 +1202,6 @@ void Renderer::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemor
     vkBindBufferMemory(m_LogicalDevice, buffer, bufferMemory, 0);
 }
 
-void Renderer::createVertexBuffers()
-{
-    VkDeviceSize buffer_size{};
-
-    for (size_t index = 0; index < m_CurrentScene->GetModels().size(); index++)
-    {
-        std::shared_ptr<omp::Model> Model = m_CurrentScene->GetModels()[index];
-
-        buffer_size = sizeof(Model->GetVertices()[0]) * Model->GetVertices().size();
-
-        VkBuffer staging_buffer;
-        VkDeviceMemory staging_buffer_memory;
-        createBuffer(
-                buffer_size,
-                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                staging_buffer, staging_buffer_memory);
-
-        void* data;
-        vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-        memcpy(data, Model->GetVertices().data(), (size_t)buffer_size);
-        vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
-
-        CreateVertexBufferAndMemoryAtIndex(index);
-
-        createBuffer(
-                buffer_size,
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                m_VertexBuffers[index], m_VertexBufferMemories[index]);
-
-        copyBuffer(staging_buffer, m_VertexBuffers[index], buffer_size);
-
-        vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
-        vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
-    }
-}
-
 void Renderer::loadModelToBuffer(const omp::Model &model)
 {
     VkDeviceSize buffer_size = sizeof(model.GetVertices()[0]) * model.GetVertices().size();
@@ -1340,41 +1287,6 @@ void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize s
     endSingleTimeCommands(command_buffer);
 }
 
-void Renderer::createIndexBuffers()
-{
-    for (size_t index = 0; index < m_CurrentScene->GetModels().size(); index++)
-    {
-        std::shared_ptr<omp::Model> model = m_CurrentScene->GetModels()[index];
-        VkDeviceSize buffer_size = sizeof(model->GetIndices()[0]) * model->GetIndices().size();
-
-        VkBuffer staging_buffer;
-        VkDeviceMemory staging_buffer_memory;
-        createBuffer(
-                buffer_size,
-                VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                staging_buffer, staging_buffer_memory);
-
-        void* data;
-        vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-        memcpy(data, model->GetIndices().data(), (size_t)buffer_size);
-        vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
-
-        CreateIndexBufferAndMemoryAtIndex(index);
-
-        createBuffer(
-                buffer_size,
-                VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                m_IndexBuffers[index], m_IndexBufferMemories[index]);
-
-        copyBuffer(staging_buffer, m_IndexBuffers[index], buffer_size);
-
-        vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
-        vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
-    }
-}
-
 void Renderer::createDescriptorSetLayout()
 {
     VkDescriptorSetLayoutBinding samplerLayoutBinding{};
@@ -1440,6 +1352,7 @@ void Renderer::createDescriptorPool()
 {
     std::array<VkDescriptorPoolSize, 2> pool_sizes{};
     pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    // TODO think about size
     pool_sizes[0].descriptorCount = 1000;static_cast<uint32_t>(m_SwapChainImages.size());
 
     pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1710,29 +1623,6 @@ void Renderer::transitionImageLayout(VkImage image, VkFormat format, VkImageLayo
 
     endSingleTimeCommands(command_buffer);
 }
-
-void Renderer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
-{
-    VkCommandBuffer command_buffer = beginSingleTimeCommands();
-
-    VkBufferImageCopy region{};
-    region.bufferOffset = 0;
-    region.bufferRowLength = 0;
-    region.bufferImageHeight = 0;
-
-    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.imageSubresource.mipLevel = 0;
-    region.imageSubresource.baseArrayLayer = 0;
-    region.imageSubresource.layerCount = 1;
-
-    region.imageOffset = {0, 0, 0};
-    region.imageExtent = {width, height, 1};
-
-    vkCmdCopyBufferToImage(command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-    endSingleTimeCommands(command_buffer);
-}
-
 
 VkImageView Renderer::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels)
 {
@@ -2092,100 +1982,6 @@ void Renderer::createImguiCommandBufferAtIndex(uint32_t Index)
     {
         throw std::runtime_error("failed to record command buffer");
     }
-}
-
-void Renderer::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
-{
-    VkFormatProperties format_properties;
-    vkGetPhysicalDeviceFormatProperties(m_PhysDevice, imageFormat, &format_properties);
-    if (!(format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
-    {
-        throw std::runtime_error("Texture image format does not support linear blitting");
-    }
-
-    VkCommandBuffer command_buffer = beginSingleTimeCommands();
-
-    VkImageMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.image = image;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-    barrier.subresourceRange.levelCount = 1;
-
-    int32_t mip_width = texWidth;
-    int32_t mip_height = texHeight;
-
-    for (uint32_t i = 1; i < mipLevels; i++)
-    {
-        barrier.subresourceRange.baseMipLevel = i - 1;
-        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-
-        vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                             0,
-                             0, nullptr,
-                             0, nullptr,
-                             1, &barrier
-        );
-
-        VkImageBlit blit{};
-        blit.srcOffsets[0] = {0, 0, 0};
-        blit.srcOffsets[1] = {mip_width, mip_height, 1};
-        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        blit.srcSubresource.mipLevel = i - 1;
-        blit.srcSubresource.baseArrayLayer = 0;
-        blit.srcSubresource.layerCount = 1;
-
-        blit.dstOffsets[0] = {0, 0, 0};
-        blit.dstOffsets[1] = {mip_width > 1 ? mip_width / 2 : 1, mip_height > 1 ? mip_height / 2 : 1, 1};
-        blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        blit.dstSubresource.mipLevel = i;
-        blit.dstSubresource.baseArrayLayer = 0;
-        blit.dstSubresource.layerCount = 1;
-
-        vkCmdBlitImage(command_buffer,
-                       image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                       image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                       1, &blit, VK_FILTER_LINEAR
-        );
-
-        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-        vkCmdPipelineBarrier(command_buffer,
-                             VK_PIPELINE_STAGE_TRANSFER_BIT,
-                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-                             0, nullptr,
-                             0, nullptr,
-                             1, &barrier
-        );
-
-        if (mip_width > 1) mip_width /= 2;
-        if (mip_height > 1) mip_height /= 2;
-    }
-
-    barrier.subresourceRange.baseMipLevel = mipLevels - 1;
-    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-    vkCmdPipelineBarrier(command_buffer,
-                         VK_PIPELINE_STAGE_TRANSFER_BIT,
-                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-                         0, nullptr,
-                         0, nullptr,
-                         1, &barrier
-    );
-
-    endSingleTimeCommands(command_buffer);
 }
 
 VkSampleCountFlagBits Renderer::getMaxUsableSampleCount()
