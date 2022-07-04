@@ -52,6 +52,27 @@ void omp::ViewPort::renderUI()
     {
         m_Resized = false;
     }
+
+    struct funcs { static bool IsLegacyNativeDupe(ImGuiKey key) { return key < 512 && ImGui::GetIO().KeyMap[key] != -1; } }; // Hide Native<>ImGuiKey duplicates when both exists in the array
+    const ImGuiKey key_first = 0;
+    for (ImGuiKey key = key_first; key < ImGuiKey_COUNT; key++)
+    {
+        if (funcs::IsLegacyNativeDupe(key)) continue;
+        if (ImGui::IsKeyPressed(key))
+        {
+
+        }
+    }
+    for (ImGuiKey key = key_first; key < ImGuiKey_COUNT; key++)
+    {
+        if (funcs::IsLegacyNativeDupe(key)) continue;
+        if (ImGui::IsKeyReleased(key))
+        {
+
+        }
+    }
+
+
     ImGui::End();
 
 }

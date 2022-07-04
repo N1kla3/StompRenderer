@@ -29,6 +29,7 @@
 #include "UI/ScenePanel.h"
 #include "MaterialManager.h"
 #include "Shader.h"
+#include "Camera.h"
 
 namespace
 {
@@ -328,6 +329,8 @@ private:
     // todo: event driven
     std::shared_ptr<omp::ViewPort> m_RenderViewport;
     std::shared_ptr<omp::ScenePanel> m_ScenePanel;
+
+    std::shared_ptr<omp::Camera> m_Camera;
 
     std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 

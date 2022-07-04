@@ -39,6 +39,7 @@ namespace
 
 Renderer::Renderer()
     : m_CurrentScene(std::make_shared<omp::Scene>())
+    , m_Camera(std::make_shared<omp::Camera>())
 {
 
 }
@@ -72,8 +73,6 @@ void Renderer::initVulkan()
     loadModel("First2");
     loadModel("Second2");
     loadModel("Third2");
-    //createVertexBuffers();
-    //createIndexBuffers();
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -1338,7 +1337,8 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
     float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
     UniformBufferObject ubo{};
-    ubo.view = glm::lookAt(glm::vec3(20.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    //ubo.view = glm::lookAt(glm::vec3(20.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    ubo.view = m_Camera->GetViewMatrix();
     ubo.proj = glm::perspective(glm::radians(90.f), (float)m_RenderViewport->GetSize().x / (float)m_RenderViewport->GetSize().y, 0.1f, 100.f);
     ubo.proj[1][1] *= -1;
 
