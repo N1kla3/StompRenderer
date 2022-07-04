@@ -5,7 +5,7 @@ namespace omp{
 class MainLayer : public ImguiUnit
 {
 public:
-    virtual void renderUI() override;
+    virtual void renderUI(float DeltaTime) override;
 };
 }
 

@@ -45,6 +45,10 @@ void omp::Camera::ProcessKeyboard(CAMERA_MOVEMENT direction, float deltaTime)
         m_Position -= m_Right * velocity;
     if (direction == CAMERA_MOVEMENT::MOVE_RIGHT)
         m_Position += m_Right * velocity;
+    if (direction == CAMERA_MOVEMENT::MOVE_UP)
+        m_Position += m_Up * velocity;
+    if (direction == CAMERA_MOVEMENT::MOVE_DOWN)
+        m_Position -= m_Up * velocity;
 }
 
 void omp::Camera::ProcessMouseMovement(float xOffset, float yOffset, bool constrainPitch)

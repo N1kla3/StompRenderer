@@ -14,7 +14,7 @@ class ScenePanel : public ImguiUnit
 
 public:
     explicit ScenePanel(const std::shared_ptr<EntityPanel>& entityPanel);
-    virtual void renderUI() override;
+    virtual void renderUI(float DeltaTime) override;
     void SetScene(const std::shared_ptr<Scene>& inScene) { m_Scene = inScene; }
 };
 }

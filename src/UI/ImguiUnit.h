@@ -13,7 +13,7 @@ public:
     ImguiUnit();
     virtual ~ImguiUnit();
 
-    virtual void renderUI() = 0;
+    virtual void renderUI(float DeltaTime) = 0;
 
     inline static std::vector<ImguiUnit*> GetAllUnits(){ return ImguiUnits; }
 };

@@ -10,7 +10,7 @@ class MaterialPanel : public ImguiUnit
 
 public:
 
-    virtual void renderUI() override;
+    virtual void renderUI(float DeltaTime) override;
 
     void setMaterial(const std::shared_ptr<Material>& inMaterial);
 };

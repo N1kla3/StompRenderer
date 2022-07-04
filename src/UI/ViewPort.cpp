@@ -1,7 +1,8 @@
 #include "ViewPort.h"
+#include "Camera.h"
 #include "imgui.h"
 
-void omp::ViewPort::renderUI()
+void omp::ViewPort::renderUI(float DeltaTime)
 {
     auto viewport = ImGui::GetMainViewport();
     auto viewport_size = viewport->WorkSize;
@@ -53,6 +54,12 @@ void omp::ViewPort::renderUI()
         m_Resized = false;
     }
 
+    if (!m_Camera || !ImGui::IsWindowFocused())
+    {
+        ImGui::End();
+        return;
+    }
+
     struct funcs { static bool IsLegacyNativeDupe(ImGuiKey key) { return key < 512 && ImGui::GetIO().KeyMap[key] != -1; } }; // Hide Native<>ImGuiKey duplicates when both exists in the array
     const ImGuiKey key_first = 0;
     for (ImGuiKey key = key_first; key < ImGuiKey_COUNT; key++)
@@ -60,19 +67,32 @@ void omp::ViewPort::renderUI()
         if (funcs::IsLegacyNativeDupe(key)) continue;
         if (ImGui::IsKeyPressed(key))
         {
-
+            if (key == ImGuiKey_W)
+            {
+                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_FORWARD, DeltaTime);
+            }
+            if (key == ImGuiKey_A)
+            {
+                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_LEFT, DeltaTime);
+            }
+            if (key == ImGuiKey_S)
+            {
+                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_BACK, DeltaTime);
+            }
+            if (key == ImGuiKey_D)
+            {
+                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_RIGHT, DeltaTime);
+            }
+            if (key == ImGuiKey_Q)
+            {
+                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_UP, DeltaTime);
+            }
+            if (key == ImGuiKey_E)
+            {
+                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_DOWN, DeltaTime);
+            }
         }
     }
-    for (ImGuiKey key = key_first; key < ImGuiKey_COUNT; key++)
-    {
-        if (funcs::IsLegacyNativeDupe(key)) continue;
-        if (ImGui::IsKeyReleased(key))
-        {
-
-        }
-    }
-
 
     ImGui::End();
-
 }

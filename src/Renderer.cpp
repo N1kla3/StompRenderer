@@ -2072,9 +2072,15 @@ void Renderer::CreateIndexBufferAndMemoryAtIndex(size_t index)
 
 void Renderer::renderAllUi()
 {
+    static auto prevTime = std::chrono::high_resolution_clock::now();
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - prevTime).count();
+    prevTime = currentTime;
+
     for (auto& unit : m_Widgets)
     {
-        unit->renderUI();
+        unit->renderUI(time);
     }
 
     // TODO remove
@@ -2096,6 +2102,7 @@ void Renderer::createImguiWidgets()
     // ORDER IS IMPORTANT DOCK NODES GO FIRST
 
     m_RenderViewport = std::make_shared<omp::ViewPort>();
+    m_RenderViewport->SetCamera(m_Camera);
     auto material_panel = std::make_shared<omp::MaterialPanel>();
     auto entity = std::make_shared<omp::EntityPanel>(material_panel);
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity);

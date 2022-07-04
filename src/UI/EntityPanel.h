@@ -13,7 +13,7 @@ class EntityPanel : public ImguiUnit
 
 public:
     explicit EntityPanel(const std::shared_ptr<MaterialPanel>& materialPanel);
-    virtual void renderUI() override;
+    virtual void renderUI(float DeltaTime) override;
     void SetModel(const std::shared_ptr<omp::Model>& model);
 };
 }

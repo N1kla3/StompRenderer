@@ -2,7 +2,7 @@
 #include "imgui.h"
 #include "Logs.h"
 
-void omp::MaterialPanel::renderUI()
+void omp::MaterialPanel::renderUI(float DeltaTime)
 {
     ImGui::Begin("Material Panel");
 

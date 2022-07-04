@@ -6,7 +6,7 @@ omp::EntityPanel::EntityPanel(const std::shared_ptr<MaterialPanel> &materialPane
     m_MaterialPanelRef = materialPanel;
 }
 
-void omp::EntityPanel::renderUI()
+void omp::EntityPanel::renderUI(float DeltaTime)
 {
     ImGui::Begin("Entity Panel");
 
