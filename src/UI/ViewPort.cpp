@@ -15,6 +15,8 @@ void omp::ViewPort::renderUI(float DeltaTime)
     ImGui::SetNextWindowClass(&Viewort);
     ImGui::Begin("Viewport", NULL, 0);
 
+
+    // RENDER RESIZING
     ImVec2 new_size = ImGui::GetWindowSize();
     float monitor_x = ImGui::GetWindowPos().x + ImGui::GetWindowSize().x;
     if (monitor_x > viewport_size.x)
@@ -60,38 +62,52 @@ void omp::ViewPort::renderUI(float DeltaTime)
         return;
     }
 
-    struct funcs { static bool IsLegacyNativeDupe(ImGuiKey key) { return key < 512 && ImGui::GetIO().KeyMap[key] != -1; } }; // Hide Native<>ImGuiKey duplicates when both exists in the array
-    const ImGuiKey key_first = 0;
-    for (ImGuiKey key = key_first; key < ImGuiKey_COUNT; key++)
+    // KEYBOARD INPUT
+
+
+    if (ImGui::IsKeyPressed(ImGuiKey_W))
     {
-        if (funcs::IsLegacyNativeDupe(key)) continue;
-        if (ImGui::IsKeyPressed(key))
+        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_FORWARD, DeltaTime);
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_A))
+    {
+        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_LEFT, DeltaTime);
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_S))
+    {
+        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_BACK, DeltaTime);
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_D))
+    {
+        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_RIGHT, DeltaTime);
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_Q))
+    {
+        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_UP, DeltaTime);
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_E))
+    {
+        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_DOWN, DeltaTime);
+    }
+
+
+    // MOUSE INPUT
+    static bool should_reset_mouse = true;
+    if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
+    {
+        static ImVec2 first_pos;
+        if (should_reset_mouse)
         {
-            if (key == ImGuiKey_W)
-            {
-                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_FORWARD, DeltaTime);
-            }
-            if (key == ImGuiKey_A)
-            {
-                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_LEFT, DeltaTime);
-            }
-            if (key == ImGuiKey_S)
-            {
-                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_BACK, DeltaTime);
-            }
-            if (key == ImGuiKey_D)
-            {
-                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_RIGHT, DeltaTime);
-            }
-            if (key == ImGuiKey_Q)
-            {
-                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_UP, DeltaTime);
-            }
-            if (key == ImGuiKey_E)
-            {
-                m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_DOWN, DeltaTime);
-            }
+            first_pos = ImGui::GetMousePos();
+            should_reset_mouse = false;
         }
+        ImVec2 second = ImGui::GetMousePos();
+        m_Camera->ProcessMouseMovement(second.x - first_pos.x, -(second.y - first_pos.y));
+        first_pos = second;
+    }
+    else
+    {
+        should_reset_mouse = true;
     }
 
     ImGui::End();
