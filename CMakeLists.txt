@@ -44,6 +44,8 @@ set(SOURCE
         Camera.cpp
         AssetManager.h
         AssetManager.cpp
+        Light.h
+        Light.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
@@ -63,6 +65,8 @@ set(SOURCE
         UI/ModelRepresentation.cpp
         UI/MaterialRepresentation.h
         UI/MaterialRepresentation.cpp
+        UI/GlobalLightPanel.cpp
+        UI/GlobalLightPanel.h
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp

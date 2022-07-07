@@ -40,6 +40,7 @@ namespace
 Renderer::Renderer()
     : m_CurrentScene(std::make_shared<omp::Scene>())
     , m_Camera(std::make_shared<omp::Camera>())
+    , m_GlobalLight(std::make_shared<omp::Light>())
 {
 
 }
