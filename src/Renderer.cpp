@@ -19,6 +19,7 @@
 #include "UI/MainLayer.h"
 #include "UI/EntityPanel.h"
 #include "UI/ScenePanel.h"
+#include "UI/CameraPanel.h"
 
 #include <tiny_obj_loader.h>
 
@@ -2108,12 +2109,14 @@ void Renderer::createImguiWidgets()
     auto entity = std::make_shared<omp::EntityPanel>(material_panel);
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity);
     m_ScenePanel->SetScene(m_CurrentScene);
+    auto camera_panel = std::make_shared<omp::CameraPanel>(m_Camera);
 
     m_Widgets.push_back(std::make_shared<omp::MainLayer>());
     m_Widgets.push_back(m_RenderViewport);
     m_Widgets.push_back(std::move(entity));
     m_Widgets.push_back(std::move(material_panel));
     m_Widgets.push_back(m_ScenePanel);
+    m_Widgets.push_back(camera_panel);
 }
 
 void Renderer::onViewportResize(size_t imageIndex)

@@ -51,5 +51,7 @@ private:
     float m_Zoom;
 
     void UpdateCameraVectors();
+
+    friend class CameraPanel;
 };
 }

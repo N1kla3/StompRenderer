@@ -139,9 +139,7 @@ private:
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void loadModel(const std::string &Name);
-    void createVertexBuffers();
     void loadModelToBuffer(const omp::Model& model);
-    void createIndexBuffers();
     void createUniformBuffers();
 
     void updateUniformBuffer(uint32_t currentImage);
@@ -186,8 +184,6 @@ private:
     void createMaterialManager();
 
     void onViewportResize(size_t imageIndex);
-
-    VkShaderModule createShaderModule(const std::vector<char>& code);
 
     bool checkValidationLayerSupport();
 

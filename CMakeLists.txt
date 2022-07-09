@@ -67,6 +67,8 @@ set(SOURCE
         UI/MaterialRepresentation.cpp
         UI/GlobalLightPanel.cpp
         UI/GlobalLightPanel.h
+        UI/CameraPanel.h
+        UI/CameraPanel.cpp
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp
