@@ -36,6 +36,10 @@ public:
     void ProcessMouseMovement(float xOffset, float yOffset, bool constrainPitch = true);
     void ProcessMouseScroll(float yOffset);
 
+    float GetViewAngle() const { return m_ViewAngle; }
+    float GetNearClipping() const { return m_NearClipping; }
+    float GetFarClipping() const { return m_FarClipping; }
+
 private:
     glm::vec3 m_Position;
     glm::vec3 m_Front;
@@ -49,6 +53,10 @@ private:
     float m_MovementSpeed;
     float m_MouseSensitivity;
     float m_Zoom;
+
+    float m_ViewAngle = 90.f;
+    float m_NearClipping = 0.1f;
+    float m_FarClipping = 1000.f;
 
     void UpdateCameraVectors();
 

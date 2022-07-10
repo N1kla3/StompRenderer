@@ -1361,7 +1361,10 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
 {
     UniformBufferObject ubo{};
     ubo.view = m_Camera->GetViewMatrix();
-    ubo.proj = glm::perspective(glm::radians(90.f), (float)m_RenderViewport->GetSize().x / (float)m_RenderViewport->GetSize().y, 0.1f, 100.f);
+    ubo.proj = glm::perspective(
+            glm::radians(m_Camera->GetViewAngle()),
+            (float)m_RenderViewport->GetSize().x / (float)m_RenderViewport->GetSize().y,
+            m_Camera->GetNearClipping(), m_Camera->GetFarClipping());
     ubo.proj[1][1] *= -1;
 
     void* data;
