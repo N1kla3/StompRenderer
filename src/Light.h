@@ -3,18 +3,9 @@
 
 
 namespace omp{
-class Light
+struct Light
 {
-private:
-    glm::vec3 m_Direction;
-    float m_Intencity;
+    glm::vec3 m_Position;
     glm::vec3 m_Color;
-
-public:
-
-
-    glm::vec3 GetDirection() const{ return m_Direction; }
-    float GetIntensity() const{ return m_Intencity; }
-    glm::vec3 GetColor() const { return m_Color; }
 };
 }

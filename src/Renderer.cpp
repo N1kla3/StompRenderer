@@ -593,7 +593,7 @@ void Renderer::createImageViews()
 
 void Renderer::createGraphicsPipeline()
 {
-    m_CurrentShader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vert.spv", "../SPRV/frag.spv");
+    m_CurrentShader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vertLight.spv", "../SPRV/fragLight.spv");
 
     // Vertex input state
     auto binding_description = omp::Vertex::getBindingDescription();
@@ -1156,6 +1156,12 @@ void Renderer::cleanupSwapChain()
         vkFreeMemory(m_LogicalDevice, m_UniformBuffersMemory[i], nullptr);
     }
 
+    for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+    {
+        vkDestroyBuffer(m_LogicalDevice, m_LightBuffer[i], nullptr);
+        vkFreeMemory(m_LogicalDevice, m_LightBufferMemory[i], nullptr);
+    }
+
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
 
     for (auto framebuffer : m_ImguiFramebuffers) {
@@ -1290,12 +1296,7 @@ void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize s
 
 void Renderer::createDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-    samplerLayoutBinding.binding = 1;
-    samplerLayoutBinding.descriptorCount = 1;
-    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    samplerLayoutBinding.pImmutableSamplers = nullptr;
-    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    //TODO need multiple textures
 
     VkDescriptorSetLayoutBinding uboLayoutBinding{};
     uboLayoutBinding.binding = 0;
@@ -1304,7 +1305,21 @@ void Renderer::createDescriptorSetLayout()
     uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
     uboLayoutBinding.pImmutableSamplers = nullptr;
 
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+    VkDescriptorSetLayoutBinding lightLayoutBinding{};
+    lightLayoutBinding.binding = 1;
+    lightLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    lightLayoutBinding.descriptorCount = 1;
+    lightLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    lightLayoutBinding.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+    samplerLayoutBinding.binding = 2;
+    samplerLayoutBinding.descriptorCount = 1;
+    samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerLayoutBinding.pImmutableSamplers = nullptr;
+    samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    std::array<VkDescriptorSetLayoutBinding, 3> bindings = {uboLayoutBinding, lightLayoutBinding, samplerLayoutBinding};
 
     VkDescriptorSetLayoutCreateInfo layout_info{};
     layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1329,17 +1344,22 @@ void Renderer::createUniformBuffers()
         createBuffer(buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                      m_UniformBuffers[i], m_UniformBuffersMemory[i]);
     }
+
+    buffer_size = sizeof(omp::Light);
+
+    m_LightBuffer.resize(m_SwapChainImages.size());
+    m_LightBufferMemory.resize(m_SwapChainImages.size());
+
+    for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+    {
+        createBuffer(buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                m_LightBuffer[i], m_LightBufferMemory[i]);
+    }
 }
 
 void Renderer::updateUniformBuffer(uint32_t currentImage)
 {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
     UniformBufferObject ubo{};
-    //ubo.view = glm::lookAt(glm::vec3(20.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     ubo.view = m_Camera->GetViewMatrix();
     ubo.proj = glm::perspective(glm::radians(90.f), (float)m_RenderViewport->GetSize().x / (float)m_RenderViewport->GetSize().y, 0.1f, 100.f);
     ubo.proj[1][1] *= -1;
@@ -1348,6 +1368,10 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
     vkMapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
     memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage]);
+
+    vkMapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage], 0, sizeof(m_GlobalLight), 0, &data);
+    memcpy(data, &m_GlobalLight, sizeof(m_GlobalLight));
+    vkUnmapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage]);
 }
 
 void Renderer::createDescriptorPool()
@@ -1395,12 +1419,17 @@ void Renderer::createDescriptorSets()
         buffer_info.offset = 0;
         buffer_info.range = sizeof(UniformBufferObject);
 
+        VkDescriptorBufferInfo light_info{};
+        light_info.buffer = m_UniformBuffers[i];
+        light_info.offset = 0;
+        light_info.range = sizeof(omp::Light);
+
         VkDescriptorImageInfo image_info{};
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         image_info.imageView = m_DefaultTexture->GetImageView();
         image_info.sampler = m_DefaultTexture->GetSampler();
 
-        std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
+        std::array<VkWriteDescriptorSet, 3> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptor_writes[0].dstSet = m_DescriptorSets[i];
         descriptor_writes[0].dstBinding = 0;
@@ -1413,9 +1442,17 @@ void Renderer::createDescriptorSets()
         descriptor_writes[1].dstSet = m_DescriptorSets[i];
         descriptor_writes[1].dstBinding = 1;
         descriptor_writes[1].dstArrayElement = 0;
-        descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptor_writes[1].descriptorCount = 1;
-        descriptor_writes[1].pImageInfo = &image_info;
+        descriptor_writes[1].pBufferInfo = &light_info;
+
+        descriptor_writes[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_writes[2].dstSet = m_DescriptorSets[i];
+        descriptor_writes[2].dstBinding = 2;
+        descriptor_writes[2].dstArrayElement = 0;
+        descriptor_writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptor_writes[2].descriptorCount = 1;
+        descriptor_writes[2].pImageInfo = &image_info;
 
         vkUpdateDescriptorSets(m_LogicalDevice,
             static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
@@ -1448,9 +1485,14 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
         buffer_info.offset = 0;
         buffer_info.range = sizeof(UniformBufferObject);
 
+        VkDescriptorBufferInfo light_info{};
+        light_info.buffer = m_UniformBuffers[index];
+        light_info.offset = 0;
+        light_info.range = sizeof(omp::Light);
+
         std::vector<VkWriteDescriptorSet> descriptor_writes{};
         auto material_sets = material->GetDescriptorWriteSets();
-        descriptor_writes.resize(material_sets.size() + 1);
+        descriptor_writes.resize(material_sets.size() + 2);
 
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptor_writes[0].dstSet = DS[index];
@@ -1460,10 +1502,18 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
         descriptor_writes[0].descriptorCount = 1;
         descriptor_writes[0].pBufferInfo = &buffer_info;
 
+        descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_writes[1].dstSet = DS[index];
+        descriptor_writes[1].dstBinding = 1;
+        descriptor_writes[1].dstArrayElement = 0;
+        descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptor_writes[1].descriptorCount = 1;
+        descriptor_writes[1].pBufferInfo = &light_info;
+
         for (size_t index_write = 0; index_write < material_sets.size(); index_write++)
         {
-            descriptor_writes[index_write + 1] = material_sets[index_write];
-            descriptor_writes[index_write + 1].dstSet = DS[index];
+            descriptor_writes[index_write + 2] = material_sets[index_write];
+            descriptor_writes[index_write + 2].dstSet = DS[index];
         }
 
         vkUpdateDescriptorSets(m_LogicalDevice,
@@ -1479,7 +1529,8 @@ void Renderer::createTextureImage()
     m_MaterialManager->LoadTextureLazily("../textures/mando.jpg");
 
     m_DefaultMaterial = std::make_shared<omp::Material>();
-    m_DefaultMaterial->AddTexture({1, m_DefaultTexture});
+    // TODO: remove hardcoding
+    m_DefaultMaterial->AddTexture({2, m_DefaultTexture});
 }
 
 void Renderer::createImage(

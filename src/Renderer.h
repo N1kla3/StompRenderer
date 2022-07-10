@@ -301,6 +301,9 @@ private:
     std::vector<VkBuffer> m_UniformBuffers;
     std::vector<VkDeviceMemory> m_UniformBuffersMemory;
 
+    std::vector<VkBuffer> m_LightBuffer;
+    std::vector<VkDeviceMemory> m_LightBufferMemory;
+
     std::vector<VkImage> m_SwapChainImages;
 
     std::vector<VkImageView> m_SwapChainImageViews;
