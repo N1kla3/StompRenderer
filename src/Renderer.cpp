@@ -67,14 +67,14 @@ void Renderer::initVulkan()
     createTextureImage();
     InitializeImgui();
     loadModel("First");
-    loadModel("Second");
-    loadModel("Third");
-    loadModel("First1");
-    loadModel("Second1");
-    loadModel("Third1");
-    loadModel("First2");
-    loadModel("Second2");
-    loadModel("Third2");
+    //loadModel("Second");
+    //loadModel("Third");
+    //loadModel("First1");
+    //loadModel("Second1");
+    //loadModel("Third1");
+    //loadModel("First2");
+    //loadModel("Second2");
+    //loadModel("Third2");
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -1776,7 +1776,17 @@ void Renderer::loadModel(const std::string &Name)
                     attrib.texcoords[2 * index.texcoord_index + 0],
                     1 - attrib.texcoords[2 * index.texcoord_index + 1]
             };
-            vertex.color = {1.0f, 1.0f, 1.0f};
+            vertex.color =  {
+                    attrib.colors[3 * index.vertex_index + 0],
+                    attrib.colors[3 * index.vertex_index + 1],
+                    attrib.colors[3 * index.vertex_index + 2]
+            };
+
+            vertex.normal = {
+                    attrib.normals[3 * index.vertex_index + 0],
+                    attrib.normals[3 * index.vertex_index + 1],
+                    attrib.normals[3 * index.vertex_index + 2]
+            };
 
             if (m_UniqueVertices.count(vertex) == 0)
             {
