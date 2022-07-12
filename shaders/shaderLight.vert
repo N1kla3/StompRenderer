@@ -21,6 +21,7 @@ layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
 layout(location = 2) out vec3 outNormal;
 layout(location = 3) out vec3 outPosition;
+layout(location = 4) out vec3 outViewPosition;
 
 void main()
 {
@@ -28,5 +29,6 @@ void main()
     fragColor = inColor;
     fragTexCoord = inTexCoord;
     outNormal = inNormal;
-    outPosition = inPosition;
+    outPosition = vec3(pushModel.model * vec4(inPosition, 1.0));
+    outViewPosition = vec3(ubo.view * vec4(1.0));
 }

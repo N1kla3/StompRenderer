@@ -331,7 +331,7 @@ private:
     std::shared_ptr<omp::ScenePanel> m_ScenePanel;
 
     std::shared_ptr<omp::Camera> m_Camera;
-    std::shared_ptr<omp::Light> m_GlobalLight;
+    omp::Light m_GlobalLight;
 
     std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 

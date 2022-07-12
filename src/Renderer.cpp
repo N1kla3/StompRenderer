@@ -41,7 +41,6 @@ namespace
 Renderer::Renderer()
     : m_CurrentScene(std::make_shared<omp::Scene>())
     , m_Camera(std::make_shared<omp::Camera>())
-    , m_GlobalLight(std::make_shared<omp::Light>())
 {
 
 }
@@ -1367,11 +1366,14 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
             m_Camera->GetNearClipping(), m_Camera->GetFarClipping());
     ubo.proj[1][1] *= -1;
 
-    void* data;
-    vkMapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
-    memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage]);
+    {
+        void *data;
+        vkMapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+        memcpy(data, &ubo, sizeof(ubo));
+        vkUnmapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage]);
+    }
 
+    void* data;
     vkMapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage], 0, sizeof(m_GlobalLight), 0, &data);
     memcpy(data, &m_GlobalLight, sizeof(m_GlobalLight));
     vkUnmapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage]);
@@ -1423,7 +1425,7 @@ void Renderer::createDescriptorSets()
         buffer_info.range = sizeof(UniformBufferObject);
 
         VkDescriptorBufferInfo light_info{};
-        light_info.buffer = m_UniformBuffers[i];
+        light_info.buffer = m_LightBuffer[i];
         light_info.offset = 0;
         light_info.range = sizeof(omp::Light);
 
@@ -1489,7 +1491,7 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
         buffer_info.range = sizeof(UniformBufferObject);
 
         VkDescriptorBufferInfo light_info{};
-        light_info.buffer = m_UniformBuffers[index];
+        light_info.buffer = m_LightBuffer[index];
         light_info.offset = 0;
         light_info.range = sizeof(omp::Light);
 
