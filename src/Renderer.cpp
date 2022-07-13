@@ -693,7 +693,7 @@ void Renderer::createGraphicsPipeline()
     VkPushConstantRange constant_range{};
     constant_range.size = sizeof(omp::ModelPushConstant);
     constant_range.offset = 0;
-    constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    constant_range.stageFlags = VK_SHADER_STAGE_ALL;// TODO: better with ranges to save space in shader
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1789,6 +1789,7 @@ void Renderer::loadModel(const std::string &Name)
                     attrib.normals[3 * index.vertex_index + 1],
                     attrib.normals[3 * index.vertex_index + 2]
             };
+            // TODO incorrect amount
 
             if (m_UniqueVertices.count(vertex) == 0)
             {

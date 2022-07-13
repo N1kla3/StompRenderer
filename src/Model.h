@@ -18,6 +18,10 @@ namespace omp{
 struct omp::ModelPushConstant
 {
     glm::mat4 model;
+
+    glm::vec3 m_Ambient;
+    glm::vec3 m_Diffusive;
+    glm::vec3 m_Specular;
 };
 
 struct omp::Vertex

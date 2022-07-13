@@ -10,6 +10,10 @@ layout(binding = 0) uniform UniformBufferObject
 layout( push_constant ) uniform constants
 {
     mat4 model;
+
+    vec3 pushAmbient;
+    vec3 pushDiffusive;
+    vec3 pushSpecular;
 } pushModel;
 
 layout(location = 0) in vec3 inPosition;

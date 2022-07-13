@@ -11,9 +11,22 @@ layout(binding = 1) uniform LightBufferObject
 {
     vec3 position;
     vec3 color;
+    vec3 ambient;
+    vec3 diffusive;
+    vec3 specular;
 } light;
 
 layout(binding = 2) uniform sampler2D texSampler;
+
+//push constants block
+layout( push_constant ) uniform constants
+{
+    mat4 model;
+
+    vec3 pushAmbient;
+    vec3 pushDiffusive;
+    vec3 pushSpecular;
+} pushModel;
 
 layout(location = 0) out vec4 outColor;
 
