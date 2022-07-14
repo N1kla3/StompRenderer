@@ -1,11 +1,19 @@
-//
-// Created by kolya on 7/6/2022.
-//
-
 #pragma once
+#include <memory>
+#include "ImguiUnit.h"
 
+namespace omp{
 
-class GlobalLightPanel
+class Light;
+
+class GlobalLightPanel : public ImguiUnit
 {
+private:
+    std::weak_ptr<omp::Light> m_LightRef;
 
+public:
+    explicit GlobalLightPanel(const std::shared_ptr<omp::Light>& inLight);
+
+    virtual void renderUI(float DeltaTime);
 };
+}
