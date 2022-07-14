@@ -33,20 +33,20 @@ layout(location = 0) out vec4 outColor;
 void main()
 {
     float ambientStr = 0.1f;
-    vec3 ambient = ambientStr * light.color;
+    vec3 ambient = pushModel.pushAmbient * light.ambient;
 
     // diffuse
     vec3 norm = normalize(outNormal);
     vec3 lightDir = normalize(light.position - outPosition);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * light.color;
+    vec3 diffuse = (diff * pushModel.pushDiffusive) * light.diffusive;
 
     // specular
     float specularStrength = 0.5;
     vec3 viewDir = normalize(outViewPosition - outPosition);
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64);
-    vec3 specular = specularStrength * spec * light.color;
+    vec3 specular = pushModel.pushSpecular * spec * light.specular;
 
     vec3 result = (ambient + diffuse + specular) * fragColor;
     outColor = texture(texSampler, fragTexCoord) * vec4(result, 1.0f);

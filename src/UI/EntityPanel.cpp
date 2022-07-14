@@ -1,4 +1,5 @@
 #include "EntityPanel.h"
+#include "Material.h"
 #include "imgui.h"
 
 omp::EntityPanel::EntityPanel(const std::shared_ptr<MaterialPanel> &materialPanel)

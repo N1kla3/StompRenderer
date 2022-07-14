@@ -1,9 +1,13 @@
 #pragma once
 
-#include "Material.h"
+#include <memory>
 #include "ImguiUnit.h"
 
+
 namespace omp{
+
+class Material;
+
 class MaterialPanel : public ImguiUnit
 {
     std::weak_ptr<Material> m_Material;

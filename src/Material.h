@@ -3,6 +3,7 @@
 #include <memory>
 #include "Texture.h"
 #include "Asset.h"
+#include "UI/MaterialPanel.h"
 #include "glm/vec3.hpp"
 
 struct TextureData
@@ -16,9 +17,9 @@ class Material : public Asset
 {
     std::vector<TextureData> m_Textures;
 
-    glm::vec3 m_Ambient;
-    glm::vec3 m_Diffusive;
-    glm::vec3 m_Specular;
+    glm::vec3 m_Ambient = {1.0f, 1.0f, 1.0f};
+    glm::vec3 m_Diffusive = {1.0f, 1.0f, 1.0f};
+    glm::vec3 m_Specular = {1.0f, 1.0f, 1.0f};
 
     bool m_IsDirty = true;
     bool m_IsInitialized = false;
@@ -48,5 +49,7 @@ public:
     glm::vec3 GetAmbient() const { return m_Ambient; }
     glm::vec3 GetDiffusive() const { return m_Diffusive; }
     glm::vec3 GetSpecular() const { return m_Specular; }
+
+    friend class MaterialPanel;
 };
 } // omp

@@ -1,5 +1,6 @@
 #include "MaterialPanel.h"
 #include "imgui.h"
+#include "Material.h"
 #include "Logs.h"
 
 void omp::MaterialPanel::renderUI(float DeltaTime)
@@ -20,9 +21,9 @@ void omp::MaterialPanel::renderUI(float DeltaTime)
                 ImGui::TreePop();
             }
         }
-        ImGui::DragFloat3("Ambient", &m_Material.lock()->GetAmbient()[0],  0.01f, 0.0f, 0.0f, "%.2f", 0);
-        ImGui::DragFloat3("Diffusive", &m_Material.lock()->GetDiffusive()[0],  0.01f, 0.0f, 0.0f, "%.2f", 0);
-        ImGui::DragFloat3("Specular", &m_Material.lock()->GetSpecular()[0],  0.01f, 0.0f, 0.0f, "%.2f", 0);
+        ImGui::DragFloat3("Ambient", &m_Material.lock()->m_Ambient[0],  0.01f, 0.0f, 0.0f, "%.2f", 0);
+        ImGui::DragFloat3("Diffusive", &m_Material.lock()->m_Diffusive[0],  0.01f, 0.0f, 0.0f, "%.2f", 0);
+        ImGui::DragFloat3("Specular", &m_Material.lock()->m_Specular[0],  0.01f, 0.0f, 0.0f, "%.2f", 0);
     }
     else
     {

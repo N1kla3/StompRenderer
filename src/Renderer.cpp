@@ -693,7 +693,7 @@ void Renderer::createGraphicsPipeline()
     VkPushConstantRange constant_range{};
     constant_range.size = sizeof(omp::ModelPushConstant);
     constant_range.offset = 0;
-    constant_range.stageFlags = VK_SHADER_STAGE_ALL;// TODO: better with ranges to save space in shader
+    constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;// TODO: better with ranges to save space in shader
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -953,6 +953,9 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
 
         omp::ModelPushConstant constant;
         constant.model = current_model->GetTransform();
+        constant.m_Ambient = current_mat->GetAmbient();
+        constant.m_Diffusive = current_mat->GetDiffusive();
+        constant.m_Specular = current_mat->GetSpecular();
         vkCmdPushConstants(m_CommandBuffers[inIndex], m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(omp::ModelPushConstant), &constant);
 
 
