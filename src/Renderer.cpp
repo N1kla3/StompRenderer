@@ -1,6 +1,3 @@
-//
-// Created by kolya on 8/18/2021.
-//
 #include "Renderer.h"
 #include <vector>
 #include <optional>
@@ -20,6 +17,8 @@
 #include "UI/EntityPanel.h"
 #include "UI/ScenePanel.h"
 #include "UI/CameraPanel.h"
+#include "UI/GlobalLightPanel.h"
+#include "UI/ViewPort.h"
 
 #include <tiny_obj_loader.h>
 
@@ -41,6 +40,7 @@ namespace
 Renderer::Renderer()
     : m_CurrentScene(std::make_shared<omp::Scene>())
     , m_Camera(std::make_shared<omp::Camera>())
+    , m_GlobalLight(std::make_shared<omp::Light>())
 {
 
 }
@@ -66,7 +66,7 @@ void Renderer::initVulkan()
     createTextureImage();
     InitializeImgui();
     loadModel("First");
-    //loadModel("Second");
+    loadModel("Second");
     //loadModel("Third");
     //loadModel("First1");
     //loadModel("Second1");
@@ -1377,8 +1377,8 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
     }
 
     void* data;
-    vkMapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage], 0, sizeof(m_GlobalLight), 0, &data);
-    memcpy(data, &m_GlobalLight, sizeof(m_GlobalLight));
+    vkMapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage], 0, sizeof(*m_GlobalLight.get()), 0, &data);
+    memcpy(data, m_GlobalLight.get(), sizeof(*m_GlobalLight.get()));
     vkUnmapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage]);
 }
 
@@ -2180,13 +2180,15 @@ void Renderer::createImguiWidgets()
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity);
     m_ScenePanel->SetScene(m_CurrentScene);
     auto camera_panel = std::make_shared<omp::CameraPanel>(m_Camera);
+    auto light_panel = std::make_shared<omp::GlobalLightPanel>(m_GlobalLight);
 
     m_Widgets.push_back(std::make_shared<omp::MainLayer>());
     m_Widgets.push_back(m_RenderViewport);
     m_Widgets.push_back(std::move(entity));
     m_Widgets.push_back(std::move(material_panel));
     m_Widgets.push_back(m_ScenePanel);
-    m_Widgets.push_back(camera_panel);
+    m_Widgets.push_back(std::move(camera_panel));
+    m_Widgets.push_back(std::move(light_panel));
 }
 
 void Renderer::onViewportResize(size_t imageIndex)

@@ -3,8 +3,9 @@
 
 
 namespace omp{
-struct Light
+class Light
 {
+public:
     glm::vec3 m_Position = {1.0f, 0.0f, 0.f};
     glm::vec3 m_Color = {1.0f, 1.0f, 1.0f};
 

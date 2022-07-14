@@ -24,9 +24,6 @@
 #include "backends/imgui_impl_vulkan.h"
 
 #include "Scene.h"
-#include "UI/ViewPort.h"
-#include "UI/EntityPanel.h"
-#include "UI/ScenePanel.h"
 #include "MaterialManager.h"
 #include "Shader.h"
 #include "Camera.h"
@@ -60,6 +57,12 @@ namespace
             func(instance, debugMessenger, pAllocator);
         }
     }
+}
+
+namespace omp
+{
+    class ScenePanel;
+    class ViewPort;
 }
 
 struct UniformBufferObject
@@ -331,7 +334,7 @@ private:
     std::shared_ptr<omp::ScenePanel> m_ScenePanel;
 
     std::shared_ptr<omp::Camera> m_Camera;
-    omp::Light m_GlobalLight;
+    std::shared_ptr<omp::Light> m_GlobalLight;
 
     std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 
