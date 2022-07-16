@@ -956,7 +956,7 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
         constant.m_Ambient = current_mat->GetAmbient();
         constant.m_Diffusive = current_mat->GetDiffusive();
         constant.m_Specular = current_mat->GetSpecular();
-        vkCmdPushConstants(m_CommandBuffers[inIndex], m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(omp::ModelPushConstant), &constant);
+        vkCmdPushConstants(m_CommandBuffers[inIndex], m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(omp::ModelPushConstant), &constant);
 
 
         if (current_mat->IsInitialized())
@@ -1377,8 +1377,8 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
     }
 
     void* data;
-    vkMapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage], 0, sizeof(*m_GlobalLight.get()), 0, &data);
-    memcpy(data, m_GlobalLight.get(), sizeof(*m_GlobalLight.get()));
+    vkMapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage], 0, sizeof(omp::Light), 0, &data);
+    memcpy(data, m_GlobalLight.get(), sizeof(omp::Light));
     vkUnmapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage]);
 }
 

@@ -4,7 +4,7 @@
 #include "Texture.h"
 #include "Asset.h"
 #include "UI/MaterialPanel.h"
-#include "glm/vec3.hpp"
+#include "glm/vec4.hpp"
 
 struct TextureData
 {
@@ -17,9 +17,9 @@ class Material : public Asset
 {
     std::vector<TextureData> m_Textures;
 
-    glm::vec3 m_Ambient = {1.0f, 1.0f, 1.0f};
-    glm::vec3 m_Diffusive = {1.0f, 1.0f, 1.0f};
-    glm::vec3 m_Specular = {1.0f, 1.0f, 1.0f};
+    glm::vec4 m_Ambient = {1.0f, 1.0f, 1.0f, 0};
+    glm::vec4 m_Diffusive = {1.0f, 1.0f, 1.0f, 0};
+    glm::vec4 m_Specular = {1.0f, 1.0f, 1.0f, 0};
 
     bool m_IsDirty = true;
     bool m_IsInitialized = false;
@@ -46,9 +46,9 @@ public:
 
     static constexpr int MAX_TEXTURES = 1;
 
-    glm::vec3 GetAmbient() const { return m_Ambient; }
-    glm::vec3 GetDiffusive() const { return m_Diffusive; }
-    glm::vec3 GetSpecular() const { return m_Specular; }
+    glm::vec4 GetAmbient() const { return m_Ambient; }
+    glm::vec4 GetDiffusive() const { return m_Diffusive; }
+    glm::vec4 GetSpecular() const { return m_Specular; }
 
     friend class MaterialPanel;
 };

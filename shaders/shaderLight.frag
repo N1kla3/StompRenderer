@@ -10,7 +10,6 @@ layout(location = 4) in vec3 outViewPosition;
 layout(binding = 1) uniform LightBufferObject
 {
     vec3 position;
-    vec3 color;
     vec3 ambient;
     vec3 diffusive;
     vec3 specular;
@@ -32,7 +31,6 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-    float ambientStr = 0.1f;
     vec3 ambient = pushModel.pushAmbient * light.ambient;
 
     // diffuse
@@ -42,11 +40,10 @@ void main()
     vec3 diffuse = (diff * pushModel.pushDiffusive) * light.diffusive;
 
     // specular
-    float specularStrength = 0.5;
     vec3 viewDir = normalize(outViewPosition - outPosition);
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64);
-    vec3 specular = pushModel.pushSpecular * spec * light.specular;
+    vec3 specular = pushModel.pushSpecular * (spec * light.specular);
 
     vec3 result = (ambient + diffuse + specular) * fragColor;
     outColor = texture(texSampler, fragTexCoord) * vec4(result, 1.0f);
