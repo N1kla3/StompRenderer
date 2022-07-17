@@ -71,7 +71,7 @@ struct UniformBufferObject
     glm::mat4 proj;
 };
 
-const std::string MODEL_PATH = "../models/vikingroom.obj";
+const std::string MODEL_PATH = "../models/cube.obj";
 const std::string TEXTURE_PATH = "../textures/viking.png";
 const VkClearColorValue CLEAR_COLOR = {0.52f, 0.48f, 0.52f, 1.0f};
 

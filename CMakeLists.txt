@@ -46,6 +46,8 @@ set(SOURCE
         AssetManager.cpp
         Light.h
         Light.cpp
+        LightObject.h
+        LightObject.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
