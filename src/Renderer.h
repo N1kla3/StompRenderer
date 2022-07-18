@@ -28,6 +28,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Light.h"
+#include "LightObject.h"
 
 namespace
 {
@@ -335,6 +336,8 @@ private:
 
     std::shared_ptr<omp::Camera> m_Camera;
     std::shared_ptr<omp::Light> m_GlobalLight;
+
+    std::shared_ptr<omp::LightObject> m_LightObject;
 
     std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 
