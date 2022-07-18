@@ -10,3 +10,9 @@ void omp::Scene::AddModelToScene(const omp::Model &ModelToAdd)
     m_StateDirty = true;
     m_Models.push_back(std::make_shared<omp::Model>(ModelToAdd));
 }
+
+void omp::Scene::AddModelToScene(const std::shared_ptr<omp::Model> &ModelToAdd)
+{
+    m_StateDirty = true;
+    m_Models.push_back(std::move(ModelToAdd));
+}

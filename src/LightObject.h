@@ -12,6 +12,7 @@ private:
 public:
     void UpdateLightObject();
     void SetModel(const std::shared_ptr<Model>& inModel);
+    void SetLight(const std::shared_ptr<Light>& inLight);
     std::shared_ptr<Light> GetLight();
 };
 }

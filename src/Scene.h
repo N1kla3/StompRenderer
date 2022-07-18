@@ -19,6 +19,7 @@ public:
     // Methods //
     // ======= //
     void AddModelToScene(const omp::Model& ModelToAdd);
+    void AddModelToScene(const std::shared_ptr<omp::Model>& ModelToAdd);
 
     std::vector<std::shared_ptr<omp::Model>>& GetModels();
     bool IsDirty() const { return m_StateDirty; }

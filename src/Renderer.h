@@ -142,7 +142,8 @@ private:
     void createFramebufferAtImage(size_t index);
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-    void loadModel(const std::string &Name);
+    void loadLightObject(const std::string& Name, const std::string& TextureName);
+    std::shared_ptr<omp::Model> loadModel(const std::string &Name, const std::string &TextureName);
     void loadModelToBuffer(const omp::Model& model);
     void createUniformBuffers();
 

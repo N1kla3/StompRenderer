@@ -42,7 +42,8 @@ Renderer::Renderer()
     , m_Camera(std::make_shared<omp::Camera>())
     , m_GlobalLight(std::make_shared<omp::Light>())
 {
-
+    m_LightObject = std::make_shared<omp::LightObject>();
+    m_LightObject->SetLight(m_GlobalLight);
 }
 
 void Renderer::initVulkan()
@@ -65,8 +66,9 @@ void Renderer::initVulkan()
     createFramebuffers();
     createTextureImage();
     InitializeImgui();
-    loadModel("First");
-    loadModel("Second");
+    loadModel("First", MODEL_PATH.c_str());
+    loadModel("Second", MODEL_PATH.c_str());
+    loadLightObject("I see the light", "../models/cube.obj");
     //loadModel("Third");
     //loadModel("First1");
     //loadModel("Second1");
@@ -1369,6 +1371,8 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
             m_Camera->GetNearClipping(), m_Camera->GetFarClipping());
     ubo.proj[1][1] *= -1;
 
+    m_LightObject->UpdateLightObject();
+
     {
         void *data;
         vkMapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
@@ -1750,14 +1754,21 @@ bool Renderer::hasStencilComponent(VkFormat format)
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-void Renderer::loadModel(const std::string &Name)
+void Renderer::loadLightObject(const std::string& Name, const std::string& TextureName)
+{
+    auto model = loadModel(Name, TextureName);
+    // TODO make a lot of light objects
+    m_LightObject->SetModel(model);
+}
+
+std::shared_ptr<omp::Model> Renderer::loadModel(const std::string &Name, const std::string &TextureName)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str()))
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, TextureName.c_str()))
     {
         throw std::runtime_error(warn + err);
     }
@@ -1807,7 +1818,9 @@ void Renderer::loadModel(const std::string &Name)
     loaded_model.SetName(Name);
     loaded_model.SetMaterial(m_DefaultMaterial);
     loadModelToBuffer(loaded_model);
-    m_CurrentScene->AddModelToScene(loaded_model);
+    auto model_ptr = std::make_shared<omp::Model>(loaded_model);
+    m_CurrentScene->AddModelToScene(model_ptr);
+    return model_ptr;
 }
 
 void Renderer::createImguiContext()
