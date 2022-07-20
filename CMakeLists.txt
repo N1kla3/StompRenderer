@@ -48,6 +48,8 @@ set(SOURCE
         Light.cpp
         LightObject.h
         LightObject.cpp
+        GraphicsPipeline.h
+        GraphicsPipeline.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
