@@ -32,6 +32,7 @@ public:
     virtual ~Camera() = default;
 
     glm::mat4 GetViewMatrix() const;
+    glm::vec3 GetPosition() const { return m_Position; }
     void ProcessKeyboard(CAMERA_MOVEMENT direction, float deltaTime);
     void ProcessMouseMovement(float xOffset, float yOffset, bool constrainPitch = true);
     void ProcessMouseScroll(float yOffset);

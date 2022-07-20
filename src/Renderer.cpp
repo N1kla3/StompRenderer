@@ -1370,6 +1370,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
             (float)m_RenderViewport->GetSize().x / (float)m_RenderViewport->GetSize().y,
             m_Camera->GetNearClipping(), m_Camera->GetFarClipping());
     ubo.proj[1][1] *= -1;
+    ubo.viewPosition = m_Camera->GetPosition();
 
     m_LightObject->UpdateLightObject();
 
@@ -1761,14 +1762,14 @@ void Renderer::loadLightObject(const std::string& Name, const std::string& Textu
     m_LightObject->SetModel(model);
 }
 
-std::shared_ptr<omp::Model> Renderer::loadModel(const std::string &Name, const std::string &TextureName)
+std::shared_ptr<omp::Model> Renderer::loadModel(const std::string &Name, const std::string &ModelName)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, TextureName.c_str()))
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, ModelName.c_str()))
     {
         throw std::runtime_error(warn + err);
     }

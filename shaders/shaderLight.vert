@@ -4,6 +4,7 @@ layout(binding = 0) uniform UniformBufferObject
 {
     mat4 view;
     mat4 proj;
+    vec3 viewPosition;
 } ubo;
 
 //push constants block
@@ -34,5 +35,5 @@ void main()
     fragTexCoord = inTexCoord;
     outNormal = inNormal;
     outPosition = vec3(pushModel.model * vec4(inPosition, 1.0));
-    outViewPosition = vec3(ubo.view * vec4(1.0));
+    outViewPosition = ubo.viewPosition;
 }

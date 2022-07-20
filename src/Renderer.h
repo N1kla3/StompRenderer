@@ -70,6 +70,7 @@ struct UniformBufferObject
 {
     glm::mat4 view;
     glm::mat4 proj;
+    glm::vec3 viewPosition;
 };
 
 const std::string MODEL_PATH = "../models/cube.obj";
@@ -143,7 +144,7 @@ private:
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void loadLightObject(const std::string& Name, const std::string& TextureName);
-    std::shared_ptr<omp::Model> loadModel(const std::string &Name, const std::string &TextureName);
+    std::shared_ptr<omp::Model> loadModel(const std::string &Name, const std::string &ModelName);
     void loadModelToBuffer(const omp::Model& model);
     void createUniformBuffers();
 
