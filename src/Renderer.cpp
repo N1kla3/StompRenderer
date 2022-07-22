@@ -1544,6 +1544,8 @@ void Renderer::createTextureImage()
     m_DefaultMaterial = std::make_shared<omp::Material>();
     // TODO: remove hardcoding
     m_DefaultMaterial->AddTexture({2, m_DefaultTexture});
+
+    // TODO: Material instancing
 }
 
 void Renderer::createImage(
