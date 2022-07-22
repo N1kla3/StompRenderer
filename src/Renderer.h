@@ -29,6 +29,7 @@
 #include "Camera.h"
 #include "Light.h"
 #include "LightObject.h"
+#include "GraphicsPipeline.h"
 
 namespace
 {
@@ -284,6 +285,7 @@ private:
     VkPipelineLayout m_PipelineLayout;
 
     VkPipeline m_GraphicsPipeline;
+    std::unique_ptr<omp::GraphicsPipeline> m_LightGraphicsPipeline;
 
     VkCommandPool m_CommandPools;
     VkDescriptorPool m_DescriptorPool;

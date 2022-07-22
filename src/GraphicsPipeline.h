@@ -14,13 +14,16 @@ public:
     void StartDefaultCreation();
     void CreateVertexInfo();
     void CreateInputAssembly();
-    void CreateViewport();
+    void CreateViewport(VkExtent2D);
     void CreateRasterizer();
     void CreateMultisamplingInfo(VkSampleCountFlagBits rasterizationSamples);
     void CreateColorBlending();
-    void CreatePipelineLayout(VkDescriptorSetLayout descriptorSetLayout);
+    void CreatePipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
     void CreateShaders(const std::shared_ptr<class Shader>& shader);
     void ConfirmCreation(VkRenderPass renderPass);
+
+    VkPipeline GetGraphicsPipeline() { return m_GraphicsPipeline; }
+    VkPipelineLayout GetPipelineLayout() { return m_PipelineLayout; }
 
 private:
     bool m_IsCreated = false;

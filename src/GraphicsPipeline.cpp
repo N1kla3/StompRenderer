@@ -26,17 +26,17 @@ void omp::GraphicsPipeline::StartDefaultCreation()
     TryDestroyVulkanObjects();
     m_IsCreated = false;
 
-    void CreateVertexInfo();
-    void CreateInputAssembly();
-    void CreateViewport();
-    void CreateRasterizer();
-    void CreateColorBlending();
+    CreateVertexInfo();
+    CreateInputAssembly();
+    CreateViewport(VkExtent2D());
+    CreateRasterizer();
+    CreateColorBlending();
 }
 
 void omp::GraphicsPipeline::CreateVertexInfo()
 {
-    auto binding_description = omp::Vertex::getBindingDescription();
-    auto attribute_descriptions = omp::Vertex::getAttributeDescriptions();
+    static auto binding_description = omp::Vertex::getBindingDescription();
+    static auto attribute_descriptions = omp::Vertex::getAttributeDescriptions();
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -58,7 +58,7 @@ void omp::GraphicsPipeline::CreateInputAssembly()
     m_InputAssembly = inputAssembly;
 }
 
-void omp::GraphicsPipeline::CreateViewport()
+void omp::GraphicsPipeline::CreateViewport(VkExtent2D ScissorExtent)
 {
     // Viewport and scissors
     // NOT USED, using dynamic viewport
@@ -72,14 +72,14 @@ void omp::GraphicsPipeline::CreateViewport()
 
     VkRect2D scissor{};
     scissor.offset = {0, 0};
-    scissor.extent = {0};//m_SwapChainExtent;
+    scissor.extent = ScissorExtent;//m_SwapChainExtent;
 
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewportState.viewportCount = 0;
     viewportState.pViewports = 0;//&viewport;
-    viewportState.scissorCount = 0;
-    viewportState.pScissors = 0;//&scissor;
+    viewportState.scissorCount = 1;
+    viewportState.pScissors = &scissor;
 
     m_ViewportState = viewportState;
 }
@@ -145,7 +145,7 @@ void omp::GraphicsPipeline::CreateColorBlending()
     m_ColorBlending = colorBlending;
 }
 
-void omp::GraphicsPipeline::CreatePipelineLayout(VkDescriptorSetLayout descriptorSetLayout)
+void omp::GraphicsPipeline::CreatePipelineLayout(VkDescriptorSetLayout& descriptorSetLayout)
 {
 
     // Push constant for model
@@ -160,7 +160,7 @@ void omp::GraphicsPipeline::CreatePipelineLayout(VkDescriptorSetLayout descripto
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 1;
-    pipelineLayoutInfo.pPushConstantRanges = &constant_range;
+    pipelineLayoutInfo.pPushConstantRanges = &m_ConstantRange;
 
     m_PipelineLayoutInfo = pipelineLayoutInfo;
 }
@@ -192,12 +192,11 @@ void omp::GraphicsPipeline::ConfirmCreation(VkRenderPass renderPass)
 
     VkDynamicState dynamicStates[] = {
             VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_LINE_WIDTH,
-            VK_DYNAMIC_STATE_SCISSOR
+            VK_DYNAMIC_STATE_LINE_WIDTH
     };
     VkPipelineDynamicStateCreateInfo dynamicState{};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicState.dynamicStateCount = 3;
+    dynamicState.dynamicStateCount = 2;
     dynamicState.pDynamicStates = dynamicStates;
 
     VkGraphicsPipelineCreateInfo pipelineInfo{};
