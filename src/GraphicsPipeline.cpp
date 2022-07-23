@@ -69,17 +69,19 @@ void omp::GraphicsPipeline::CreateViewport(VkExtent2D ScissorExtent)
     viewport.height = 0;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
+    m_Viewport = viewport;
 
     VkRect2D scissor{};
     scissor.offset = {0, 0};
     scissor.extent = ScissorExtent;//m_SwapChainExtent;
+    m_Scissor = scissor;
 
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewportState.viewportCount = 0;
     viewportState.pViewports = 0;//&viewport;
     viewportState.scissorCount = 1;
-    viewportState.pScissors = &scissor;
+    viewportState.pScissors = &m_Scissor;
 
     m_ViewportState = viewportState;
 }

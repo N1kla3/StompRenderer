@@ -17,12 +17,15 @@ class Material : public Asset
 {
     std::vector<TextureData> m_Textures;
 
+    // vec4 because of glsl alignment, 4th element used for color strength
     glm::vec4 m_Ambient = {1.0f, 1.0f, 1.0f, 0};
     glm::vec4 m_Diffusive = {1.0f, 1.0f, 1.0f, 0};
     glm::vec4 m_Specular = {1.0f, 1.0f, 1.0f, 0};
 
     bool m_IsDirty = true;
     bool m_IsInitialized = false;
+
+    std::string m_ShaderName;
 
     std::vector<VkWriteDescriptorSet> m_DescriptorWriteSets;
 
@@ -34,6 +37,8 @@ public:
     void RemoveTexture(const TextureData& Data);
 
     std::vector<TextureData> GetTextureData() const;
+    void SetShaderName(const std::string& newName) { m_ShaderName = newName; };
+    std::string GetShaderName() const { return m_ShaderName; }
 
     void SetDescriptorSet(const std::vector<VkDescriptorSet>& DS);
     std::vector<VkDescriptorSet>& GetDescriptorSet();

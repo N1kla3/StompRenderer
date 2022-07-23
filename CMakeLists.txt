@@ -31,6 +31,8 @@ set(SOURCE
         MaterialManager.cpp
         Material.h
         Material.cpp
+        MaterialInstance.h
+        MaterialInstance.cpp
         VulkanContext.h
         VulkanContext.cpp
         Shader.h

@@ -10,7 +10,7 @@ enum class CAMERA_MOVEMENT
     MOVE_UP,
     MOVE_DOWN
 };
-
+// TODO: camera is not smooth
 namespace omp{
 class Camera
 {

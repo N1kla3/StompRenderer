@@ -594,17 +594,30 @@ void Renderer::createImageViews()
 
 void Renderer::createGraphicsPipeline()
 {
-    m_CurrentShader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vertLight.spv", "../SPRV/fragLight.spv");
+    // Light pipeline
+    std::shared_ptr<omp::Shader> light_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vertLight.spv", "../SPRV/fragLight.spv");
 
-    m_LightGraphicsPipeline = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
-    m_LightGraphicsPipeline->StartDefaultCreation();
-    m_LightGraphicsPipeline->CreateMultisamplingInfo(m_MSAASamples);
-    m_LightGraphicsPipeline->CreateViewport(m_SwapChainExtent);
-    m_LightGraphicsPipeline->CreatePipelineLayout(m_DescriptorSetLayout);
-    m_LightGraphicsPipeline->CreateShaders(m_CurrentShader);
-    m_LightGraphicsPipeline->ConfirmCreation(m_RenderPass);
+    std::unique_ptr<omp::GraphicsPipeline> light_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    light_pipe->StartDefaultCreation();
+    light_pipe->CreateMultisamplingInfo(m_MSAASamples);
+    light_pipe->CreateViewport(m_SwapChainExtent);
+    light_pipe->CreatePipelineLayout(m_DescriptorSetLayout);
+    light_pipe->CreateShaders(light_shader);
+    light_pipe->ConfirmCreation(m_RenderPass);
 
-    m_CurrentShader.reset();
+    // Simple pipeline
+    std::shared_ptr<omp::Shader> shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vert.spv", "../SPRV/frag.spv");
+
+    std::unique_ptr<omp::GraphicsPipeline> pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    pipe->StartDefaultCreation();
+    pipe->CreateMultisamplingInfo(m_MSAASamples);
+    pipe->CreateViewport(m_SwapChainExtent);
+    pipe->CreatePipelineLayout(m_DescriptorSetLayout);
+    pipe->CreateShaders(shader);
+    pipe->ConfirmCreation(m_RenderPass);
+
+    m_Pipelines.insert({"Light", std::move(light_pipe)});
+    m_Pipelines.insert({"Simple", std::move(pipe)});
 }
 
 void Renderer::createRenderPass()
@@ -797,7 +810,6 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
 
     vkCmdBeginRenderPass(m_CommandBuffers[inIndex], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdSetViewport(m_CommandBuffers[inIndex], 0, 1, &viewport);
-    vkCmdBindPipeline(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_LightGraphicsPipeline->GetGraphicsPipeline());
 
     VkDeviceSize offsets[] = { 0 };
 
@@ -805,6 +817,9 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
     {
         auto& current_model = m_CurrentScene->GetModels()[index];
         auto current_mat = current_model->GetMaterial();
+
+        vkCmdBindPipeline(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          FindGraphicsPipeline(current_mat->GetShaderName())->GetGraphicsPipeline());
 
         vkCmdBindVertexBuffers(m_CommandBuffers[inIndex], 0, 1, &m_VertexBuffers[index], offsets);
         vkCmdBindIndexBuffer(m_CommandBuffers[inIndex], m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
@@ -814,17 +829,26 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
         constant.m_Ambient = current_mat->GetAmbient();
         constant.m_Diffusive = current_mat->GetDiffusive();
         constant.m_Specular = current_mat->GetSpecular();
-        vkCmdPushConstants(m_CommandBuffers[inIndex], m_LightGraphicsPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(omp::ModelPushConstant), &constant);
+        vkCmdPushConstants(m_CommandBuffers[inIndex],
+                           FindGraphicsPipeline(current_mat->GetShaderName())->GetPipelineLayout(),
+                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                           0, sizeof(omp::ModelPushConstant), &constant);
 
 
         if (current_mat->IsInitialized())
         {
-            vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_LightGraphicsPipeline->GetPipelineLayout(), 0, 1, &current_mat->GetDescriptorSet()[inIndex], 0, nullptr);
+            vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    FindGraphicsPipeline(current_mat->GetShaderName())->GetPipelineLayout(),
+                                    0, 1, &current_mat->GetDescriptorSet()[inIndex],
+                                    0, nullptr);
         }
         else
         {
             createDescriptorSetsForMaterial(current_model->GetMaterial());
-            vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, m_LightGraphicsPipeline->GetPipelineLayout(), 0, 1, &m_DefaultMaterial->GetDescriptorSet()[inIndex], 0, nullptr);
+            vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    FindGraphicsPipeline(current_mat->GetShaderName())->GetPipelineLayout(),
+                                    0, 1, &m_DefaultMaterial->GetDescriptorSet()[inIndex],
+                                    0, nullptr);
         }
         vkCmdDrawIndexed(m_CommandBuffers[inIndex], static_cast<uint32_t>(m_CurrentScene->GetModels()[index]->GetIndices().size()), 1, 0, 0, 0);
     }
@@ -1000,7 +1024,7 @@ void Renderer::cleanupSwapChain()
         vkDestroyFramebuffer(m_LogicalDevice, m_SwapChainFramebuffers[i], nullptr);
     }
     vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, static_cast<int32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
-    m_LightGraphicsPipeline.reset();
+    m_Pipelines.clear();
     vkDestroyRenderPass(m_LogicalDevice, m_RenderPass, nullptr);
 
     for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
@@ -1399,6 +1423,7 @@ void Renderer::createTextureImage()
     m_DefaultMaterial = std::make_shared<omp::Material>();
     // TODO: remove hardcoding
     m_DefaultMaterial->AddTexture({2, m_DefaultTexture});
+    m_DefaultMaterial->SetShaderName("Light");
 
     // TODO: Material instancing
 }
@@ -2073,5 +2098,15 @@ void Renderer::createMaterialManager()
 {
     m_VulkanContext->SetCommandPool(m_CommandPools);
     m_MaterialManager = std::make_unique<omp::MaterialManager>(m_VulkanContext);
+}
+
+omp::GraphicsPipeline* Renderer::FindGraphicsPipeline(const std::string &name)
+{
+    if (m_Pipelines.find(name) != m_Pipelines.end())
+    {
+        return m_Pipelines.at(name).get();
+    }
+
+    throw "No shader with such name";
 }
 

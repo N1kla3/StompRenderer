@@ -228,6 +228,8 @@ private:
 
     VkSampleCountFlagBits getMaxUsableSampleCount();
 
+    omp::GraphicsPipeline* FindGraphicsPipeline(const std::string& name);
+
     void CreateVertexBufferAndMemoryAtIndex(size_t index);
     void CreateIndexBufferAndMemoryAtIndex(size_t index);
 
@@ -282,10 +284,8 @@ private:
 
     VkDescriptorSetLayout m_DescriptorSetLayout;
     VkRenderPass m_RenderPass;
-    VkPipelineLayout m_PipelineLayout;
 
-    VkPipeline m_GraphicsPipeline;
-    std::unique_ptr<omp::GraphicsPipeline> m_LightGraphicsPipeline;
+    std::unordered_map<std::string, std::unique_ptr<omp::GraphicsPipeline>> m_Pipelines;
 
     VkCommandPool m_CommandPools;
     VkDescriptorPool m_DescriptorPool;
@@ -329,8 +329,6 @@ private:
     VkImage m_DepthImage;
     VkDeviceMemory m_DepthImageMemory;
     VkImageView m_DepthImageView;
-
-    std::shared_ptr<omp::Shader> m_CurrentShader;
 
     std::shared_ptr<omp::Scene> m_CurrentScene;
     // Todo: maybe multiple later
