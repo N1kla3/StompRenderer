@@ -11,6 +11,11 @@ omp::Model::Model()
 
 }
 
+void omp::Model::SetMaterial(const std::shared_ptr<Material>& InMaterial)
+{
+    m_MaterialInstance = std::make_shared<MaterialInstance>(InMaterial);
+}
+
 void omp::Model::AddVertex(const omp::Vertex &InVertex)
 {
     m_Vertices.emplace_back(std::move(InVertex));

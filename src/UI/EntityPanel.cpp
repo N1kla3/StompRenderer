@@ -28,7 +28,6 @@ void omp::EntityPanel::renderUI(float DeltaTime)
     }
     else
     {
-        //ImGui::SameLine(2, 2);
         ImGui::BulletText("No Entity");
     }
 
@@ -41,6 +40,6 @@ void omp::EntityPanel::SetModel(const std::shared_ptr<omp::Model> &model)
     auto mat_panel = m_MaterialPanelRef.lock();
     if (mat_panel)
     {
-        mat_panel->setMaterial(model->GetMaterial());
+        mat_panel->setMaterial(model->GetMaterialInstance());
     }
 }

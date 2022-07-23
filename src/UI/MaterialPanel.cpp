@@ -2,15 +2,16 @@
 #include "imgui.h"
 #include "Material.h"
 #include "Logs.h"
+#include "MaterialInstance.h"
 
 void omp::MaterialPanel::renderUI(float DeltaTime)
 {
     ImGui::Begin("Material Panel");
 
-    if (!m_Material.expired())
+    if (!m_MaterialInstance.expired())
     {
         ImGui::BulletText("Textures:");
-        for (auto& texture : m_Material.lock()->GetTextureData())
+        for (auto& texture : m_MaterialInstance.lock()->m_StaticMaterial.lock()->GetTextureData())
         {
             if (ImGui::TreeNode(texture.Texture->GetPath().c_str()))
             {
@@ -21,9 +22,9 @@ void omp::MaterialPanel::renderUI(float DeltaTime)
                 ImGui::TreePop();
             }
         }
-        ImGui::DragFloat3("Ambient", &m_Material.lock()->m_Ambient[0],  0.01f, 0.0f, 0.0f, "%.2f", 0);
-        ImGui::DragFloat3("Diffusive", &m_Material.lock()->m_Diffusive[0],  0.01f, 0.0f, 0.0f, "%.2f", 0);
-        ImGui::DragFloat3("Specular", &m_Material.lock()->m_Specular[0],  0.01f, 0.0f, 0.0f, "%.2f", 0);
+        ImGui::DragFloat3("Ambient", &m_MaterialInstance.lock()->m_Ambient[0], 0.01f, 0.0f, 0.0f, "%.2f", 0);
+        ImGui::DragFloat3("Diffusive", &m_MaterialInstance.lock()->m_Diffusive[0], 0.01f, 0.0f, 0.0f, "%.2f", 0);
+        ImGui::DragFloat3("Specular", &m_MaterialInstance.lock()->m_Specular[0], 0.01f, 0.0f, 0.0f, "%.2f", 0);
     }
     else
     {
@@ -33,7 +34,7 @@ void omp::MaterialPanel::renderUI(float DeltaTime)
     ImGui::End();
 }
 
-void omp::MaterialPanel::setMaterial(const std::shared_ptr<Material> &inMaterial)
+void omp::MaterialPanel::setMaterial(const std::shared_ptr<MaterialInstance> &inMaterial)
 {
-    m_Material = inMaterial;
+    m_MaterialInstance = inMaterial;
 }

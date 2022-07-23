@@ -17,11 +17,6 @@ class Material : public Asset
 {
     std::vector<TextureData> m_Textures;
 
-    // vec4 because of glsl alignment, 4th element used for color strength
-    glm::vec4 m_Ambient = {1.0f, 1.0f, 1.0f, 0};
-    glm::vec4 m_Diffusive = {1.0f, 1.0f, 1.0f, 0};
-    glm::vec4 m_Specular = {1.0f, 1.0f, 1.0f, 0};
-
     bool m_IsDirty = true;
     bool m_IsInitialized = false;
 
@@ -51,10 +46,6 @@ public:
 
     static constexpr int MAX_TEXTURES = 1;
 
-    glm::vec4 GetAmbient() const { return m_Ambient; }
-    glm::vec4 GetDiffusive() const { return m_Diffusive; }
-    glm::vec4 GetSpecular() const { return m_Specular; }
 
-    friend class MaterialPanel;
 };
 } // omp

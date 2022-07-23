@@ -816,37 +816,39 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
     for (size_t index = 0; index < m_CurrentScene->GetModels().size(); index++)
     {
         auto& current_model = m_CurrentScene->GetModels()[index];
-        auto current_mat = current_model->GetMaterial();
+        auto& material_instance = current_model->GetMaterialInstance();
+        auto material = material_instance->GetStaticMaterial();
+
 
         vkCmdBindPipeline(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          FindGraphicsPipeline(current_mat->GetShaderName())->GetGraphicsPipeline());
+                          FindGraphicsPipeline(material_instance->GetShaderName())->GetGraphicsPipeline());
 
         vkCmdBindVertexBuffers(m_CommandBuffers[inIndex], 0, 1, &m_VertexBuffers[index], offsets);
         vkCmdBindIndexBuffer(m_CommandBuffers[inIndex], m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
 
         omp::ModelPushConstant constant;
         constant.model = current_model->GetTransform();
-        constant.m_Ambient = current_mat->GetAmbient();
-        constant.m_Diffusive = current_mat->GetDiffusive();
-        constant.m_Specular = current_mat->GetSpecular();
+        constant.m_Ambient = material_instance->GetAmbient();
+        constant.m_Diffusive = material_instance->GetDiffusive();
+        constant.m_Specular = material_instance->GetSpecular();
         vkCmdPushConstants(m_CommandBuffers[inIndex],
-                           FindGraphicsPipeline(current_mat->GetShaderName())->GetPipelineLayout(),
+                           FindGraphicsPipeline(material_instance->GetShaderName())->GetPipelineLayout(),
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                            0, sizeof(omp::ModelPushConstant), &constant);
 
 
-        if (current_mat->IsInitialized())
+        if (material.lock()->IsInitialized())
         {
             vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    FindGraphicsPipeline(current_mat->GetShaderName())->GetPipelineLayout(),
-                                    0, 1, &current_mat->GetDescriptorSet()[inIndex],
+                                    FindGraphicsPipeline(material_instance->GetShaderName())->GetPipelineLayout(),
+                                    0, 1, &material.lock()->GetDescriptorSet()[inIndex],
                                     0, nullptr);
         }
         else
         {
-            createDescriptorSetsForMaterial(current_model->GetMaterial());
+            createDescriptorSetsForMaterial(material.lock());
             vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    FindGraphicsPipeline(current_mat->GetShaderName())->GetPipelineLayout(),
+                                    FindGraphicsPipeline(material_instance->GetShaderName())->GetPipelineLayout(),
                                     0, 1, &m_DefaultMaterial->GetDescriptorSet()[inIndex],
                                     0, nullptr);
         }
@@ -1699,6 +1701,7 @@ std::shared_ptr<omp::Model> Renderer::loadModel(const std::string &Name, const s
     }
 
     loaded_model.SetName(Name);
+    // TODO should be choosable
     loaded_model.SetMaterial(m_DefaultMaterial);
     loadModelToBuffer(loaded_model);
     auto model_ptr = std::make_shared<omp::Model>(loaded_model);

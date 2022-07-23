@@ -6,16 +6,16 @@
 
 namespace omp{
 
-class Material;
+class MaterialInstance;
 
 class MaterialPanel : public ImguiUnit
 {
-    std::weak_ptr<Material> m_Material;
+    std::weak_ptr<MaterialInstance> m_MaterialInstance;
 
 public:
 
     virtual void renderUI(float DeltaTime) override;
 
-    void setMaterial(const std::shared_ptr<Material>& inMaterial);
+    void setMaterial(const std::shared_ptr<MaterialInstance>& inMaterial);
 };
 }
