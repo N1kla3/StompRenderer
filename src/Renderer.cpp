@@ -1320,6 +1320,7 @@ void Renderer::createDescriptorSets()
 
         VkDescriptorImageInfo image_info{};
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        m_DefaultTexture->FullLoad(m_DefaultTexture->GetPath());
         image_info.imageView = m_DefaultTexture->GetImageView();
         image_info.sampler = m_DefaultTexture->GetSampler();
 
@@ -1420,9 +1421,11 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
 void Renderer::createTextureImage()
 {
     m_DefaultTexture = m_MaterialManager->LoadTextureLazily(TEXTURE_PATH);
+    // TODO add autoload of texture when requested somewhere
+    m_MaterialManager->LoadTextureLazily("../textures/viking.png");
     m_MaterialManager->LoadTextureLazily("../textures/mando.jpg");
 
-    m_DefaultMaterial = std::make_shared<omp::Material>();
+    m_DefaultMaterial = m_MaterialManager->CreateMaterial("default");
     // TODO: remove hardcoding
     m_DefaultMaterial->AddTexture({2, m_DefaultTexture});
     m_DefaultMaterial->SetShaderName("Light");
@@ -1642,6 +1645,11 @@ bool Renderer::hasStencilComponent(VkFormat format)
 void Renderer::loadLightObject(const std::string& Name, const std::string& TextureName)
 {
     auto model = loadModel(Name, TextureName);
+    auto mat = m_MaterialManager->CreateMaterial("default_no_light");
+    mat->AddTexture({2, m_DefaultTexture});
+    mat->SetShaderName("Simple");
+    model->SetMaterial(mat);
+
     // TODO make a lot of light objects
     m_LightObject->SetModel(model);
 }

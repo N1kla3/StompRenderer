@@ -40,3 +40,10 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::GetTexture(const std::string
     WARN(Rendering, "Texture do not exists: " + path);
     return nullptr;
 }
+
+std::shared_ptr<omp::Material> omp::MaterialManager::CreateMaterial(const std::string& name)
+{
+    auto mat = std::make_shared<omp::Material>(name);
+    m_Materials.insert({name, mat});
+    return mat;
+}

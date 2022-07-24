@@ -13,7 +13,7 @@ struct TextureData
 };
 
 namespace omp{
-class Material : public Asset
+class Material : public Asset // TODO should be separated from asset
 {
     std::vector<TextureData> m_Textures;
 
@@ -28,8 +28,12 @@ class Material : public Asset
 
     VkDescriptorImageInfo image_info{};
 public:
+    explicit Material(const std::string& name);
+
     void AddTexture(const TextureData& Data);
     void RemoveTexture(const TextureData& Data);
+
+    std::string GetName() const { return m_Name; }
 
     std::vector<TextureData> GetTextureData() const;
     void SetShaderName(const std::string& newName) { m_ShaderName = newName; };

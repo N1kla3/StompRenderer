@@ -75,7 +75,7 @@ struct UniformBufferObject
 };
 
 const std::string MODEL_PATH = "../models/cube.obj";
-const std::string TEXTURE_PATH = "../textures/viking.png";
+const std::string TEXTURE_PATH = "../textures/default.png";
 const VkClearColorValue CLEAR_COLOR = {0.52f, 0.48f, 0.52f, 1.0f};
 
 class Renderer {

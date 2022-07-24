@@ -75,3 +75,9 @@ void omp::Material::initialize()
     // TODO handle default texture if null
     m_AssetRepresentation = std::make_shared<MaterialRepresentation>(m_Textures[0].Texture);
 }
+
+omp::Material::Material(const std::string& name)
+    : Asset()
+{
+    m_Name = name;
+}
