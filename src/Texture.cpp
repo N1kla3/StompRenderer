@@ -13,7 +13,7 @@ omp::Texture::Texture(VkDevice device, VkPhysicalDevice physDevice, const std::s
 
 }
 
-void omp::Texture::Destroy()
+void omp::Texture::DestroyVkObjects()
 {
     vkDestroySampler(m_LogicalDevice, m_TextureSampler, nullptr);
     vkDestroyImageView(m_LogicalDevice, m_TextureImageView, nullptr);
@@ -137,6 +137,11 @@ void omp::Texture::createImageView()
 
 void omp::Texture::FullLoad(const std::string &path)
 {
+    // TODO normal lifecycle
+    if (m_LoadedToGPU)
+    {
+        DestroyVkObjects();
+    }
     LoadTextureToCPU(path);
     LoadToGPU();
 }

@@ -11,7 +11,7 @@ omp::MaterialManager::~MaterialManager()
 {
     for (auto texture_pair : m_Textures)
     {
-        texture_pair.second->Destroy();
+        texture_pair.second->DestroyVkObjects();
     }
 }
 

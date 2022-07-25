@@ -39,7 +39,7 @@ public:
     void FullLoad(const std::string& path);
     void LazyLoad(const std::string& path);
 
-    void Destroy();
+    void DestroyVkObjects();
     uint64_t GetTextureId();
     VkImageView GetImageView() const { return m_TextureImageView; }
     VkImage GetImage() const { return m_TextureImage; }
