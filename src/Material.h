@@ -6,13 +6,21 @@
 #include "UI/MaterialPanel.h"
 #include "glm/vec4.hpp"
 
+namespace omp{
 struct TextureData
 {
     uint32_t BindingIndex;
-    std::shared_ptr<omp::Texture> Texture;
+    std::shared_ptr<Texture> Texture;
 };
 
-namespace omp{
+enum class TextureType
+{
+    Texture = 2,
+    DiffusiveMap,
+    SpecularMap,
+    MAX
+};
+
 class Material : public Asset // TODO should be separated from asset
 {
     std::vector<TextureData> m_Textures;
@@ -27,10 +35,13 @@ class Material : public Asset // TODO should be separated from asset
     std::vector<VkDescriptorSet> m_DescriptorSets;
 
     VkDescriptorImageInfo image_info{};
+
+    void AddTextureInternal(TextureData&& Data);
+
 public:
     explicit Material(const std::string& name);
 
-    void AddTexture(const TextureData& Data);
+    void AddTexture(TextureType type, const std::shared_ptr<Texture>& texture);
     void RemoveTexture(const TextureData& Data);
 
     std::string GetName() const { return m_Name; }
@@ -48,8 +59,7 @@ public:
 
     virtual void initialize() override;
 
-    static constexpr int MAX_TEXTURES = 1;
-
+    static constexpr int MAX_TEXTURES = 3;
 
 };
 } // omp

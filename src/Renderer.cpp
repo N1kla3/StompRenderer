@@ -1181,8 +1181,7 @@ void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize s
 
 void Renderer::createDescriptorSetLayout()
 {
-    //TODO need multiple textures
-
+    // TODO: need abstraction
     VkDescriptorSetLayoutBinding uboLayoutBinding{};
     uboLayoutBinding.binding = 0;
     uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1204,7 +1203,21 @@ void Renderer::createDescriptorSetLayout()
     samplerLayoutBinding.pImmutableSamplers = nullptr;
     samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    std::array<VkDescriptorSetLayoutBinding, 3> bindings = {uboLayoutBinding, lightLayoutBinding, samplerLayoutBinding};
+    VkDescriptorSetLayoutBinding diffusiveLayoutBinding{};
+    diffusiveLayoutBinding.binding = 3;
+    diffusiveLayoutBinding.descriptorCount = 1;
+    diffusiveLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    diffusiveLayoutBinding.pImmutableSamplers = nullptr;
+    diffusiveLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    VkDescriptorSetLayoutBinding specularLayoutBinding{};
+    specularLayoutBinding.binding = 4;
+    specularLayoutBinding.descriptorCount = 1;
+    specularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    specularLayoutBinding.pImmutableSamplers = nullptr;
+    specularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    std::array<VkDescriptorSetLayoutBinding, 5> bindings = {uboLayoutBinding, lightLayoutBinding, samplerLayoutBinding, diffusiveLayoutBinding, specularLayoutBinding};
 
     VkDescriptorSetLayoutCreateInfo layout_info{};
     layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1324,7 +1337,7 @@ void Renderer::createDescriptorSets()
         image_info.imageView = m_DefaultTexture->GetImageView();
         image_info.sampler = m_DefaultTexture->GetSampler();
 
-        std::array<VkWriteDescriptorSet, 3> descriptor_writes{};
+        std::array<VkWriteDescriptorSet, 5> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptor_writes[0].dstSet = m_DescriptorSets[i];
         descriptor_writes[0].dstBinding = 0;
@@ -1348,6 +1361,22 @@ void Renderer::createDescriptorSets()
         descriptor_writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         descriptor_writes[2].descriptorCount = 1;
         descriptor_writes[2].pImageInfo = &image_info;
+
+        descriptor_writes[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_writes[3].dstSet = m_DescriptorSets[i];
+        descriptor_writes[3].dstBinding = 3;
+        descriptor_writes[3].dstArrayElement = 0;
+        descriptor_writes[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptor_writes[3].descriptorCount = 1;
+        descriptor_writes[3].pImageInfo = &image_info;
+
+        descriptor_writes[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_writes[4].dstSet = m_DescriptorSets[i];
+        descriptor_writes[4].dstBinding = 4;
+        descriptor_writes[4].dstArrayElement = 0;
+        descriptor_writes[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptor_writes[4].descriptorCount = 1;
+        descriptor_writes[4].pImageInfo = &image_info;
 
         vkUpdateDescriptorSets(m_LogicalDevice,
             static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
@@ -1427,7 +1456,7 @@ void Renderer::createTextureImage()
 
     m_DefaultMaterial = m_MaterialManager->CreateMaterial("default");
     // TODO: remove hardcoding
-    m_DefaultMaterial->AddTexture({2, m_DefaultTexture});
+    m_DefaultMaterial->AddTexture(omp::TextureType::Texture, m_DefaultTexture);
     m_DefaultMaterial->SetShaderName("Light");
 
     // TODO: Material instancing
@@ -1646,7 +1675,7 @@ void Renderer::loadLightObject(const std::string& Name, const std::string& Textu
 {
     auto model = loadModel(Name, TextureName);
     auto mat = m_MaterialManager->CreateMaterial("default_no_light");
-    mat->AddTexture({2, m_DefaultTexture});
+    mat->AddTexture(omp::TextureType::Texture, m_DefaultTexture);
     mat->SetShaderName("Simple");
     model->SetMaterial(mat);
 
