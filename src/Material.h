@@ -23,6 +23,7 @@ enum class TextureType
 
 class Material : public Asset // TODO should be separated from asset
 {
+    omp::MaterialManager* m_Manager = nullptr;
     std::vector<TextureData> m_Textures;
 
     bool m_IsDirty = true;
@@ -61,5 +62,6 @@ public:
 
     static constexpr int MAX_TEXTURES = 3;
 
+    friend MaterialManager;
 };
 } // omp

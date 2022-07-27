@@ -14,6 +14,9 @@ class MaterialManager
     std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
     std::unordered_map<std::string, std::shared_ptr<omp::Material>> m_Materials;
 
+    std::shared_ptr<omp::Texture> m_DefaultTexture;
+    std::shared_ptr<omp::Texture> m_EmptyTexture;
+
 public:
     explicit MaterialManager(const std::shared_ptr<VulkanContext>& helper);
     ~MaterialManager();
@@ -24,5 +27,8 @@ public:
     std::shared_ptr<omp::Material> CreateMaterial(const std::string& name);
 
     std::shared_ptr<Texture> GetTexture(const std::string& path) const;
+
+    std::weak_ptr<omp::Texture> GetDefaultTexture() const { return m_DefaultTexture; }
+    std::weak_ptr<omp::Texture> GetEmptyTexture() const { return m_EmptyTexture; }
 };
 } // omp
