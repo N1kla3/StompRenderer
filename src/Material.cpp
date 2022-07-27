@@ -18,7 +18,14 @@ void omp::Material::AddTextureInternal(TextureData&& Data)
 
 void omp::Material::AddTexture(TextureType type, const std::shared_ptr<Texture>& texture)
 {
-    AddTextureInternal({static_cast<uint32_t>(type), texture});
+    const static std::array<std::string, static_cast<size_t>(TextureType::MAX)> Names
+            {"",
+             "",
+             "Texture",
+             "Diffusive map",
+             "Specular map"};
+
+    AddTextureInternal({static_cast<uint32_t>(type), texture, Names[static_cast<uint32_t>(type)]});
 }
 
 void omp::Material::RemoveTexture(const TextureData &Data)
@@ -39,20 +46,17 @@ std::vector<VkWriteDescriptorSet> omp::Material::GetDescriptorWriteSets()
     {
         auto& cached_texture_data = m_Textures[i];
         auto& cached_texture = cached_texture_data.Texture;
-
-        // TODO: this will load for imgui too, not good
-        image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        m_Manager->GetEmptyTexture().lock()->GetTextureId();
-        image_info.imageView = m_Manager->GetEmptyTexture().lock()->GetImageView();
-        image_info.sampler = m_Manager->GetEmptyTexture().lock()->GetSampler();
-        m_DescriptorWriteSets[i].dstBinding = i + 2; // TODO remove hard code
-        if (cached_texture)
+        if (!cached_texture || cached_texture_data.BindingIndex <= 1)
         {
-            cached_texture->GetTextureId();
-            image_info.imageView = cached_texture->GetImageView();
-            image_info.sampler = cached_texture->GetSampler();
-            m_DescriptorWriteSets[i].dstBinding = cached_texture_data.BindingIndex;
+            AddTexture(static_cast<TextureType>(i + static_cast<uint32_t>(TextureType::Texture)), m_Manager->GetEmptyTexture().lock());
         }
+
+        image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        // TODO: this will load for imgui too, not good
+        cached_texture->GetTextureId();
+        image_info.imageView = cached_texture->GetImageView();
+        image_info.sampler = cached_texture->GetSampler();
+        m_DescriptorWriteSets[i].dstBinding = cached_texture_data.BindingIndex;
 
         m_DescriptorWriteSets[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         //m_DescriptorSets[i].dstSet = m_DescriptorSets[i];

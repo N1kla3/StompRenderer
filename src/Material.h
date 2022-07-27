@@ -11,6 +11,7 @@ struct TextureData
 {
     uint32_t BindingIndex;
     std::shared_ptr<Texture> Texture;
+    std::string Name;
 };
 
 enum class TextureType

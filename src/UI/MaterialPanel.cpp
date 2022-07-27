@@ -13,8 +13,9 @@ void omp::MaterialPanel::renderUI(float DeltaTime)
         ImGui::BulletText("Textures:");
         for (auto& texture : m_MaterialInstance.lock()->m_StaticMaterial.lock()->GetTextureData())
         {
-            if (ImGui::TreeNode(texture.Texture->GetPath().c_str()))
+            if (ImGui::TreeNode(texture.Name.c_str()))
             {
+                ImGui::BulletText("%s", texture.Texture->GetPath().c_str());
                 if (ImGui::ImageButton(texture.Texture->GetTextureId(), {100, 100}))
                 {
                     INFO(Rendering, "Pressed");
