@@ -36,7 +36,7 @@ class Material : public Asset // TODO should be separated from asset
 
     std::vector<VkDescriptorSet> m_DescriptorSets;
 
-    VkDescriptorImageInfo image_info{};
+    std::vector<VkDescriptorImageInfo> m_ImageInfosCache{};
 
     void AddTextureInternal(TextureData&& Data);
 

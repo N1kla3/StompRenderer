@@ -19,6 +19,8 @@ layout(binding = 1) uniform LightBufferObject
 } light;
 
 layout(binding = 2) uniform sampler2D texSampler;
+layout(binding = 3) uniform sampler2D diffMap;
+layout(binding = 4) uniform sampler2D specMap;
 
 //push constants block
 layout( push_constant ) uniform constants

@@ -75,7 +75,7 @@ struct UniformBufferObject
 };
 
 const std::string MODEL_PATH = "../models/cube.obj";
-const std::string TEXTURE_PATH = "../textures/default.png";
+const std::string TEXTURE_PATH = "../textures/container.png";
 const VkClearColorValue CLEAR_COLOR = {0.52f, 0.48f, 0.52f, 1.0f};
 
 class Renderer {
@@ -299,7 +299,6 @@ private:
     std::vector<VkBuffer> m_IndexBuffers;
     std::vector<VkDeviceMemory> m_IndexBufferMemories;
 
-    std::shared_ptr<omp::Texture> m_DefaultTexture;
     std::shared_ptr<omp::Material> m_DefaultMaterial;
 
     VkImage m_ColorImage;

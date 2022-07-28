@@ -1332,10 +1332,11 @@ void Renderer::createDescriptorSets()
         light_info.range = sizeof(omp::Light);
 
         VkDescriptorImageInfo image_info{};
+        auto texture = m_MaterialManager->GetDefaultTexture().lock();
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        m_DefaultTexture->FullLoad(m_DefaultTexture->GetPath());
-        image_info.imageView = m_DefaultTexture->GetImageView();
-        image_info.sampler = m_DefaultTexture->GetSampler();
+        texture->FullLoad(texture->GetPath());
+        image_info.imageView = texture->GetImageView();
+        image_info.sampler = texture->GetSampler();
 
         std::array<VkWriteDescriptorSet, 5> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1449,14 +1450,16 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
 
 void Renderer::createTextureImage()
 {
-    m_DefaultTexture = m_MaterialManager->LoadTextureLazily(TEXTURE_PATH);
     // TODO add autoload of texture when requested somewhere
     m_MaterialManager->LoadTextureLazily("../textures/viking.png");
     m_MaterialManager->LoadTextureLazily("../textures/mando.jpg");
+    m_MaterialManager->LoadTextureLazily("../textures/container.png");
 
     m_DefaultMaterial = m_MaterialManager->CreateMaterial("default");
     // TODO: remove hardcoding
-    m_DefaultMaterial->AddTexture(omp::TextureType::Texture, m_DefaultTexture);
+    m_DefaultMaterial->AddTexture(omp::TextureType::Texture, m_MaterialManager->GetTexture("../textures/container.png"));
+    //m_DefaultMaterial->AddTexture(omp::TextureType::DiffusiveMap, m_MaterialManager->GetDefaultTexture().lock());
+    //m_DefaultMaterial->AddTexture(omp::TextureType::SpecularMap, m_MaterialManager->GetDefaultTexture().lock());
     m_DefaultMaterial->SetShaderName("Light");
 
     // TODO: Material instancing
@@ -1675,7 +1678,7 @@ void Renderer::loadLightObject(const std::string& Name, const std::string& Textu
 {
     auto model = loadModel(Name, TextureName);
     auto mat = m_MaterialManager->CreateMaterial("default_no_light");
-    mat->AddTexture(omp::TextureType::Texture, m_DefaultTexture);
+    mat->AddTexture(omp::TextureType::Texture, m_MaterialManager->GetDefaultTexture().lock());
     mat->SetShaderName("Simple");
     model->SetMaterial(mat);
 

@@ -42,6 +42,7 @@ std::vector<VkWriteDescriptorSet> omp::Material::GetDescriptorWriteSets()
     }
 
     m_DescriptorWriteSets.resize(m_Textures.size());
+    m_ImageInfosCache.resize(m_Textures.size());
     for (size_t i = 0; i < m_Textures.size(); i++)
     {
         auto& cached_texture_data = m_Textures[i];
@@ -50,7 +51,7 @@ std::vector<VkWriteDescriptorSet> omp::Material::GetDescriptorWriteSets()
         {
             AddTexture(static_cast<TextureType>(i + static_cast<uint32_t>(TextureType::Texture)), m_Manager->GetEmptyTexture().lock());
         }
-
+        VkDescriptorImageInfo image_info{};
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         // TODO: this will load for imgui too, not good
         cached_texture->GetTextureId();
@@ -63,7 +64,8 @@ std::vector<VkWriteDescriptorSet> omp::Material::GetDescriptorWriteSets()
         m_DescriptorWriteSets[i].dstArrayElement = 0;
         m_DescriptorWriteSets[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         m_DescriptorWriteSets[i].descriptorCount = 1;
-        m_DescriptorWriteSets[i].pImageInfo = &image_info;
+        m_ImageInfosCache[i] = image_info;
+        m_DescriptorWriteSets[i].pImageInfo = &m_ImageInfosCache[i];
     }
     m_IsDirty = false;
     return m_DescriptorWriteSets;
