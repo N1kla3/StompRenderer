@@ -42,13 +42,13 @@ void main()
     vec3 norm = normalize(outNormal);
     vec3 lightDir = normalize(light.position - outPosition);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = vec3(light.diff_str) * (diff * pushModel.pushDiffusive) * light.diffusive;
+    vec3 diffuse = vec3(light.diff_str) * (diff * pushModel.pushDiffusive) * vec3(texture(diffMap, fragTexCoord));
 
     // specular
     vec3 viewDir = normalize(outViewPosition - outPosition);
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64);
-    vec3 specular = vec3(light.spec_str) * pushModel.pushSpecular * (spec * light.specular);
+    vec3 specular = vec3(light.spec_str) * pushModel.pushSpecular * (spec * vec3(texture(specMap, fragTexCoord)));
 
     vec3 result = (ambient + diffuse + specular) * fragColor;
     outColor = texture(texSampler, fragTexCoord) * vec4(result, 1.0f);

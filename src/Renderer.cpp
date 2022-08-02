@@ -1049,7 +1049,8 @@ void Renderer::cleanupSwapChain()
 
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
 
-    for (auto framebuffer : m_ImguiFramebuffers) {
+    for (auto framebuffer : m_ImguiFramebuffers)
+    {
         vkDestroyFramebuffer(m_LogicalDevice, framebuffer, nullptr);
     }
 
@@ -1454,12 +1455,13 @@ void Renderer::createTextureImage()
     m_MaterialManager->LoadTextureLazily("../textures/viking.png");
     m_MaterialManager->LoadTextureLazily("../textures/mando.jpg");
     m_MaterialManager->LoadTextureLazily("../textures/container.png");
+    m_MaterialManager->LoadTextureLazily("../textures/container_specular.png");
 
     m_DefaultMaterial = m_MaterialManager->CreateMaterial("default");
     // TODO: remove hardcoding
     m_DefaultMaterial->AddTexture(omp::TextureType::Texture, m_MaterialManager->GetTexture("../textures/container.png"));
-    //m_DefaultMaterial->AddTexture(omp::TextureType::DiffusiveMap, m_MaterialManager->GetDefaultTexture().lock());
-    //m_DefaultMaterial->AddTexture(omp::TextureType::SpecularMap, m_MaterialManager->GetDefaultTexture().lock());
+    m_DefaultMaterial->AddTexture(omp::TextureType::DiffusiveMap, m_MaterialManager->GetTexture("../textures/container_specular.png"));
+    m_DefaultMaterial->AddTexture(omp::TextureType::SpecularMap, m_MaterialManager->GetTexture("../textures/container_specular.png"));
     m_DefaultMaterial->SetShaderName("Light");
 
     // TODO: Material instancing
