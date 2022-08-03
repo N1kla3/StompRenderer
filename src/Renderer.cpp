@@ -1453,7 +1453,6 @@ void Renderer::createTextureImage()
 {
     // TODO add autoload of texture when requested somewhere
     m_MaterialManager->LoadTextureLazily("../textures/viking.png");
-    m_MaterialManager->LoadTextureLazily("../textures/mando.jpg");
     m_MaterialManager->LoadTextureLazily("../textures/container.png");
     m_MaterialManager->LoadTextureLazily("../textures/container_specular.png");
 
@@ -2101,9 +2100,6 @@ void Renderer::renderAllUi()
     if (m_MaterialManager->GetTexture("../textures/viking.png"))
         ImGui::Image(
                 (ImTextureID)(m_MaterialManager->GetTexture("../textures/viking.png")->GetTextureId()), {100, 100});
-    if (m_MaterialManager->GetTexture("../textures/mando.jpg"))
-        ImGui::Image(
-                (ImTextureID)(m_MaterialManager->GetTexture("../textures/mando.jpg")->GetTextureId()), {100, 100});
 
     ImGui::End();
 
