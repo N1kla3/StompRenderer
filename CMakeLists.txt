@@ -11,6 +11,7 @@ add_subdirectory(tinyobjloader-master)
 add_subdirectory(spdlog)
 add_subdirectory(googletest)
 add_subdirectory(json)
+add_subdirectory(profiler)
 
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src)
@@ -114,7 +115,7 @@ enable_testing()
 
 add_executable(renderer src/main.cpp ${SOURCE} ${IMGUI})
 target_compile_definitions(renderer PRIVATE)
-target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json)
+target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json stompprofiler)
 
 add_executable(tests ${TESTS} ${SOURCE} ${IMGUI})
 add_test(NAME RendererTests COMMAND tests)

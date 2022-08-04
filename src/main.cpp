@@ -5,6 +5,7 @@
 #include <glm/mat4x4.hpp>
 #include "Logs.h"
 #include "Renderer.h"
+#include "../profiler/src/ProfilerCore.h"
 
 int main()
 {
