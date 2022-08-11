@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <memory>
 #include "Texture.h"
+#include "Logs.h"
 #include "imgui_impl_vulkan.h"
 #include "stb_image.h"
 
@@ -23,18 +24,17 @@ void omp::Texture::DestroyVkObjects()
 
 uint64_t omp::Texture::GetTextureId()
 {
-    if (!m_LoadedToGPU)
+    if (!hasFlags(LoadedToGPU))
     {
         LoadToGPU();
-        m_LoadedToGPU = true;
+        addFlags(LoadedToGPU);
     }
     return m_Id;
 }
 
 void omp::Texture::LoadTextureToCPU(const std::string &path)
 {
-    m_LoadedToGPU = false;
-    m_LoadedToCPU = false;
+    removeFlags(LoadedToGPU | LoadedToCPU);
 
     m_ContentPath = path;
     int tex_channels;
@@ -48,14 +48,19 @@ void omp::Texture::LoadTextureToCPU(const std::string &path)
         throw std::runtime_error("Failed to load texture image!");
     }
 
-    m_LoadedToCPU = true;
+    addFlags(LoadedToCPU);
 }
 
 void omp::Texture::LoadToGPU()
 {
-    if (m_LoadedToGPU)
+    if (hasFlags(LoadedToGPU))
     {
         return;
+    }
+
+    if (!hasFlags(LoadedToCPU))
+    {
+        ERROR(Rendering, "Texture not loaded to CPU {1} ", m_ContentPath);
     }
 
     createSampler();
@@ -64,7 +69,7 @@ void omp::Texture::LoadToGPU()
 
     m_Id = ImGui_ImplVulkan_AddTexture(m_TextureSampler, m_TextureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    m_LoadedToGPU = true;
+    addFlags(LoadedToGPU);
 }
 
 void omp::Texture::createSampler()
@@ -138,7 +143,7 @@ void omp::Texture::createImageView()
 void omp::Texture::FullLoad(const std::string &path)
 {
     // TODO normal lifecycle
-    if (m_LoadedToGPU)
+    if (hasFlags(LoadedToGPU))
     {
         DestroyVkObjects();
     }
@@ -149,5 +154,20 @@ void omp::Texture::FullLoad(const std::string &path)
 void omp::Texture::LazyLoad(const std::string &path)
 {
     LoadTextureToCPU(path);
+}
+
+void omp::Texture::removeFlags(uint16_t flags)
+{
+    m_Flags = (m_Flags & flags) ^ m_Flags;
+}
+
+void omp::Texture::addFlags(uint16_t flags)
+{
+    m_Flags = m_Flags | flags;
+}
+
+bool omp::Texture::hasFlags(uint16_t flags) const
+{
+    return m_Flags & flags;
 }
 

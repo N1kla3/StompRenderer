@@ -10,14 +10,20 @@ namespace omp{
  */
 class Texture
 {
+    enum
+    {
+        LoadedToGPU = 1 << 1,
+        LoadedToCPU = 1 << 2,
+        LoadedToUI = 1 << 3
+    };
+
     std::string m_ContentPath;
     stbi_uc* m_Pixels;
     int m_Size;
     int m_Width, m_Height;
     uint32_t m_MipLevels;
 
-    bool m_LoadedToCPU;
-    bool m_LoadedToGPU;
+    uint16_t m_Flags = 0;
 
     // Vulkan //
     // ====== //
@@ -52,9 +58,15 @@ protected:
     // =========== //
     void LoadTextureToCPU(const std::string& path);
     void LoadToGPU();
+    void LoadToUI();
 
     void createSampler();
     void createImage();
     void createImageView();
+
+private:
+    void removeFlags(uint16_t flags);
+    void addFlags(uint16_t flags);
+    bool hasFlags(uint16_t flags) const;
 };
 } // omp
