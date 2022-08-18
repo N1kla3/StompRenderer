@@ -1335,7 +1335,6 @@ void Renderer::createDescriptorSets()
         VkDescriptorImageInfo image_info{};
         auto texture = m_MaterialManager->GetDefaultTexture().lock();
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        texture->FullLoad(texture->GetPath());
         image_info.imageView = texture->GetImageView();
         image_info.sampler = texture->GetSampler();
 

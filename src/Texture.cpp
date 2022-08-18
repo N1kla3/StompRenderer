@@ -24,17 +24,16 @@ void omp::Texture::DestroyVkObjects()
 
 uint64_t omp::Texture::GetTextureId()
 {
-    if (!hasFlags(LoadedToGPU))
+    if (!hasFlags(LoadedToUI))
     {
-        LoadToGPU();
-        addFlags(LoadedToGPU);
+        LoadToUI();
     }
     return m_Id;
 }
 
 void omp::Texture::LoadTextureToCPU(const std::string &path)
 {
-    removeFlags(LoadedToGPU | LoadedToCPU);
+    removeFlags(LoadedToGPU | LoadedToCPU | LoadedToUI);
 
     m_ContentPath = path;
     int tex_channels;
@@ -60,14 +59,12 @@ void omp::Texture::LoadToGPU()
 
     if (!hasFlags(LoadedToCPU))
     {
-        ERROR(Rendering, "Texture not loaded to CPU {1} ", m_ContentPath);
+        VERROR(Rendering, "Texture not loaded to CPU {1} ", m_ContentPath);
     }
 
     createSampler();
     createImage();
     createImageView();
-
-    m_Id = ImGui_ImplVulkan_AddTexture(m_TextureSampler, m_TextureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     addFlags(LoadedToGPU);
 }
@@ -142,7 +139,6 @@ void omp::Texture::createImageView()
 
 void omp::Texture::FullLoad(const std::string &path)
 {
-    // TODO normal lifecycle
     if (hasFlags(LoadedToGPU))
     {
         DestroyVkObjects();
@@ -169,5 +165,42 @@ void omp::Texture::addFlags(uint16_t flags)
 bool omp::Texture::hasFlags(uint16_t flags) const
 {
     return m_Flags & flags;
+}
+
+void omp::Texture::LoadToUI()
+{
+    if (!hasFlags(LoadedToGPU))
+    {
+        LoadToGPU();
+    }
+    m_Id = ImGui_ImplVulkan_AddTexture(m_TextureSampler, m_TextureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    addFlags(LoadedToUI);
+}
+
+VkImageView omp::Texture::GetImageView()
+{
+    if (!hasFlags(LoadedToGPU))
+    {
+        LoadToGPU();
+    }
+    return m_TextureImageView;
+}
+
+VkImage omp::Texture::GetImage()
+{
+    if (!hasFlags(LoadedToGPU))
+    {
+        LoadToGPU();
+    }
+    return m_TextureImage;
+}
+
+VkSampler omp::Texture::GetSampler()
+{
+    if (!hasFlags(LoadedToGPU))
+    {
+        LoadToGPU();
+    }
+    return m_TextureSampler;
 }
 

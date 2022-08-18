@@ -53,8 +53,6 @@ std::vector<VkWriteDescriptorSet> omp::Material::GetDescriptorWriteSets()
         }
         VkDescriptorImageInfo image_info{};
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        // TODO: this will load for imgui too, not good
-        cached_texture->GetTextureId();
         image_info.imageView = cached_texture->GetImageView();
         image_info.sampler = cached_texture->GetSampler();
         m_DescriptorWriteSets[i].dstBinding = cached_texture_data.BindingIndex;

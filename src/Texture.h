@@ -47,9 +47,9 @@ public:
 
     void DestroyVkObjects();
     uint64_t GetTextureId();
-    VkImageView GetImageView() const { return m_TextureImageView; }
-    VkImage GetImage() const { return m_TextureImage; }
-    VkSampler GetSampler() const { return m_TextureSampler; }
+    VkImageView GetImageView();
+    VkImage GetImage();
+    VkSampler GetSampler();
 
     std::string GetPath() const { return m_ContentPath; }
 

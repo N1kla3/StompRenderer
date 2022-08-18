@@ -15,7 +15,7 @@ omp::MaterialManager::MaterialManager(const std::shared_ptr<VulkanContext> &help
 
 omp::MaterialManager::~MaterialManager()
 {
-    for (auto texture_pair : m_Textures)
+    for (auto& texture_pair : m_Textures)
     {
         texture_pair.second->DestroyVkObjects();
     }
