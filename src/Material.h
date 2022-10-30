@@ -22,7 +22,7 @@ enum class TextureType
     MAX
 };
 
-class Material : public Asset // TODO should be separated from asset
+class Material
 {
     omp::MaterialManager* m_Manager = nullptr;
     std::vector<TextureData> m_Textures;
@@ -46,8 +46,6 @@ public:
     void AddTexture(TextureType type, const std::shared_ptr<Texture>& texture);
     void RemoveTexture(const TextureData& Data);
 
-    std::string GetName() const { return m_Name; }
-
     std::vector<TextureData> GetTextureData() const;
     void SetShaderName(const std::string& newName) { m_ShaderName = newName; };
     std::string GetShaderName() const { return m_ShaderName; }
@@ -58,8 +56,6 @@ public:
     std::vector<VkWriteDescriptorSet> GetDescriptorWriteSets();
 
     bool IsInitialized() const noexcept { return m_IsInitialized; }
-
-    virtual void initialize() override;
 
     static constexpr int MAX_TEXTURES = 3;
 

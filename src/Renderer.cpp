@@ -1450,7 +1450,6 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
 
 void Renderer::createTextureImage()
 {
-    // TODO add autoload of texture when requested somewhere
     m_MaterialManager->LoadTextureLazily("../textures/viking.png");
     m_MaterialManager->LoadTextureLazily("../textures/container.png");
     m_MaterialManager->LoadTextureLazily("../textures/container_specular.png");
@@ -1461,8 +1460,6 @@ void Renderer::createTextureImage()
     m_DefaultMaterial->AddTexture(omp::TextureType::DiffusiveMap, m_MaterialManager->GetTexture("../textures/container_specular.png"));
     m_DefaultMaterial->AddTexture(omp::TextureType::SpecularMap, m_MaterialManager->GetTexture("../textures/container_specular.png"));
     m_DefaultMaterial->SetShaderName("Light");
-
-    // TODO: Material instancing
 }
 
 void Renderer::createImage(

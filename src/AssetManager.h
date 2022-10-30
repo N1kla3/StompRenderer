@@ -12,9 +12,15 @@ class AssetManager
 private:
     std::unordered_map<std::string, std::shared_ptr<Asset>> m_Assets;
 
-    std::shared_ptr<VulkanContext> m_VkHelper;
+    AssetManager();
+    ~AssetManager() = default;
 public:
-    AssetManager(const std::shared_ptr<VulkanContext>& inHelper);
+
+    AssetManager(const AssetManager&) = delete;
+    AssetManager operator=(const AssetManager&) = delete;
+    AssetManager(AssetManager&&) = delete;
+    AssetManager operator=(AssetManager&&) = delete;
+    static AssetManager& GetAssetManager();
 
     template<class T>
     void createAsset(const std::string& inName);

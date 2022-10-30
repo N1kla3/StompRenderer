@@ -86,15 +86,7 @@ std::vector<omp::TextureData> omp::Material::GetTextureData() const
     return m_Textures;
 }
 
-void omp::Material::initialize()
-{
-    // TODO handle default texture if null
-    m_AssetRepresentation = std::make_shared<MaterialRepresentation>(m_Textures[0].Texture);
-}
-
 omp::Material::Material(const std::string& name)
-    : Asset()
 {
-    m_Name = name;
     m_Textures.resize(MAX_TEXTURES);
 }

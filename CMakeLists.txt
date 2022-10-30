@@ -53,6 +53,8 @@ set(SOURCE
         LightObject.cpp
         GraphicsPipeline.h
         GraphicsPipeline.cpp
+        AssetLoader.h
+        AssetLoader.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
@@ -85,6 +87,7 @@ set(SOURCE
 
 set(TESTS
         InitializationTests.cpp
+        AssetSystemTests.cpp
         )
 
 set(IMGUI

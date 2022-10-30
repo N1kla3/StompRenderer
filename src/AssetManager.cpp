@@ -8,8 +8,7 @@
 
 using namespace std::filesystem;
 
-omp::AssetManager::AssetManager(const std::shared_ptr<VulkanContext> &inHelper)
-    : m_VkHelper(inHelper)
+omp::AssetManager::AssetManager()
 {
 
 }
@@ -67,5 +66,11 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string &path)
             }
         }
     }
+}
+
+omp::AssetManager& omp::AssetManager::GetAssetManager()
+{
+    static AssetManager Singleton{};
+    return Singleton;
 }
 
