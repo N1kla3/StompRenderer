@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(renderer)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(Vulkan REQUIRED)
 
@@ -24,6 +24,8 @@ set(SOURCE
         Renderer.h
         Model.h
         Model.cpp
+        ModelAsset.h
+        ModelAsset.cpp
         Scene.h
         Scene.cpp
         Texture.h
@@ -34,6 +36,8 @@ set(SOURCE
         Material.cpp
         MaterialInstance.h
         MaterialInstance.cpp
+        MaterialAsset.h
+        MaterialAsset.cpp
         VulkanContext.h
         VulkanContext.cpp
         Shader.h

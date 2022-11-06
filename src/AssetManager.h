@@ -23,6 +23,7 @@ public:
     static AssetManager& GetAssetManager();
 
     template<class T>
+    requires std::is_base_of_v<Asset, T>
     void createAsset(const std::string& inName);
 
     void saveAsset(const std::string& inName);
@@ -33,6 +34,7 @@ private:
     void loadAssetsFromDrive(const std::string& path);
 
     template<class T>
+    requires std::is_base_of_v<Asset, T>
     void loadAsset(const std::string& inName);
 
     void loadAssetFromString(const std::string& className, const std::string& inName);
@@ -40,27 +42,22 @@ private:
 }; // Asset Manager
 
     template<class T>
+    requires std::is_base_of_v<Asset, T>
     void AssetManager::createAsset(const std::string& inName)
     {
-        static_assert(std::is_base_of_v<Asset, T>);
-
         std::shared_ptr<Asset> asset_ptr = std::make_shared<T>();
         asset_ptr->SetName(inName);
         m_Assets.insert({inName, asset_ptr});
-        asset_ptr->initialize();
     }
 
     template<class T>
+    requires std::is_base_of_v<Asset, T>
     void AssetManager::loadAsset(const std::string &inName)
     {
-        static_assert(std::is_base_of_v<Asset, T>);
-
         std::shared_ptr<Asset> asset_ptr = std::make_shared<T>();
         asset_ptr->SetName(inName);
 
-        asset_ptr->loadAssetFromFile(Asset::ASSET_FOLDER + inName + Asset::ASSET_FORMAT);
 
         m_Assets.insert({inName, asset_ptr});
-        asset_ptr->initialize();
     }
 }
