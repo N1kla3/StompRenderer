@@ -1,10 +1,13 @@
 #pragma once
-
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <filesystem>
+#include <fstream>
 #include "VulkanContext.h"
 #include "Asset.h"
+#include "AssetLoader.h"
+#include "Logs.h"
 
 namespace omp{
 class AssetManager
@@ -24,40 +27,26 @@ public:
 
     template<class T>
     requires std::is_base_of_v<Asset, T>
-    void createAsset(const std::string& inName);
+    void createAsset(const std::string& inName, const std::string& inPath);
 
     void saveAsset(const std::string& inName);
     void deleteAsset(const std::string& inName);
+    std::shared_ptr<Asset> getAsset(const std::string& inName);
 
 private:
     void loadAssetsFromDrive();
-    void loadAssetsFromDrive(const std::string& path);
-
-    template<class T>
-    requires std::is_base_of_v<Asset, T>
-    void loadAsset(const std::string& inName);
-
-    void loadAssetFromString(const std::string& className, const std::string& inName);
+    void loadAssetsFromDrive(const std::string& pathDirectory);
+    void loadAsset(const std::string& inPath);
 
 }; // Asset Manager
 
     template<class T>
     requires std::is_base_of_v<Asset, T>
-    void AssetManager::createAsset(const std::string& inName)
+    void AssetManager::createAsset(const std::string& inName, const std::string& inPath)
     {
         std::shared_ptr<Asset> asset_ptr = std::make_shared<T>();
-        asset_ptr->SetName(inName);
-        m_Assets.insert({inName, asset_ptr});
-    }
-
-    template<class T>
-    requires std::is_base_of_v<Asset, T>
-    void AssetManager::loadAsset(const std::string &inName)
-    {
-        std::shared_ptr<Asset> asset_ptr = std::make_shared<T>();
-        asset_ptr->SetName(inName);
-
-
+        asset_ptr->setName(inName);
+        asset_ptr->saveAssetToFile(inPath);
         m_Assets.insert({inName, asset_ptr});
     }
 }

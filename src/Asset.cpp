@@ -5,26 +5,29 @@
 #include "AssetLoader.h"
 #include "nlohmann/json.hpp"
 
-void omp::Asset::saveAssetToFile(const std::string &path)
+void omp::Asset::saveAssetToFile(const std::string &inPath)
 {
-    WARN(UI, "Asset " + m_Name + " is not saveable");
+    auto file = std::filesystem::directory_entry(inPath);
+    std::ofstream stream(file.path().string());
+    if (stream.is_open())
+    {
+        nlohmann::json data;
+        serializeData(data);
+        stream << std::setw(4) << data << std::endl;
+        INFO(AssetManager, "Asset saved successfully: ", inPath);
+    }
+
+    stream.close();
 }
 
-void omp::Asset::loadAssetFromFile(const std::string &path)
+void omp::Asset::saveToLastValidPath()
 {
-    Asset* LoadingAsset = AssetLoader::LoadAssetFromStorage(path);
-    if (LoadingAsset)
+    if (!m_Path.empty())
     {
-        auto file = std::filesystem::directory_entry(path);
-        std::ifstream stream(file.path().string());
-        if (stream.is_open())
-        {
-            nlohmann::json data;
-            stream >> data;
-            LoadingAsset->deserializeData(data);// memory leak watch
-        }
-
-        stream.close();
+        saveAssetToFile(m_Path);
     }
-    WARN(UI, "Asset " + m_Name + " is not loadable");
+    else
+    {
+        VWARN(AssetManager, "Not valid file path");
+    }
 }

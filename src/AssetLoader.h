@@ -14,7 +14,7 @@ struct Classes<ClassName>\
     using ClassType = ClassName;\
     inline static Asset* CreateClassAsset()\
     {\
-        return Asset::CreateAsset<ClassName>();\
+        return Asset::createAsset<ClassName>();\
     }\
 };\
 
@@ -35,11 +35,12 @@ namespace omp
             using ClassType = T;
             inline static Asset* CreateClassAsset()
             {
-                return Asset::CreateAsset<T>();
+                return Asset::createAsset<T>();
             }
         };
 
         ImplementClass(MaterialAsset);
+
         ImplementClass(ModelAsset);
 
         inline static const std::unordered_map<std::string, std::function<Asset*()>> ClassNames
@@ -52,7 +53,7 @@ namespace omp
         ~AssetLoader() = delete;
         AssetLoader& operator=(const AssetLoader&) = delete;
         AssetLoader& operator=(AssetLoader&&) = delete;
-        friend class Asset;
+        friend class AssetManager;
     };
 }
 
