@@ -4,6 +4,14 @@
 #include "UI/AssetRepresentation.h"
 #include "nlohmann/json.hpp"
 
+#define DeclareSerializableMember(Type, Name) \
+Type Name;                                    \
+std::string Name##_Name = #Name;              \
+void write##_Name(nlohmann::json& inJson)     \
+{                                             \
+    WriteValueToJSON<Type>(std::move(Name), inJson, Name##_Name); \
+}
+
 namespace omp{
 class Asset : public ISaveable
 {
@@ -15,6 +23,10 @@ protected:
 protected:
     virtual void serializeData(nlohmann::json& data) = 0;
     virtual void deserializeData(const nlohmann::json& data) = 0;
+
+    template<typename T>
+    void WriteValueToJSON(T&& inValue, nlohmann::json& inJson, const std::string& inName);
+
 private:
     virtual void saveAssetToFile(const std::string& inPath) override;
 public:
@@ -41,4 +53,10 @@ public:
 
     friend class AssetManager;
 };
+
+    template<typename T>
+    void Asset::WriteValueToJSON(T&& inValue, nlohmann::json& inJson, const std::string& inName)
+    {
+
+    }
 }
