@@ -8,10 +8,10 @@ omp::ModelAsset::ModelAsset()
 
 void omp::ModelAsset::serializeData(nlohmann::json &data)
 {
-
+    write_modelPath(data);
 }
 
 void omp::ModelAsset::deserializeData(const nlohmann::json &data)
 {
-
+    modelPath = read_modelPath(data);
 }

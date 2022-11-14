@@ -10,7 +10,7 @@ protected:
     virtual void serializeData(nlohmann::json& data) override;
     virtual void deserializeData(const nlohmann::json& data) override;
 
-    DeclareSerializableMember(std::string, numb);
+    DeclareSerializableMember(std::string, modelPath);
 
 };
 };

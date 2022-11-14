@@ -7,10 +7,16 @@
 #define DeclareSerializableMember(Type, Name) \
 Type Name;                                    \
 std::string Name##_Name = #Name;              \
-void write##_Name(nlohmann::json& inJson)     \
+void write_##Name(nlohmann::json& inJson)     \
 {                                             \
     WriteValueToJSON<Type>(std::move(Name), inJson, Name##_Name); \
+}                                              \
+Type read_##Name(const nlohmann::json& inJson)        \
+{                                                \
+    return LoadValueFromJSON<Type>(inJson, Name##_Name);\
 }
+
+
 
 namespace omp{
 class Asset : public ISaveable
@@ -26,6 +32,8 @@ protected:
 
     template<typename T>
     void WriteValueToJSON(T&& inValue, nlohmann::json& inJson, const std::string& inName);
+    template<typename T>
+    T LoadValueFromJSON(const nlohmann::json& inJson, const std::string& inName);
 
 private:
     virtual void saveAssetToFile(const std::string& inPath) override;
@@ -57,6 +65,12 @@ public:
     template<typename T>
     void Asset::WriteValueToJSON(T&& inValue, nlohmann::json& inJson, const std::string& inName)
     {
+        inJson[inName] = std::forward<T>(inValue);
+    }
 
+    template<typename T>
+    T Asset::LoadValueFromJSON(const nlohmann::json& inJson, const std::string& inName)
+    {
+        return inJson[inName].get<T>();
     }
 }
