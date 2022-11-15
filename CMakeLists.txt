@@ -28,6 +28,8 @@ set(SOURCE
         ModelAsset.cpp
         Scene.h
         Scene.cpp
+        SceneAsset.h
+        SceneAsset.cpp
         Texture.h
         Texture.cpp
         MaterialManager.h

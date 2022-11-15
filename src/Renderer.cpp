@@ -837,11 +837,11 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
                            0, sizeof(omp::ModelPushConstant), &constant);
 
 
-        if (material.lock()->IsInitialized())
+        if (material.lock()->isInitialized())
         {
             vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
                                     FindGraphicsPipeline(material_instance->GetShaderName())->GetPipelineLayout(),
-                                    0, 1, &material.lock()->GetDescriptorSet()[inIndex],
+                                    0, 1, &material.lock()->getDescriptorSet()[inIndex],
                                     0, nullptr);
         }
         else
@@ -849,7 +849,7 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
             createDescriptorSetsForMaterial(material.lock());
             vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
                                     FindGraphicsPipeline(material_instance->GetShaderName())->GetPipelineLayout(),
-                                    0, 1, &m_DefaultMaterial->GetDescriptorSet()[inIndex],
+                                    0, 1, &m_DefaultMaterial->getDescriptorSet()[inIndex],
                                     0, nullptr);
         }
         vkCmdDrawIndexed(m_CommandBuffers[inIndex], static_cast<uint32_t>(m_CurrentScene->GetModels()[index]->GetIndices().size()), 1, 0, 0, 0);
@@ -1416,7 +1416,7 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
         light_info.range = sizeof(omp::Light);
 
         std::vector<VkWriteDescriptorSet> descriptor_writes{};
-        auto material_sets = material->GetDescriptorWriteSets();
+        auto material_sets = material->getDescriptorWriteSets();
         descriptor_writes.resize(material_sets.size() + 2);
 
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1445,7 +1445,7 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
                                static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
     }
 
-    material->SetDescriptorSet(DS);
+    material->setDescriptorSet(DS);
 }
 
 void Renderer::createTextureImage()
@@ -1456,10 +1456,12 @@ void Renderer::createTextureImage()
 
     m_DefaultMaterial = m_MaterialManager->CreateMaterial("default");
     // TODO: remove hardcoding
-    m_DefaultMaterial->AddTexture(omp::TextureType::Texture, m_MaterialManager->GetTexture("../textures/container.png"));
-    m_DefaultMaterial->AddTexture(omp::TextureType::DiffusiveMap, m_MaterialManager->GetTexture("../textures/container_specular.png"));
-    m_DefaultMaterial->AddTexture(omp::TextureType::SpecularMap, m_MaterialManager->GetTexture("../textures/container_specular.png"));
-    m_DefaultMaterial->SetShaderName("Light");
+    m_DefaultMaterial->addTexture(omp::TextureType::Texture, m_MaterialManager->GetTexture("../textures/container.png"));
+    m_DefaultMaterial->addTexture(omp::TextureType::DiffusiveMap,
+                                  m_MaterialManager->GetTexture("../textures/container_specular.png"));
+    m_DefaultMaterial->addTexture(omp::TextureType::SpecularMap,
+                                  m_MaterialManager->GetTexture("../textures/container_specular.png"));
+    m_DefaultMaterial->setShaderName("Light");
 }
 
 void Renderer::createImage(
@@ -1675,8 +1677,8 @@ void Renderer::loadLightObject(const std::string& Name, const std::string& Textu
 {
     auto model = loadModel(Name, TextureName);
     auto mat = m_MaterialManager->CreateMaterial("default_no_light");
-    mat->AddTexture(omp::TextureType::Texture, m_MaterialManager->GetDefaultTexture().lock());
-    mat->SetShaderName("Simple");
+    mat->addTexture(omp::TextureType::Texture, m_MaterialManager->GetDefaultTexture().lock());
+    mat->setShaderName("Simple");
     model->SetMaterial(mat);
 
     // TODO make a lot of light objects

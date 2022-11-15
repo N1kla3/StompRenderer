@@ -38,24 +38,24 @@ class Material
 
     std::vector<VkDescriptorImageInfo> m_ImageInfosCache{};
 
-    void AddTextureInternal(TextureData&& Data);
+    void addTextureInternal(TextureData&& Data);
 
 public:
     explicit Material(const std::string& name);
 
-    void AddTexture(TextureType type, const std::shared_ptr<Texture>& texture);
-    void RemoveTexture(const TextureData& Data);
+    void addTexture(TextureType type, const std::shared_ptr<Texture>& texture);
+    void removeTexture(const TextureData& Data);
 
-    std::vector<TextureData> GetTextureData() const;
-    void SetShaderName(const std::string& newName) { m_ShaderName = newName; };
-    std::string GetShaderName() const { return m_ShaderName; }
+    std::vector<TextureData> getTextureData() const;
+    void setShaderName(const std::string& newName) { m_ShaderName = newName; };
+    std::string getShaderName() const { return m_ShaderName; }
 
-    void SetDescriptorSet(const std::vector<VkDescriptorSet>& DS);
-    std::vector<VkDescriptorSet>& GetDescriptorSet();
+    void setDescriptorSet(const std::vector<VkDescriptorSet>& DS);
+    std::vector<VkDescriptorSet>& getDescriptorSet();
 
-    std::vector<VkWriteDescriptorSet> GetDescriptorWriteSets();
+    std::vector<VkWriteDescriptorSet> getDescriptorWriteSets();
 
-    bool IsInitialized() const noexcept { return m_IsInitialized; }
+    bool isInitialized() const noexcept { return m_IsInitialized; }
 
     static constexpr int MAX_TEXTURES = 3;
 

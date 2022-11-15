@@ -6,6 +6,11 @@ omp::ModelAsset::ModelAsset()
 
 }
 
+void omp::ModelAsset::initialize()
+{
+
+}
+
 void omp::ModelAsset::serializeData(nlohmann::json &data)
 {
     write_modelPath(data);

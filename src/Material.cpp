@@ -3,7 +3,7 @@
 #include "MaterialManager.h"
 #include "UI/MaterialRepresentation.h"
 
-void omp::Material::AddTextureInternal(TextureData&& Data)
+void omp::Material::addTextureInternal(TextureData&& Data)
 {
     if (m_Textures.size() > MAX_TEXTURES)
     {
@@ -16,7 +16,7 @@ void omp::Material::AddTextureInternal(TextureData&& Data)
     m_Textures[Data.BindingIndex-2] = std::move(Data);
 }
 
-void omp::Material::AddTexture(TextureType type, const std::shared_ptr<Texture>& texture)
+void omp::Material::addTexture(TextureType type, const std::shared_ptr<Texture>& texture)
 {
     const static std::array<std::string, static_cast<size_t>(TextureType::MAX)> Names
             {"",
@@ -25,16 +25,16 @@ void omp::Material::AddTexture(TextureType type, const std::shared_ptr<Texture>&
              "Diffusive map",
              "Specular map"};
 
-    AddTextureInternal({static_cast<uint32_t>(type), texture, Names[static_cast<uint32_t>(type)]});
+    addTextureInternal({static_cast<uint32_t>(type), texture, Names[static_cast<uint32_t>(type)]});
 }
 
-void omp::Material::RemoveTexture(const TextureData &Data)
+void omp::Material::removeTexture(const TextureData &Data)
 {
     m_IsDirty = true;
     m_IsInitialized = false;
 }
 
-std::vector<VkWriteDescriptorSet> omp::Material::GetDescriptorWriteSets()
+std::vector<VkWriteDescriptorSet> omp::Material::getDescriptorWriteSets()
 {
     if (!m_IsDirty)
     {
@@ -49,7 +49,8 @@ std::vector<VkWriteDescriptorSet> omp::Material::GetDescriptorWriteSets()
         auto& cached_texture = cached_texture_data.Texture;
         if (!cached_texture || cached_texture_data.BindingIndex <= 1)
         {
-            AddTexture(static_cast<TextureType>(i + static_cast<uint32_t>(TextureType::Texture)), m_Manager->GetEmptyTexture().lock());
+            addTexture(static_cast<TextureType>(i + static_cast<uint32_t>(TextureType::Texture)),
+                       m_Manager->GetEmptyTexture().lock());
         }
         VkDescriptorImageInfo image_info{};
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -69,19 +70,19 @@ std::vector<VkWriteDescriptorSet> omp::Material::GetDescriptorWriteSets()
     return m_DescriptorWriteSets;
 }
 
-void omp::Material::SetDescriptorSet(const std::vector<VkDescriptorSet>& DS)
+void omp::Material::setDescriptorSet(const std::vector<VkDescriptorSet>& DS)
 {
     m_DescriptorSets = DS;
 
     m_IsInitialized = true;// TODO safety
 }
 
-std::vector<VkDescriptorSet>& omp::Material::GetDescriptorSet()
+std::vector<VkDescriptorSet>& omp::Material::getDescriptorSet()
 {
     return m_DescriptorSets;
 }
 
-std::vector<omp::TextureData> omp::Material::GetTextureData() const
+std::vector<omp::TextureData> omp::Material::getTextureData() const
 {
     return m_Textures;
 }

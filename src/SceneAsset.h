@@ -1,17 +1,15 @@
 #pragma once
 #include "Asset.h"
 
-namespace omp{
-class MaterialAsset : public Asset
+namespace omp {
+class SceneAsset : public Asset
 {
 public:
-    MaterialAsset();
+    SceneAsset();
 protected:
     virtual void initialize() override;
     virtual void serializeData(nlohmann::json& data) override;
     virtual void deserializeData(const nlohmann::json& data) override;
 
-    DeclareSerializableMember(std::vector<std::string>, TexturePaths);
-    DeclareSerializableMember(std::string, ShaderName);
 };
 };

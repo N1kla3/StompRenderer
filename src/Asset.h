@@ -16,8 +16,6 @@ Type read_##Name(const nlohmann::json& inJson)        \
     return LoadValueFromJSON<Type>(inJson, Name##_Name);\
 }
 
-
-
 namespace omp{
 class Asset : public ISaveable
 {
@@ -27,6 +25,7 @@ protected:
     std::shared_ptr<AssetRepresentation> m_AssetRepresentation;
 
 protected:
+    virtual void initialize() = 0;
     virtual void serializeData(nlohmann::json& data) = 0;
     virtual void deserializeData(const nlohmann::json& data) = 0;
 

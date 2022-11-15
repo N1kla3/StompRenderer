@@ -11,7 +11,7 @@ std::string omp::MaterialInstance::GetShaderName() const
 {
     if (!m_StaticMaterial.expired())
     {
-        return m_StaticMaterial.lock()->GetShaderName();
+        return m_StaticMaterial.lock()->getShaderName();
     }
 
     return "";

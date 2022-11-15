@@ -11,7 +11,7 @@ void omp::MaterialPanel::renderUI(float DeltaTime)
     if (!m_MaterialInstance.expired())
     {
         ImGui::BulletText("Textures:");
-        for (auto& texture : m_MaterialInstance.lock()->m_StaticMaterial.lock()->GetTextureData())
+        for (auto& texture : m_MaterialInstance.lock()->m_StaticMaterial.lock()->getTextureData())
         {
             if (ImGui::TreeNode(texture.Name.c_str()))
             {

@@ -67,6 +67,7 @@ void omp::AssetManager::loadAsset(const std::string& inPath)
             LoadingAsset->deserializeData(data);// memory leak watch
             std::shared_ptr<Asset> asset_ptr(LoadingAsset);
             m_Assets.insert({asset_ptr->getPath(), asset_ptr});
+            asset_ptr->initialize();
             INFO(AssetManager, "Asset loaded successfully:", asset_ptr->getPath());
         }
 
@@ -85,6 +86,7 @@ std::shared_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string &inNam
     if (m_Assets.find(inName) == m_Assets.end())
     {
         ERROR(AssetManager, "Cant find asset " + inName);
+        return nullptr;
     }
     return m_Assets.at(inName);
 }
