@@ -27,9 +27,6 @@ class Texture
 
     // Vulkan //
     // ====== //
-    VkDevice m_LogicalDevice;
-    VkPhysicalDevice m_PhysDevice;
-
     VkImage m_TextureImage;
     VkDeviceMemory m_TextureImageMemory;
     VkImageView m_TextureImageView;
@@ -40,7 +37,7 @@ class Texture
     std::weak_ptr<VulkanContext> m_VulkanContext;
 
 public:
-    Texture(VkDevice device, VkPhysicalDevice physDevice, const std::shared_ptr<VulkanContext> &helper);
+    Texture(const std::shared_ptr<VulkanContext> &helper);
 
     void FullLoad(const std::string& path);
     void LazyLoad(const std::string& path);

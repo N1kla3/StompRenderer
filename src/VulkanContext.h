@@ -9,12 +9,12 @@ namespace omp{
  */
 class VulkanContext
 {
+public:
     VkDevice m_LogicalDevice;
     VkPhysicalDevice m_PhysDevice;
     VkCommandPool m_CommandPools;
     VkQueue graphics_queue;
     // TODO replace occurences in Renderer.cpp
-public:
     VulkanContext(VkDevice device, VkPhysicalDevice physDevice, VkCommandPool pool, VkQueue graphicsQueue);
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);

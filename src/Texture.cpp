@@ -6,20 +6,18 @@
 #include "imgui_impl_vulkan.h"
 #include "stb_image.h"
 
-omp::Texture::Texture(VkDevice device, VkPhysicalDevice physDevice, const std::shared_ptr<VulkanContext> &helper)
-    : m_LogicalDevice(device)
-    , m_PhysDevice(physDevice)
-    , m_VulkanContext(helper)
+omp::Texture::Texture(const std::shared_ptr<VulkanContext> &helper)
+    : m_VulkanContext(helper)
 {
 
 }
 
 void omp::Texture::DestroyVkObjects()
 {
-    vkDestroySampler(m_LogicalDevice, m_TextureSampler, nullptr);
-    vkDestroyImageView(m_LogicalDevice, m_TextureImageView, nullptr);
-    vkDestroyImage(m_LogicalDevice, m_TextureImage, nullptr);
-    vkFreeMemory(m_LogicalDevice, m_TextureImageMemory, nullptr);
+    vkDestroySampler(m_VulkanContext.lock()->m_LogicalDevice, m_TextureSampler, nullptr);
+    vkDestroyImageView(m_VulkanContext.lock()->m_LogicalDevice, m_TextureImageView, nullptr);
+    vkDestroyImage(m_VulkanContext.lock()->m_LogicalDevice, m_TextureImage, nullptr);
+    vkFreeMemory(m_VulkanContext.lock()->m_LogicalDevice, m_TextureImageMemory, nullptr);
 }
 
 uint64_t omp::Texture::GetTextureId()
@@ -95,7 +93,7 @@ void omp::Texture::createSampler()
     sampler_info.minLod = 0;
     sampler_info.maxLod = static_cast<float>(m_MipLevels);
 
-    if (vkCreateSampler(m_LogicalDevice, &sampler_info, nullptr, &m_TextureSampler) != VK_SUCCESS)
+    if (vkCreateSampler(m_VulkanContext.lock()->m_LogicalDevice, &sampler_info, nullptr, &m_TextureSampler) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create sampler");
     }
@@ -110,9 +108,9 @@ void omp::Texture::createImage()
                                          staging_buffer, staging_buffer_memory);
 
     void* data;
-    vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, m_Size, 0, &data);
+    vkMapMemory(m_VulkanContext.lock()->m_LogicalDevice, staging_buffer_memory, 0, m_Size, 0, &data);
     memcpy(data, m_Pixels, static_cast<size_t>(m_Size));
-    vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
+    vkUnmapMemory(m_VulkanContext.lock()->m_LogicalDevice, staging_buffer_memory);
 
     stbi_image_free(m_Pixels);
 
@@ -128,8 +126,8 @@ void omp::Texture::createImage()
     //                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
     m_VulkanContext.lock()->generateMipmaps(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, m_Width, m_Height, m_MipLevels);
 
-    vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
-    vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
+    vkDestroyBuffer(m_VulkanContext.lock()->m_LogicalDevice, staging_buffer, nullptr);
+    vkFreeMemory(m_VulkanContext.lock()->m_LogicalDevice, staging_buffer_memory, nullptr);
 }
 
 void omp::Texture::createImageView()

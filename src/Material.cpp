@@ -82,12 +82,11 @@ std::vector<VkDescriptorSet>& omp::Material::getDescriptorSet()
     return m_DescriptorSets;
 }
 
-std::vector<omp::TextureData> omp::Material::getTextureData() const
+std::array<omp::TextureData, omp::Material::MAX_TEXTURES> omp::Material::getTextureData() const
 {
     return m_Textures;
 }
 
 omp::Material::Material(const std::string& name)
 {
-    m_Textures.resize(MAX_TEXTURES);
 }

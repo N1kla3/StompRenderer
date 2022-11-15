@@ -24,8 +24,12 @@ enum class TextureType
 
 class Material
 {
+public:
+    static constexpr int MAX_TEXTURES = 3;
+
+private:
     omp::MaterialManager* m_Manager = nullptr;
-    std::vector<TextureData> m_Textures;
+    std::array<TextureData, MAX_TEXTURES> m_Textures;
 
     bool m_IsDirty = true;
     bool m_IsInitialized = false;
@@ -46,7 +50,7 @@ public:
     void addTexture(TextureType type, const std::shared_ptr<Texture>& texture);
     void removeTexture(const TextureData& Data);
 
-    std::vector<TextureData> getTextureData() const;
+    std::array<TextureData, MAX_TEXTURES> getTextureData() const;
     void setShaderName(const std::string& newName) { m_ShaderName = newName; };
     std::string getShaderName() const { return m_ShaderName; }
 
@@ -56,8 +60,6 @@ public:
     std::vector<VkWriteDescriptorSet> getDescriptorWriteSets();
 
     bool isInitialized() const noexcept { return m_IsInitialized; }
-
-    static constexpr int MAX_TEXTURES = 3;
 
     friend MaterialManager;
 };
