@@ -1,28 +1,38 @@
 #pragma once
+
 #include <vector>
 #include "Model.h"
 
-namespace omp{
-class Scene
+namespace omp
 {
-public:
-    Scene() = default;
+    class Scene
+    {
+    public:
+        Scene() = default;
 
-private:
-    // State //
-    // ===== //
-    bool m_StateDirty = false;
+    private:
+        // State //
+        // ===== //
+        bool m_StateDirty = false;
 
-    std::vector<std::shared_ptr<omp::Model>> m_Models;
+        std::vector<std::shared_ptr<omp::Model>> m_Models;
 
-public:
-    // Methods //
-    // ======= //
-    void AddModelToScene(const omp::Model& ModelToAdd);
-    void AddModelToScene(const std::shared_ptr<omp::Model>& ModelToAdd);
+    public:
+        // Methods //
+        // ======= //
+        void addModelToScene(const omp::Model& modelToAdd);
+        void addModelToScene(const std::shared_ptr<omp::Model>& modelToAdd);
 
-    std::vector<std::shared_ptr<omp::Model>>& GetModels();
-    bool IsDirty() const { return m_StateDirty; }
-    void ConfirmRendering() { m_StateDirty = true; };
-};
+        std::vector<std::shared_ptr<omp::Model>>& getModels();
+
+        bool isDirty() const
+        {
+            return m_StateDirty;
+        }
+
+        void confirmRendering()
+        {
+            m_StateDirty = true;
+        };
+    };
 } // omp

@@ -1,11 +1,13 @@
 #pragma once
+
 #include "ImguiUnit.h"
 
-namespace omp{
-class MainLayer : public ImguiUnit
+namespace omp
 {
-public:
-    virtual void renderUI(float DeltaTime) override;
-};
+    class MainLayer : public ImguiUnit
+    {
+    public:
+        virtual void renderUi(float deltaTime) override;
+    };
 }
 

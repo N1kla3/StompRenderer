@@ -1,21 +1,23 @@
 #pragma once
+
 #include <vector>
 
-namespace omp{
+namespace omp
+{
 /*
  * Base class for ui elements, which is automatically rendered, only need to override renderUI()
  */
-class ImguiUnit
-{
-    inline static std::vector<ImguiUnit*> ImguiUnits{};
+    class ImguiUnit
+    {
+        inline static std::vector<ImguiUnit*> s_ImguiUnits{};
 
-public:
-    ImguiUnit();
-    virtual ~ImguiUnit();
+    public:
+        ImguiUnit();
+        virtual ~ImguiUnit();
 
-    virtual void renderUI(float DeltaTime) = 0;
+        virtual void renderUi(float DeltaTime) = 0;
 
-    inline static std::vector<ImguiUnit*> GetAllUnits(){ return ImguiUnits; }
-};
+        inline static std::vector<ImguiUnit*> getAllUnits() { return s_ImguiUnits; }
+    };
 } // omp
 

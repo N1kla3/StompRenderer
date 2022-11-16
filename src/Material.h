@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vector>
 #include <memory>
 #include "Texture.h"
@@ -6,61 +7,64 @@
 #include "UI/MaterialPanel.h"
 #include "glm/vec4.hpp"
 
-namespace omp{
-struct TextureData
+namespace omp
 {
-    uint32_t BindingIndex;
-    std::shared_ptr<Texture> Texture;
-    std::string Name;
-};
+    struct TextureData
+    {
+        uint32_t binding_index;
+        std::shared_ptr<Texture> texture;
+        std::string name;
+    };
 
-enum class TextureType
-{
-    Texture = 2,
-    DiffusiveMap,
-    SpecularMap,
-    MAX
-};
+    enum class ETextureType
+    {
+        Texture = 2,
+        DiffusiveMap,
+        SpecularMap,
+        Max
+    };
 
-class Material
-{
-public:
-    static constexpr int MAX_TEXTURES = 3;
+    class Material
+    {
+    public:
+        static constexpr int MAX_TEXTURES = 3;
 
-private:
-    omp::MaterialManager* m_Manager = nullptr;
-    std::array<TextureData, MAX_TEXTURES> m_Textures;
+    private:
+        omp::MaterialManager* m_Manager = nullptr;
+        std::array<TextureData, MAX_TEXTURES> m_Textures;
 
-    bool m_IsDirty = true;
-    bool m_IsInitialized = false;
+        bool m_IsDirty = true;
+        bool m_IsInitialized = false;
 
-    std::string m_ShaderName;
+        std::string m_ShaderName;
 
-    std::vector<VkWriteDescriptorSet> m_DescriptorWriteSets;
+        std::vector<VkWriteDescriptorSet> m_DescriptorWriteSets;
 
-    std::vector<VkDescriptorSet> m_DescriptorSets;
+        std::vector<VkDescriptorSet> m_DescriptorSets;
 
-    std::vector<VkDescriptorImageInfo> m_ImageInfosCache{};
+        std::vector<VkDescriptorImageInfo> m_ImageInfosCache{};
 
-    void addTextureInternal(TextureData&& Data);
+        void addTextureInternal(TextureData&& data);
 
-public:
-    explicit Material(const std::string& name);
+    public:
+        explicit Material(const std::string& name);
 
-    void addTexture(TextureType type, const std::shared_ptr<Texture>& texture);
-    void removeTexture(const TextureData& Data);
+        void addTexture(ETextureType type, const std::shared_ptr<Texture>& texture);
+        void removeTexture(const TextureData& data);
 
-    std::array<TextureData, MAX_TEXTURES> getTextureData() const;
-    void setShaderName(const std::string& newName) { m_ShaderName = newName; };
-    std::string getShaderName() const { return m_ShaderName; }
+        std::array<TextureData, MAX_TEXTURES> getTextureData() const;
 
-    void setDescriptorSet(const std::vector<VkDescriptorSet>& DS);
-    std::vector<VkDescriptorSet>& getDescriptorSet();
+        void setShaderName(const std::string& newName) { m_ShaderName = newName; };
 
-    std::vector<VkWriteDescriptorSet> getDescriptorWriteSets();
+        std::string getShaderName() const { return m_ShaderName; }
 
-    bool isInitialized() const noexcept { return m_IsInitialized; }
+        void setDescriptorSet(const std::vector<VkDescriptorSet>& ds);
+        std::vector<VkDescriptorSet>& getDescriptorSet();
 
-    friend MaterialManager;
-};
+        std::vector<VkWriteDescriptorSet> getDescriptorWriteSets();
+
+        bool isInitialized() const noexcept { return m_IsInitialized; }
+
+        friend MaterialManager;
+    };
 } // omp

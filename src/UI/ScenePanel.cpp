@@ -1,14 +1,14 @@
 #include "ScenePanel.h"
 #include "imgui.h"
 
-omp::ScenePanel::ScenePanel(const std::shared_ptr<EntityPanel> &entityPanel)
-    : ImguiUnit()
-    , m_EntityUI(entityPanel)
+omp::ScenePanel::ScenePanel(const std::shared_ptr<EntityPanel>& entityPanel)
+        : ImguiUnit()
+        , m_EntityUi(entityPanel)
 {
 
 }
 
-void omp::ScenePanel::renderUI(float DeltaTime)
+void omp::ScenePanel::renderUi(float deltaTime)
 {
 
     ImGui::Begin("Scene Panel");
@@ -17,12 +17,12 @@ void omp::ScenePanel::renderUI(float DeltaTime)
     {
         if (ImGui::TreeNode("Scene items"))
         {
-            for (int16_t n = 0; n < m_Scene.lock()->GetModels().size(); n++)
+            for (int16_t n = 0; n < m_Scene.lock()->getModels().size(); n++)
             {
-                if (ImGui::Selectable(m_Scene.lock()->GetModels()[n]->GetName().c_str(), m_SelectedIndex == n))
+                if (ImGui::Selectable(m_Scene.lock()->getModels()[n]->getName().c_str(), m_SelectedIndex == n))
                 {
                     m_SelectedIndex = n;
-                    m_EntityUI->SetModel(m_Scene.lock()->GetModels()[m_SelectedIndex]);
+                    m_EntityUi->setModel(m_Scene.lock()->getModels()[m_SelectedIndex]);
                 }
             }
             ImGui::TreePop();

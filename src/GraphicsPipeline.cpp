@@ -4,61 +4,61 @@
 #include "Shader.h"
 
 omp::GraphicsPipeline::GraphicsPipeline(VkDevice inLogicalDevice)
-    : m_LogicalDevice(inLogicalDevice)
+        : m_LogicalDevice(inLogicalDevice)
 {
 
 }
 
 omp::GraphicsPipeline::~GraphicsPipeline()
 {
-    TryDestroyVulkanObjects();
+    tryDestroyVulkanObjects();
 }
 
-void omp::GraphicsPipeline::StartCreation()
+void omp::GraphicsPipeline::startCreation()
 {
-    TryDestroyVulkanObjects();
+    tryDestroyVulkanObjects();
     m_IsCreated = false;
 
 }
 
-void omp::GraphicsPipeline::StartDefaultCreation()
+void omp::GraphicsPipeline::startDefaultCreation()
 {
-    TryDestroyVulkanObjects();
+    tryDestroyVulkanObjects();
     m_IsCreated = false;
 
-    CreateVertexInfo();
-    CreateInputAssembly();
-    CreateViewport(VkExtent2D());
-    CreateRasterizer();
-    CreateColorBlending();
+    createVertexInfo();
+    createInputAssembly();
+    createViewport(VkExtent2D());
+    createRasterizer();
+    createColorBlending();
 }
 
-void omp::GraphicsPipeline::CreateVertexInfo()
+void omp::GraphicsPipeline::createVertexInfo()
 {
-    static auto binding_description = omp::Vertex::getBindingDescription();
-    static auto attribute_descriptions = omp::Vertex::getAttributeDescriptions();
+    static auto binding_description = omp::Vertex::GetBindingDescription();
+    static auto attribute_descriptions = omp::Vertex::GetAttributeDescriptions();
 
-    VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 1;
-    vertexInputInfo.pVertexBindingDescriptions = &binding_description;
-    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size());
-    vertexInputInfo.pVertexAttributeDescriptions = attribute_descriptions.data();
+    VkPipelineVertexInputStateCreateInfo vertex_input_info{};
+    vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertex_input_info.vertexBindingDescriptionCount = 1;
+    vertex_input_info.pVertexBindingDescriptions = &binding_description;
+    vertex_input_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size());
+    vertex_input_info.pVertexAttributeDescriptions = attribute_descriptions.data();
 
-    m_VertexInputInfo = vertexInputInfo;
+    m_VertexInputInfo = vertex_input_info;
 }
 
-void omp::GraphicsPipeline::CreateInputAssembly()
+void omp::GraphicsPipeline::createInputAssembly()
 {
-    VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
-    inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    inputAssembly.primitiveRestartEnable = VK_FALSE;
+    VkPipelineInputAssemblyStateCreateInfo input_assembly{};
+    input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    input_assembly.primitiveRestartEnable = VK_FALSE;
 
-    m_InputAssembly = inputAssembly;
+    m_InputAssembly = input_assembly;
 }
 
-void omp::GraphicsPipeline::CreateViewport(VkExtent2D ScissorExtent)
+void omp::GraphicsPipeline::createViewport(VkExtent2D scissorExtent)
 {
     // Viewport and scissors
     // NOT USED, using dynamic viewport
@@ -73,20 +73,20 @@ void omp::GraphicsPipeline::CreateViewport(VkExtent2D ScissorExtent)
 
     VkRect2D scissor{};
     scissor.offset = {0, 0};
-    scissor.extent = ScissorExtent;//m_SwapChainExtent;
+    scissor.extent = scissorExtent;//m_SwapChainExtent;
     m_Scissor = scissor;
 
-    VkPipelineViewportStateCreateInfo viewportState{};
-    viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewportState.viewportCount = 0;
-    viewportState.pViewports = 0;//&viewport;
-    viewportState.scissorCount = 1;
-    viewportState.pScissors = &m_Scissor;
+    VkPipelineViewportStateCreateInfo viewport_state{};
+    viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewport_state.viewportCount = 0;
+    viewport_state.pViewports = 0;//&viewport;
+    viewport_state.scissorCount = 1;
+    viewport_state.pScissors = &m_Scissor;
 
-    m_ViewportState = viewportState;
+    m_ViewportState = viewport_state;
 }
 
-void omp::GraphicsPipeline::CreateRasterizer()
+void omp::GraphicsPipeline::createRasterizer()
 {
     VkPipelineRasterizationStateCreateInfo rasterizer{};
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -104,7 +104,7 @@ void omp::GraphicsPipeline::CreateRasterizer()
     m_Rasterizer = rasterizer;
 }
 
-void omp::GraphicsPipeline::CreateMultisamplingInfo(VkSampleCountFlagBits rasterizationSamples)
+void omp::GraphicsPipeline::createMultisamplingInfo(VkSampleCountFlagBits rasterizationSamples)
 {
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -118,61 +118,62 @@ void omp::GraphicsPipeline::CreateMultisamplingInfo(VkSampleCountFlagBits raster
     m_Multisampling = multisampling;
 }
 
-void omp::GraphicsPipeline::CreateColorBlending()
+void omp::GraphicsPipeline::createColorBlending()
 {
-    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
-                                          | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    colorBlendAttachment.blendEnable = VK_FALSE;
-    colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-    colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-    colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-    colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+    VkPipelineColorBlendAttachmentState color_blend_attachment{};
+    color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
+                                            | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    color_blend_attachment.blendEnable = VK_FALSE;
+    color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+    color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
-    m_ColorBlendAttachment = colorBlendAttachment;
+    m_ColorBlendAttachment = color_blend_attachment;
 
-    VkPipelineColorBlendStateCreateInfo colorBlending{};
-    colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colorBlending.logicOpEnable = VK_FALSE;
-    colorBlending.logicOp = VK_LOGIC_OP_COPY;
-    colorBlending.attachmentCount = 1;
-    colorBlending.pAttachments = &m_ColorBlendAttachment;
-    colorBlending.blendConstants[0] = 0.0f;
-    colorBlending.blendConstants[1] = 0.0f;
-    colorBlending.blendConstants[2] = 0.0f;
-    colorBlending.blendConstants[3] = 0.0f;
+    VkPipelineColorBlendStateCreateInfo color_blending{};
+    color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blending.logicOpEnable = VK_FALSE;
+    color_blending.logicOp = VK_LOGIC_OP_COPY;
+    color_blending.attachmentCount = 1;
+    color_blending.pAttachments = &m_ColorBlendAttachment;
+    color_blending.blendConstants[0] = 0.0f;
+    color_blending.blendConstants[1] = 0.0f;
+    color_blending.blendConstants[2] = 0.0f;
+    color_blending.blendConstants[3] = 0.0f;
 
-    m_ColorBlending = colorBlending;
+    m_ColorBlending = color_blending;
 }
 
-void omp::GraphicsPipeline::CreatePipelineLayout(VkDescriptorSetLayout& descriptorSetLayout)
+void omp::GraphicsPipeline::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout)
 {
 
     // Push constant for model
     VkPushConstantRange constant_range{};
     constant_range.size = sizeof(omp::ModelPushConstant);
     constant_range.offset = 0;
-    constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;// TODO: better with ranges to save space in shader
+    constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT |
+                                VK_SHADER_STAGE_FRAGMENT_BIT;// TODO: better with ranges to save space in shader
     m_ConstantRange = constant_range;
 
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1;
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-    pipelineLayoutInfo.pushConstantRangeCount = 1;
-    pipelineLayoutInfo.pPushConstantRanges = &m_ConstantRange;
+    VkPipelineLayoutCreateInfo pipeline_layout_info{};
+    pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_info.setLayoutCount = 1;
+    pipeline_layout_info.pSetLayouts = &descriptorSetLayout;
+    pipeline_layout_info.pushConstantRangeCount = 1;
+    pipeline_layout_info.pPushConstantRanges = &m_ConstantRange;
 
-    m_PipelineLayoutInfo = pipelineLayoutInfo;
+    m_PipelineLayoutInfo = pipeline_layout_info;
 }
 
-void omp::GraphicsPipeline::CreateShaders(const std::shared_ptr<struct Shader> &shader)
+void omp::GraphicsPipeline::createShaders(const std::shared_ptr<struct Shader>& shader)
 {
     m_Shader = std::move(shader);
 }
 
-void omp::GraphicsPipeline::ConfirmCreation(VkRenderPass renderPass)
+void omp::GraphicsPipeline::confirmCreation(VkRenderPass renderPass)
 {
     VkPipelineDepthStencilStateCreateInfo depth_stencil{};
     depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -192,37 +193,37 @@ void omp::GraphicsPipeline::ConfirmCreation(VkRenderPass renderPass)
         throw std::runtime_error("Failed to create pipeline layout");
     }
 
-    VkDynamicState dynamicStates[] = {
+    VkDynamicState dynamic_states[] = {
             VK_DYNAMIC_STATE_VIEWPORT,
             VK_DYNAMIC_STATE_LINE_WIDTH
     };
-    VkPipelineDynamicStateCreateInfo dynamicState{};
-    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicState.dynamicStateCount = 2;
-    dynamicState.pDynamicStates = dynamicStates;
+    VkPipelineDynamicStateCreateInfo dynamic_state{};
+    dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamic_state.dynamicStateCount = 2;
+    dynamic_state.pDynamicStates = dynamic_states;
 
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = m_Shader->GetStagesCount();
-    pipelineInfo.pStages = m_Shader->GetShaderStages().data();
+    VkGraphicsPipelineCreateInfo pipeline_info{};
+    pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline_info.stageCount = m_Shader->getStagesCount();
+    pipeline_info.pStages = m_Shader->getShaderStages().data();
 
-    pipelineInfo.pVertexInputState = &m_VertexInputInfo;
-    pipelineInfo.pInputAssemblyState = &m_InputAssembly;
-    pipelineInfo.pViewportState = &m_ViewportState;
-    pipelineInfo.pRasterizationState = &m_Rasterizer;
-    pipelineInfo.pMultisampleState = &m_Multisampling;
-    pipelineInfo.pDepthStencilState = &depth_stencil;
-    pipelineInfo.pColorBlendState = &m_ColorBlending;
-    pipelineInfo.pDynamicState = &dynamicState;
+    pipeline_info.pVertexInputState = &m_VertexInputInfo;
+    pipeline_info.pInputAssemblyState = &m_InputAssembly;
+    pipeline_info.pViewportState = &m_ViewportState;
+    pipeline_info.pRasterizationState = &m_Rasterizer;
+    pipeline_info.pMultisampleState = &m_Multisampling;
+    pipeline_info.pDepthStencilState = &depth_stencil;
+    pipeline_info.pColorBlendState = &m_ColorBlending;
+    pipeline_info.pDynamicState = &dynamic_state;
 
-    pipelineInfo.layout = m_PipelineLayout;
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = 0;
+    pipeline_info.layout = m_PipelineLayout;
+    pipeline_info.renderPass = renderPass;
+    pipeline_info.subpass = 0;
 
-    pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
-    pipelineInfo.basePipelineIndex = -1;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
+    pipeline_info.basePipelineIndex = -1;
 
-    if (vkCreateGraphicsPipelines(m_LogicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_GraphicsPipeline)
+    if (vkCreateGraphicsPipelines(m_LogicalDevice, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &m_GraphicsPipeline)
         != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create graphics pipeline!");
@@ -231,7 +232,7 @@ void omp::GraphicsPipeline::ConfirmCreation(VkRenderPass renderPass)
     m_IsCreated = true;
 }
 
-void omp::GraphicsPipeline::TryDestroyVulkanObjects()
+void omp::GraphicsPipeline::tryDestroyVulkanObjects()
 {
     if (m_IsCreated)
     {

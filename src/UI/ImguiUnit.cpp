@@ -2,16 +2,16 @@
 
 omp::ImguiUnit::ImguiUnit()
 {
-    ImguiUnits.push_back(this);
+    s_ImguiUnits.push_back(this);
 }
 
 omp::ImguiUnit::~ImguiUnit()
 {
-    for (auto start = ImguiUnits.begin(); start != ImguiUnits.end(); start++)
+    for (auto start = s_ImguiUnits.begin(); start != s_ImguiUnits.end(); start++)
     {
         if (*start == this)
         {
-            ImguiUnits.erase(start);
+            s_ImguiUnits.erase(start);
             return;
         }
     }

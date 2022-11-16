@@ -2,17 +2,18 @@
 #include "Camera.h"
 #include "imgui.h"
 
-void omp::ViewPort::renderUI(float DeltaTime)
+void omp::ViewPort::renderUi(float deltaTime)
 {
     auto viewport = ImGui::GetMainViewport();
     auto viewport_size = viewport->WorkSize;
 
-    ImGuiWindowClass Viewort;
-    Viewort.ClassId = ImGui::GetID("Window");
-    Viewort.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_NoSplit | ImGuiDockNodeFlags_PassthruCentralNode;
-    Viewort.DockingAllowUnclassed = true;
+    ImGuiWindowClass window_class;
+    window_class.ClassId = ImGui::GetID("Window");
+    window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_NoSplit |
+                                            ImGuiDockNodeFlags_PassthruCentralNode;
+    window_class.DockingAllowUnclassed = true;
 
-    ImGui::SetNextWindowClass(&Viewort);
+    ImGui::SetNextWindowClass(&window_class);
     ImGui::Begin("Viewport", NULL, 0);
 
 
@@ -67,27 +68,27 @@ void omp::ViewPort::renderUI(float DeltaTime)
 
     if (ImGui::IsKeyPressed(ImGuiKey_W))
     {
-        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_FORWARD, DeltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_FORWARD, deltaTime);
     }
     if (ImGui::IsKeyPressed(ImGuiKey_A))
     {
-        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_LEFT, DeltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_LEFT, deltaTime);
     }
     if (ImGui::IsKeyPressed(ImGuiKey_S))
     {
-        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_BACK, DeltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_BACK, deltaTime);
     }
     if (ImGui::IsKeyPressed(ImGuiKey_D))
     {
-        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_RIGHT, DeltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_RIGHT, deltaTime);
     }
     if (ImGui::IsKeyPressed(ImGuiKey_Q))
     {
-        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_UP, DeltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_UP, deltaTime);
     }
     if (ImGui::IsKeyPressed(ImGuiKey_E))
     {
-        m_Camera->ProcessKeyboard(CAMERA_MOVEMENT::MOVE_DOWN, DeltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_DOWN, deltaTime);
     }
 
 
@@ -102,7 +103,7 @@ void omp::ViewPort::renderUI(float DeltaTime)
             should_reset_mouse = false;
         }
         ImVec2 second = ImGui::GetMousePos();
-        m_Camera->ProcessMouseMovement(second.x - first_pos.x, -(second.y - first_pos.y));
+        m_Camera->processMouseMovement(second.x - first_pos.x, -(second.y - first_pos.y));
         first_pos = second;
     }
     else

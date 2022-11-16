@@ -1,30 +1,36 @@
 #pragma once
+
 #include <memory>
 #include <string>
 #include "glm/vec4.hpp"
 
-namespace omp{
-    class Material;
-class MaterialInstance
+namespace omp
 {
-private:
-    std::weak_ptr<Material> m_StaticMaterial;
+    class Material;
 
-    // vec4 because of glsl alignment, 4th element used for color strength
-    glm::vec4 m_Ambient = {1.0f, 1.0f, 1.0f, 0};
-    glm::vec4 m_Diffusive = {1.0f, 1.0f, 1.0f, 0};
-    glm::vec4 m_Specular = {1.0f, 1.0f, 1.0f, 0};
+    class MaterialInstance
+    {
+    private:
+        std::weak_ptr<Material> m_StaticMaterial;
 
-public:
-    MaterialInstance(const std::shared_ptr<Material>& materialCreateFrom);
+        // vec4 because of glsl alignment, 4th element used for color strength
+        glm::vec4 m_Ambient = {1.0f, 1.0f, 1.0f, 0};
+        glm::vec4 m_Diffusive = {1.0f, 1.0f, 1.0f, 0};
+        glm::vec4 m_Specular = {1.0f, 1.0f, 1.0f, 0};
 
-    std::string GetShaderName() const;
-    std::weak_ptr<Material> GetStaticMaterial() const { return m_StaticMaterial; }
+    public:
+        MaterialInstance(const std::shared_ptr<Material>& materialCreateFrom);
 
-    glm::vec4 GetAmbient() const { return m_Ambient; }
-    glm::vec4 GetDiffusive() const { return m_Diffusive; }
-    glm::vec4 GetSpecular() const { return m_Specular; }
+        std::string getShaderName() const;
 
-    friend class MaterialPanel;
-};
+        std::weak_ptr<Material> getStaticMaterial() const { return m_StaticMaterial; }
+
+        glm::vec4 getAmbient() const { return m_Ambient; }
+
+        glm::vec4 getDiffusive() const { return m_Diffusive; }
+
+        glm::vec4 getSpecular() const { return m_Specular; }
+
+        friend class MaterialPanel;
+    };
 }

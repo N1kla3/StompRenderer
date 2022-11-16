@@ -1,13 +1,13 @@
 #include "MaterialManager.h"
 #include "Logs.h"
 
-omp::MaterialManager::MaterialManager(const std::shared_ptr<VulkanContext> &helper)
-    : m_VkHelper(helper)
+omp::MaterialManager::MaterialManager(const std::shared_ptr<VulkanContext>& helper)
+        : m_VkHelper(helper)
 {
     static const std::string default_path = "../textures/default.png";
     static const std::string empty_path = "../textures/empty.jpg";
-    m_DefaultTexture = LoadTextureLazily(default_path);
-    m_EmptyTexture = LoadTextureLazily(empty_path);
+    m_DefaultTexture = loadTextureLazily(default_path);
+    m_EmptyTexture = loadTextureLazily(empty_path);
 
     m_Textures.insert({default_path, m_DefaultTexture});
     m_Textures.insert({empty_path, m_EmptyTexture});
@@ -15,21 +15,21 @@ omp::MaterialManager::MaterialManager(const std::shared_ptr<VulkanContext> &help
 
 omp::MaterialManager::~MaterialManager()
 {
-    for (auto& texture_pair : m_Textures)
+    for (auto& texture_pair: m_Textures)
     {
-        texture_pair.second->DestroyVkObjects();
+        texture_pair.second->destroyVkObjects();
     }
 }
 
-std::shared_ptr<omp::Texture> omp::MaterialManager::LoadTextureInstantly(const std::string &path)
+std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureInstantly(const std::string& path)
 {
     auto texture_ptr = std::make_shared<Texture>(m_VkHelper.lock());
-    texture_ptr->FullLoad(path);
+    texture_ptr->fullLoad(path);
     m_Textures.insert({path, texture_ptr});
     return texture_ptr;
 }
 
-std::shared_ptr<omp::Texture> omp::MaterialManager::LoadTextureLazily(const std::string &path)
+std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureLazily(const std::string& path)
 {
     if (m_Textures.find(path) != m_Textures.end())
     {
@@ -37,12 +37,12 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::LoadTextureLazily(const std:
     }
 
     auto texture_ptr = std::make_shared<Texture>(m_VkHelper.lock());
-    texture_ptr->LazyLoad(path);
+    texture_ptr->lazyLoad(path);
     m_Textures.insert({path, texture_ptr});
     return texture_ptr;
 }
 
-std::shared_ptr<omp::Texture> omp::MaterialManager::GetTexture(const std::string &path) const
+std::shared_ptr<omp::Texture> omp::MaterialManager::getTexture(const std::string& path) const
 {
     if (m_Textures.find(path) != m_Textures.end())
     {
@@ -52,7 +52,7 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::GetTexture(const std::string
     return nullptr;
 }
 
-std::shared_ptr<omp::Material> omp::MaterialManager::CreateMaterial(const std::string& name)
+std::shared_ptr<omp::Material> omp::MaterialManager::createMaterial(const std::string& name)
 {
     auto mat = std::make_shared<omp::Material>(name);
     mat->m_Manager = this;

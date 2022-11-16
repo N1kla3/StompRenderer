@@ -2,10 +2,9 @@
 #include <fstream>
 #include "Asset.h"
 #include "Logs.h"
-#include "AssetLoader.h"
 #include "nlohmann/json.hpp"
 
-void omp::Asset::saveAssetToFile(const std::string &inPath)
+void omp::Asset::saveAssetToFile(const std::string& inPath)
 {
     auto file = std::filesystem::directory_entry(inPath);
     std::ofstream stream(file.path().string());

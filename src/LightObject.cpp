@@ -1,24 +1,24 @@
 #include "LightObject.h"
 
-void omp::LightObject::UpdateLightObject()
+void omp::LightObject::updateLightObject()
 {
-    auto& v = m_Model->GetPosition();
-    m_LightRef->m_Position.x = v.x;
-    m_LightRef->m_Position.y = v.y;
-    m_LightRef->m_Position.z = v.z;
+    auto& v = m_Model->getPosition();
+    m_LightRef->position.x = v.x;
+    m_LightRef->position.y = v.y;
+    m_LightRef->position.z = v.z;
 }
 
-void omp::LightObject::SetModel(const std::shared_ptr<Model> &inModel)
+void omp::LightObject::setModel(const std::shared_ptr<Model>& inModel)
 {
     m_Model = std::move(inModel);
 }
 
-void omp::LightObject::SetLight(const std::shared_ptr<Light> &inLight)
+void omp::LightObject::setLight(const std::shared_ptr<Light>& inLight)
 {
     m_LightRef = std::move(inLight);
 }
 
-std::shared_ptr<omp::Light> omp::LightObject::GetLight()
+std::shared_ptr<omp::Light> omp::LightObject::getLight()
 {
     return std::shared_ptr<Light>();
 }

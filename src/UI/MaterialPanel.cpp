@@ -4,19 +4,19 @@
 #include "Logs.h"
 #include "MaterialInstance.h"
 
-void omp::MaterialPanel::renderUI(float DeltaTime)
+void omp::MaterialPanel::renderUi(float deltaTime)
 {
     ImGui::Begin("Material Panel");
 
     if (!m_MaterialInstance.expired())
     {
         ImGui::BulletText("Textures:");
-        for (auto& texture : m_MaterialInstance.lock()->m_StaticMaterial.lock()->getTextureData())
+        for (auto& texture: m_MaterialInstance.lock()->m_StaticMaterial.lock()->getTextureData())
         {
-            if (ImGui::TreeNode(texture.Name.c_str()))
+            if (ImGui::TreeNode(texture.name.c_str()))
             {
-                ImGui::BulletText("%s", texture.Texture->GetPath().c_str());
-                if (ImGui::ImageButton(texture.Texture->GetTextureId(), {100, 100}))
+                ImGui::BulletText("%s", texture.texture->getPath().c_str());
+                if (ImGui::ImageButton(texture.texture->getTextureId(), {100, 100}))
                 {
                     INFO(Rendering, "Pressed");
                 }
@@ -35,7 +35,7 @@ void omp::MaterialPanel::renderUI(float DeltaTime)
     ImGui::End();
 }
 
-void omp::MaterialPanel::setMaterial(const std::shared_ptr<MaterialInstance> &inMaterial)
+void omp::MaterialPanel::setMaterial(const std::shared_ptr<MaterialInstance>& inMaterial)
 {
     m_MaterialInstance = inMaterial;
 }

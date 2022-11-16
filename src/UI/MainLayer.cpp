@@ -1,7 +1,7 @@
 #include "MainLayer.h"
 #include "imgui.h"
 
-void omp::MainLayer::renderUI(float DeltaTime)
+void omp::MainLayer::renderUi(float deltaTime)
 {
     auto viewport = ImGui::GetMainViewport();
 
@@ -15,7 +15,8 @@ void omp::MainLayer::renderUI(float DeltaTime)
     window_class.DockingAllowUnclassed = false;
 
     ImGuiWindowFlags host_window_flags = 0;
-    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
+    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
     host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -27,8 +28,8 @@ void omp::MainLayer::renderUI(float DeltaTime)
     ImGui::Begin("Window", NULL, host_window_flags);
     ImGui::PopStyleVar(3);
 
-    ImGuiID dockSpace = ImGui::GetID("dockSpace");
-    ImGui::DockSpace(dockSpace, ImVec2(0.0f, 0.0f));
+    ImGuiID dock_space = ImGui::GetID("dockSpace");
+    ImGui::DockSpace(dock_space, ImVec2(0.0f, 0.0f));
 
     ImGui::End();
 

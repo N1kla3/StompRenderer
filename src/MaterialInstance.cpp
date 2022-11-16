@@ -2,12 +2,12 @@
 #include "Material.h"
 
 omp::MaterialInstance::MaterialInstance(const std::shared_ptr<omp::Material>& materialCreateFrom)
-    : m_StaticMaterial(materialCreateFrom)
+        : m_StaticMaterial(materialCreateFrom)
 {
 
 }
 
-std::string omp::MaterialInstance::GetShaderName() const
+std::string omp::MaterialInstance::getShaderName() const
 {
     if (!m_StaticMaterial.expired())
     {

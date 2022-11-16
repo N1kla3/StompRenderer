@@ -7,5 +7,5 @@
 class FileDialog
 {
 public:
-    static std::optional<std::string> OpenDir();
+    static std::optional<std::string> openDir();
 };

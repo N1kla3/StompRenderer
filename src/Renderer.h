@@ -6,9 +6,11 @@
 #define NOMINMAX
 
 #define GLFW_INCLUDE_VULKAN
+
 #include <GLFW/glfw3.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
+
 #include <glm/gtx/hash.hpp>
 
 #include <iostream>
@@ -33,12 +35,14 @@
 
 namespace
 {
-    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-             const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-             const VkAllocationCallbacks* pAllocator,
-             VkDebugUtilsMessengerEXT* pDebugMessenger)
+    VkResult CreateDebugUtilsMessengerEXT(
+            VkInstance instance,
+            const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+            const VkAllocationCallbacks* pAllocator,
+            VkDebugUtilsMessengerEXT* pDebugMessenger)
     {
-        auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+        auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance,
+                                                                               "vkCreateDebugUtilsMessengerEXT");
         if (func != nullptr)
         {
             return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
@@ -49,11 +53,13 @@ namespace
         }
     }
 
-    void DestroyDebugUtilsMessengerEXT(VkInstance instance,
+    void DestroyDebugUtilsMessengerEXT(
+            VkInstance instance,
             VkDebugUtilsMessengerEXT debugMessenger,
             const VkAllocationCallbacks* pAllocator)
     {
-        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance,
+                                                                                "vkDestroyDebugUtilsMessengerEXT");
         if (func != nullptr)
         {
             func(instance, debugMessenger, pAllocator);
@@ -64,6 +70,7 @@ namespace
 namespace omp
 {
     class ScenePanel;
+
     class ViewPort;
 }
 
@@ -71,22 +78,21 @@ struct UniformBufferObject
 {
     glm::mat4 view;
     glm::mat4 proj;
-    glm::vec3 viewPosition;
+    glm::vec3 view_position;
 };
 
-const std::string MODEL_PATH = "../models/cube.obj";
-const std::string TEXTURE_PATH = "../textures/container.png";
-const VkClearColorValue CLEAR_COLOR = {0.52f, 0.48f, 0.52f, 1.0f};
+const std::string g_ModelPath = "../models/cube.obj";
+const std::string g_TexturePath = "../textures/container.png";
+const VkClearColorValue g_ClearColor = {0.52f, 0.48f, 0.52f, 1.0f};
 
-class Renderer {
-
-
+class Renderer
+{
     struct QueueFamilyIndices
     {
         std::optional<uint32_t> graphics_family;
         std::optional<uint32_t> present_family;
 
-        bool isComplete() const
+        bool IsComplete() const
         {
             return graphics_family.has_value() && present_family.has_value();
         }
@@ -103,6 +109,7 @@ class Renderer {
     // ======= //
 public:
     Renderer();
+
     void run()
     {
         initWindow();
@@ -141,12 +148,19 @@ private:
     void createGraphicsPipeline();
 
     void createFramebuffers();
+
     void createFramebufferAtImage(size_t index);
 
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
-    void loadLightObject(const std::string& Name, const std::string& TextureName);
-    std::shared_ptr<omp::Model> loadModel(const std::string &Name, const std::string &ModelName);
+    void createBuffer(
+            VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
+            VkDeviceMemory& bufferMemory);
+
+    void loadLightObject(const std::string& name, const std::string& textureName);
+
+    std::shared_ptr<omp::Model> loadModel(const std::string& name, const std::string& modelName);
+
     void loadModelToBuffer(const omp::Model& model);
+
     void createUniformBuffers();
 
     void updateUniformBuffer(uint32_t currentImage);
@@ -158,12 +172,16 @@ private:
 
     void createDepthResources();
 
-    void createImage(uint32_t width, uint32_t height, uint32_t mip_levels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, VkSampleCountFlagBits numSamples);
+    void createImage(
+            uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling,
+            VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory,
+            VkSampleCountFlagBits numSamples);
+
     void createTextureImage();
 
     void createColorResources();
 
-    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels);
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
     void createSyncObjects();
 
@@ -171,19 +189,19 @@ private:
     void createDescriptorPool();
 
     void createDescriptorSets();
-    void createDescriptorSetsForMaterial(const std::shared_ptr<omp::Material> &material);
+    void createDescriptorSetsForMaterial(const std::shared_ptr<omp::Material>& material);
 
     void recreateSwapChain();
 
     void cleanupSwapChain();
 
     void createImguiContext();
-    void InitializeImgui();
+    void initializeImgui();
     void createImguiRenderPass();
 
     void createImguiCommandPools();
     void createImguiCommandBuffers();
-    void createImguiCommandBufferAtIndex(uint32_t ImageIndex);
+    void createImguiCommandBufferAtIndex(uint32_t imageIndex);
     void renderAllUi();
     void createImguiWidgets();
     void createImguiFramebuffers();
@@ -211,14 +229,21 @@ private:
 
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    VkFormat findSupportedFormat(
+            const std::vector<VkFormat>& candidates,
+            VkImageTiling tiling,
+            VkFormatFeatureFlags features);
     VkFormat findDepthFormat();
     bool hasStencilComponent(VkFormat format);
 
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
     void transitionImageLayout(
-            VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mip_levels);
+            VkImage image,
+            VkFormat format,
+            VkImageLayout oldLayout,
+            VkImageLayout newLayout,
+            uint32_t mipLevels);
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
@@ -228,17 +253,17 @@ private:
 
     VkSampleCountFlagBits getMaxUsableSampleCount();
 
-    omp::GraphicsPipeline* FindGraphicsPipeline(const std::string& name);
+    omp::GraphicsPipeline* findGraphicsPipeline(const std::string& name);
 
-    void CreateVertexBufferAndMemoryAtIndex(size_t index);
-    void CreateIndexBufferAndMemoryAtIndex(size_t index);
+    void createVertexBufferAndMemoryAtIndex(size_t index);
+    void createIndexBufferAndMemoryAtIndex(size_t index);
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
             VkDebugUtilsMessageTypeFlagsEXT messageType,
             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-            void*  pUserData
-            )
+            void* pUserData
+    )
     {
         std::cerr << "validation layer" << pCallbackData->pMessage << std::endl;
 
@@ -254,14 +279,15 @@ private:
             throw std::runtime_error("failed to open file");
         }
 
-        size_t fileSize = (size_t) file.tellg();
-        std::vector<char> buffer(fileSize);
+        size_t file_size = (size_t) file.tellg();
+        std::vector<char> buffer(file_size);
         file.seekg(0);
-        file.read(buffer.data(), fileSize);
+        file.read(buffer.data(), file_size);
 
         file.close();
         return buffer;
     }
+
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
 
     // State //
@@ -278,9 +304,9 @@ private:
 
     VkSwapchainKHR m_SwapChain;
 
-    VkQueue graphics_queue;
+    VkQueue m_GraphicsQueue;
 
-    VkQueue present_queue;
+    VkQueue m_PresentQueue;
 
     VkDescriptorSetLayout m_DescriptorSetLayout;
     VkRenderPass m_RenderPass;
@@ -350,7 +376,7 @@ private:
 
     bool m_FramebufferResized = false;
 
-    VkDebugUtilsMessengerEXT debugMessenger;
+    VkDebugUtilsMessengerEXT m_DebugMessenger;
 
     VkRenderPass m_ImguiRenderPass;
     VkCommandPool m_ImguiCommandPool;

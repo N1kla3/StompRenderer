@@ -5,17 +5,19 @@
 #include "Scene.h"
 #include "EntityPanel.h"
 
-namespace omp{
-class ScenePanel : public ImguiUnit
+namespace omp
 {
-    int16_t m_SelectedIndex;
-    std::weak_ptr<Scene> m_Scene;
-    std::shared_ptr<EntityPanel> m_EntityUI;
+    class ScenePanel : public ImguiUnit
+    {
+        int16_t m_SelectedIndex;
+        std::weak_ptr<Scene> m_Scene;
+        std::shared_ptr<EntityPanel> m_EntityUi;
 
-public:
-    explicit ScenePanel(const std::shared_ptr<EntityPanel>& entityPanel);
-    virtual void renderUI(float DeltaTime) override;
-    void SetScene(const std::shared_ptr<Scene>& inScene) { m_Scene = inScene; }
-};
+    public:
+        explicit ScenePanel(const std::shared_ptr<EntityPanel>& entityPanel);
+        virtual void renderUi(float deltaTime) override;
+
+        void setScene(const std::shared_ptr<Scene>& inScene) { m_Scene = inScene; }
+    };
 }
 

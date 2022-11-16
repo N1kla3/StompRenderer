@@ -1,10 +1,11 @@
 #pragma once
 
-namespace omp{
-class AssetRepresentation
+namespace omp
 {
-public:
-    virtual void renderUIonPanel() = 0;
-    virtual void renderUIonContentBrowser() = 0;
-};
+    class AssetRepresentation
+    {
+    public:
+        virtual void renderUIonPanel() = 0;
+        virtual void renderUIonContentBrowser() = 0;
+    };
 }

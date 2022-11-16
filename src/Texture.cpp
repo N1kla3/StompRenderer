@@ -6,30 +6,30 @@
 #include "imgui_impl_vulkan.h"
 #include "stb_image.h"
 
-omp::Texture::Texture(const std::shared_ptr<VulkanContext> &helper)
-    : m_VulkanContext(helper)
+omp::Texture::Texture(const std::shared_ptr<VulkanContext>& helper)
+        : m_VulkanContext(helper)
 {
 
 }
 
-void omp::Texture::DestroyVkObjects()
+void omp::Texture::destroyVkObjects()
 {
-    vkDestroySampler(m_VulkanContext.lock()->m_LogicalDevice, m_TextureSampler, nullptr);
-    vkDestroyImageView(m_VulkanContext.lock()->m_LogicalDevice, m_TextureImageView, nullptr);
-    vkDestroyImage(m_VulkanContext.lock()->m_LogicalDevice, m_TextureImage, nullptr);
-    vkFreeMemory(m_VulkanContext.lock()->m_LogicalDevice, m_TextureImageMemory, nullptr);
+    vkDestroySampler(m_VulkanContext.lock()->logical_device, m_TextureSampler, nullptr);
+    vkDestroyImageView(m_VulkanContext.lock()->logical_device, m_TextureImageView, nullptr);
+    vkDestroyImage(m_VulkanContext.lock()->logical_device, m_TextureImage, nullptr);
+    vkFreeMemory(m_VulkanContext.lock()->logical_device, m_TextureImageMemory, nullptr);
 }
 
-uint64_t omp::Texture::GetTextureId()
+uint64_t omp::Texture::getTextureId()
 {
     if (!hasFlags(LoadedToUI))
     {
-        LoadToUI();
+        loadToUi();
     }
     return m_Id;
 }
 
-void omp::Texture::LoadTextureToCPU(const std::string &path)
+void omp::Texture::loadTextureToCpu(const std::string& path)
 {
     removeFlags(LoadedToGPU | LoadedToCPU | LoadedToUI);
 
@@ -48,7 +48,7 @@ void omp::Texture::LoadTextureToCPU(const std::string &path)
     addFlags(LoadedToCPU);
 }
 
-void omp::Texture::LoadToGPU()
+void omp::Texture::loadToGpu()
 {
     if (hasFlags(LoadedToGPU))
     {
@@ -93,7 +93,8 @@ void omp::Texture::createSampler()
     sampler_info.minLod = 0;
     sampler_info.maxLod = static_cast<float>(m_MipLevels);
 
-    if (vkCreateSampler(m_VulkanContext.lock()->m_LogicalDevice, &sampler_info, nullptr, &m_TextureSampler) != VK_SUCCESS)
+    if (vkCreateSampler(m_VulkanContext.lock()->logical_device, &sampler_info, nullptr, &m_TextureSampler) !=
+        VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create sampler");
     }
@@ -104,50 +105,54 @@ void omp::Texture::createImage()
     VkBuffer staging_buffer;
     VkDeviceMemory staging_buffer_memory;
     m_VulkanContext.lock()->createBuffer(m_Size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                          staging_buffer, staging_buffer_memory);
 
     void* data;
-    vkMapMemory(m_VulkanContext.lock()->m_LogicalDevice, staging_buffer_memory, 0, m_Size, 0, &data);
+    vkMapMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory, 0, m_Size, 0, &data);
     memcpy(data, m_Pixels, static_cast<size_t>(m_Size));
-    vkUnmapMemory(m_VulkanContext.lock()->m_LogicalDevice, staging_buffer_memory);
+    vkUnmapMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory);
 
     stbi_image_free(m_Pixels);
 
     m_VulkanContext.lock()->createImage(m_Width, m_Height, m_MipLevels, VK_FORMAT_R8G8B8A8_SRGB,
                                         VK_IMAGE_TILING_OPTIMAL,
-                                   VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory, VK_SAMPLE_COUNT_1_BIT);
+                                        VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+                                        VK_IMAGE_USAGE_SAMPLED_BIT,
+                                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory,
+                                        VK_SAMPLE_COUNT_1_BIT);
 
     m_VulkanContext.lock()->transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
                                                   VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
-    m_VulkanContext.lock()->copyBufferToImage(staging_buffer, m_TextureImage, static_cast<uint32_t>(m_Width), static_cast<uint32_t>(m_Height));
+    m_VulkanContext.lock()->copyBufferToImage(staging_buffer, m_TextureImage, static_cast<uint32_t>(m_Width),
+                                              static_cast<uint32_t>(m_Height));
     //transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
     //                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
     m_VulkanContext.lock()->generateMipmaps(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, m_Width, m_Height, m_MipLevels);
 
-    vkDestroyBuffer(m_VulkanContext.lock()->m_LogicalDevice, staging_buffer, nullptr);
-    vkFreeMemory(m_VulkanContext.lock()->m_LogicalDevice, staging_buffer_memory, nullptr);
+    vkDestroyBuffer(m_VulkanContext.lock()->logical_device, staging_buffer, nullptr);
+    vkFreeMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory, nullptr);
 }
 
 void omp::Texture::createImageView()
 {
-    m_TextureImageView = m_VulkanContext.lock()->createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT, m_MipLevels);
+    m_TextureImageView = m_VulkanContext.lock()->createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB,
+                                                                 VK_IMAGE_ASPECT_COLOR_BIT, m_MipLevels);
 }
 
-void omp::Texture::FullLoad(const std::string &path)
+void omp::Texture::fullLoad(const std::string& path)
 {
     if (hasFlags(LoadedToGPU))
     {
-        DestroyVkObjects();
+        destroyVkObjects();
     }
-    LoadTextureToCPU(path);
-    LoadToGPU();
+    loadTextureToCpu(path);
+    loadToGpu();
 }
 
-void omp::Texture::LazyLoad(const std::string &path)
+void omp::Texture::lazyLoad(const std::string& path)
 {
-    LoadTextureToCPU(path);
+    loadTextureToCpu(path);
 }
 
 void omp::Texture::removeFlags(uint16_t flags)
@@ -165,40 +170,45 @@ bool omp::Texture::hasFlags(uint16_t flags) const
     return m_Flags & flags;
 }
 
-void omp::Texture::LoadToUI()
+void omp::Texture::loadToUi()
 {
     if (!hasFlags(LoadedToGPU))
     {
-        LoadToGPU();
+        loadToGpu();
     }
     m_Id = ImGui_ImplVulkan_AddTexture(m_TextureSampler, m_TextureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     addFlags(LoadedToUI);
 }
 
-VkImageView omp::Texture::GetImageView()
+VkImageView omp::Texture::getImageView()
 {
     if (!hasFlags(LoadedToGPU))
     {
-        LoadToGPU();
+        loadToGpu();
     }
     return m_TextureImageView;
 }
 
-VkImage omp::Texture::GetImage()
+VkImage omp::Texture::getImage()
 {
     if (!hasFlags(LoadedToGPU))
     {
-        LoadToGPU();
+        loadToGpu();
     }
     return m_TextureImage;
 }
 
-VkSampler omp::Texture::GetSampler()
+VkSampler omp::Texture::getSampler()
 {
     if (!hasFlags(LoadedToGPU))
     {
-        LoadToGPU();
+        loadToGpu();
     }
     return m_TextureSampler;
+}
+
+omp::Texture::Texture(const std::string& inPath)
+{
+
 }
 

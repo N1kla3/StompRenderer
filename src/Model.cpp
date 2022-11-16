@@ -1,39 +1,41 @@
 #include "Model.h"
+
 #define GLM_ENABLE_EXPERIMENTAL
+
 #include <glm/gtx/quaternion.hpp>
 
 omp::Model::Model()
-    : m_Name("NONE")
-    , m_Translation(glm::vec3{1.f})
-    , m_Rotation(glm::vec3{0.f})
-    , m_Scale(glm::vec3{1.f})
+        : m_Name("NONE")
+        , m_Translation(glm::vec3{1.f})
+        , m_Rotation(glm::vec3{0.f})
+        , m_Scale(glm::vec3{1.f})
 {
 
 }
 
-void omp::Model::SetMaterial(const std::shared_ptr<Material>& InMaterial)
+void omp::Model::setMaterial(const std::shared_ptr<Material>& inMaterial)
 {
-    m_MaterialInstance = std::make_shared<MaterialInstance>(InMaterial);
+    m_MaterialInstance = std::make_shared<MaterialInstance>(inMaterial);
 }
 
-void omp::Model::AddVertex(const omp::Vertex &InVertex)
+void omp::Model::addVertex(const omp::Vertex& inVertex)
 {
-    m_Vertices.emplace_back(std::move(InVertex));
+    m_Vertices.emplace_back(std::move(inVertex));
 }
 
-void omp::Model::AddVertices(const std::vector<Vertex> &InVertices)
+void omp::Model::addVertices(const std::vector<Vertex>& inVertices)
 {
-    m_Vertices = std::move(InVertices);
+    m_Vertices = std::move(inVertices);
 }
 
-void omp::Model::AddIndex(uint32_t InIndex)
+void omp::Model::addIndex(uint32_t inIndex)
 {
-    m_Indices.push_back(InIndex);
+    m_Indices.push_back(inIndex);
 }
 
-void omp::Model::AddIndices(const std::vector<uint32_t> &InIndices)
+void omp::Model::addIndices(const std::vector<uint32_t>& inIndices)
 {
-    m_Indices = InIndices;
+    m_Indices = inIndices;
 }
 
 /*
@@ -58,22 +60,22 @@ void omp::Model::SetTransform()
 }
  */
 
-glm::vec3& omp::Model::GetPosition()
+glm::vec3& omp::Model::getPosition()
 {
     return m_Translation;
 }
 
-glm::vec3& omp::Model::GetRotation()
+glm::vec3& omp::Model::getRotation()
 {
     return m_Rotation;
 }
 
-glm::vec3& omp::Model::GetScale()
+glm::vec3& omp::Model::getScale()
 {
     return m_Scale;
 }
 
-glm::mat4 omp::Model::GetTransform() const
+glm::mat4 omp::Model::getTransform() const
 {
     glm::mat4 rotation = glm::toMat4(glm::quat(m_Rotation));
     return glm::translate(glm::mat4(1.0f), m_Translation)

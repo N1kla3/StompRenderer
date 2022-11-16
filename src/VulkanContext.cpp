@@ -2,15 +2,19 @@
 #include <stdexcept>
 #include <vector>
 
-omp::VulkanContext::VulkanContext(VkDevice device, VkPhysicalDevice physDevice, VkCommandPool pool, VkQueue graphicsQueue)
-    : m_LogicalDevice(device)
-    , m_PhysDevice(physDevice)
-    , m_CommandPools(pool)
-    , graphics_queue(graphicsQueue)
+omp::VulkanContext::VulkanContext(
+        VkDevice device, VkPhysicalDevice physDevice, VkCommandPool pool, VkQueue graphicsQueue)
+        : logical_device(device)
+        , phys_device(physDevice)
+        , command_pools(pool)
+        , graphics_queue(graphicsQueue)
 {
 
 }
-void omp::VulkanContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+
+void omp::VulkanContext::createBuffer(
+        VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
+        VkDeviceMemory& bufferMemory)
 {
     VkBufferCreateInfo buffer_info{};
     buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -18,31 +22,31 @@ void omp::VulkanContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usag
     buffer_info.usage = usage;
     buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(m_LogicalDevice, &buffer_info, nullptr, &buffer) != VK_SUCCESS)
+    if (vkCreateBuffer(logical_device, &buffer_info, nullptr, &buffer) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create vertex buffer");
     }
 
     VkMemoryRequirements memory_requirements;
-    vkGetBufferMemoryRequirements(m_LogicalDevice, buffer, &memory_requirements);
+    vkGetBufferMemoryRequirements(logical_device, buffer, &memory_requirements);
 
     VkMemoryAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocate_info.allocationSize = memory_requirements.size;
     allocate_info.memoryTypeIndex = findMemoryType(memory_requirements.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(m_LogicalDevice, &allocate_info, nullptr, &bufferMemory) != VK_SUCCESS)
+    if (vkAllocateMemory(logical_device, &allocate_info, nullptr, &bufferMemory) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate vertex buffer memory");
     }
 
-    vkBindBufferMemory(m_LogicalDevice, buffer, bufferMemory, 0);
+    vkBindBufferMemory(logical_device, buffer, bufferMemory, 0);
 }
 
 uint32_t omp::VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
 {
     VkPhysicalDeviceMemoryProperties memory_properties;
-    vkGetPhysicalDeviceMemoryProperties(m_PhysDevice, &memory_properties);
+    vkGetPhysicalDeviceMemoryProperties(phys_device, &memory_properties);
     for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
     {
         if ((typeFilter & (1 << i))
@@ -55,10 +59,10 @@ uint32_t omp::VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropert
 }
 
 void omp::VulkanContext::createImage(
-        uint32_t width, uint32_t height, uint32_t mip_levels,
+        uint32_t width, uint32_t height, uint32_t mipLevels,
         VkFormat format, VkImageTiling tiling,
         VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-        VkImage &image, VkDeviceMemory &imageMemory,
+        VkImage& image, VkDeviceMemory& imageMemory,
         VkSampleCountFlagBits numSamples)
 {
     VkImageCreateInfo image_info{};
@@ -67,7 +71,7 @@ void omp::VulkanContext::createImage(
     image_info.extent.width = static_cast<uint32_t>(width);
     image_info.extent.height = static_cast<uint32_t>(height);
     image_info.extent.depth = 1;
-    image_info.mipLevels = mip_levels;
+    image_info.mipLevels = mipLevels;
     image_info.arrayLayers = 1;
     image_info.format = format;
     image_info.tiling = tiling;
@@ -77,28 +81,29 @@ void omp::VulkanContext::createImage(
     image_info.samples = numSamples;
     image_info.flags = 0;
 
-    if (vkCreateImage(m_LogicalDevice, &image_info, nullptr, &image) != VK_SUCCESS)
+    if (vkCreateImage(logical_device, &image_info, nullptr, &image) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create image!");
     }
 
     VkMemoryRequirements mem_req;
-    vkGetImageMemoryRequirements(m_LogicalDevice, image, &mem_req);
+    vkGetImageMemoryRequirements(logical_device, image, &mem_req);
 
     VkMemoryAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocate_info.allocationSize = mem_req.size;
     allocate_info.memoryTypeIndex = findMemoryType(mem_req.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(m_LogicalDevice, &allocate_info, nullptr, &imageMemory) != VK_SUCCESS)
+    if (vkAllocateMemory(logical_device, &allocate_info, nullptr, &imageMemory) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to allocate image memory!");
     }
 
-    vkBindImageMemory(m_LogicalDevice, image, imageMemory, 0);
+    vkBindImageMemory(logical_device, image, imageMemory, 0);
 }
 
-void omp::VulkanContext::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mip_levels)
+void omp::VulkanContext::transitionImageLayout(
+        VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
 {
     VkCommandBuffer command_buffer = beginSingleTimeCommands();
 
@@ -111,7 +116,7 @@ void omp::VulkanContext::transitionImageLayout(VkImage image, VkFormat format, V
     barrier.image = image;
     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = mip_levels;
+    barrier.subresourceRange.levelCount = mipLevels;
     barrier.subresourceRange.baseArrayLayer = 0;
     barrier.subresourceRange.layerCount = 1;
     barrier.srcAccessMask = 0;
@@ -147,7 +152,8 @@ void omp::VulkanContext::transitionImageLayout(VkImage image, VkFormat format, V
     else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
     {
         barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        barrier.dstAccessMask =
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
         source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         destination_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
@@ -187,10 +193,11 @@ void omp::VulkanContext::copyBufferToImage(VkBuffer buffer, VkImage image, uint3
     endSingleTimeCommands(command_buffer);
 }
 
-void omp::VulkanContext::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
+void omp::VulkanContext::generateMipmaps(
+        VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
 {
     VkFormatProperties format_properties;
-    vkGetPhysicalDeviceFormatProperties(m_PhysDevice, imageFormat, &format_properties);
+    vkGetPhysicalDeviceFormatProperties(phys_device, imageFormat, &format_properties);
     if (!(format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
     {
         throw std::runtime_error("Texture image format does not support linear blitting");
@@ -260,8 +267,10 @@ void omp::VulkanContext::generateMipmaps(VkImage image, VkFormat imageFormat, in
                              1, &barrier
         );
 
-        if (mip_width > 1) mip_width /= 2;
-        if (mip_height > 1) mip_height /= 2;
+        if (mip_width > 1)
+        { mip_width /= 2; }
+        if (mip_height > 1)
+        { mip_height /= 2; }
     }
 
     barrier.subresourceRange.baseMipLevel = mipLevels - 1;
@@ -286,11 +295,11 @@ VkCommandBuffer omp::VulkanContext::beginSingleTimeCommands()
     VkCommandBufferAllocateInfo alloc_info{};
     alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandPool = m_CommandPools;
+    alloc_info.commandPool = command_pools;
     alloc_info.commandBufferCount = 1;
 
     VkCommandBuffer command_buffer;
-    vkAllocateCommandBuffers(m_LogicalDevice, &alloc_info, &command_buffer);
+    vkAllocateCommandBuffers(logical_device, &alloc_info, &command_buffer);
 
     VkCommandBufferBeginInfo begin_info{};
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -311,7 +320,7 @@ void omp::VulkanContext::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 
     vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
     vkQueueWaitIdle(graphics_queue);
-    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, 1, &commandBuffer);
+    vkFreeCommandBuffers(logical_device, command_pools, 1, &commandBuffer);
 }
 
 bool omp::VulkanContext::hasStencilComponent(VkFormat format)
@@ -319,7 +328,11 @@ bool omp::VulkanContext::hasStencilComponent(VkFormat format)
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-VkImageView omp::VulkanContext::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mip_levels)
+VkImageView omp::VulkanContext::createImageView(
+        VkImage image,
+        VkFormat format,
+        VkImageAspectFlags aspectFlags,
+        uint32_t mipLevels)
 {
     VkImageViewCreateInfo view_info{};
     view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -328,12 +341,12 @@ VkImageView omp::VulkanContext::createImageView(VkImage image, VkFormat format, 
     view_info.format = format;
     view_info.subresourceRange.aspectMask = aspectFlags;
     view_info.subresourceRange.baseMipLevel = 0;
-    view_info.subresourceRange.levelCount = mip_levels;
+    view_info.subresourceRange.levelCount = mipLevels;
     view_info.subresourceRange.baseArrayLayer = 0;
     view_info.subresourceRange.layerCount = 1;
 
     VkImageView image_view;
-    if (vkCreateImageView(m_LogicalDevice, &view_info, nullptr, &image_view) != VK_SUCCESS)
+    if (vkCreateImageView(logical_device, &view_info, nullptr, &image_view) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create texture image view!");
     }
@@ -348,7 +361,7 @@ VkShaderModule omp::VulkanContext::createShaderModule(const std::vector<char>& c
     create_info.codeSize = code.size();
     create_info.pCode = reinterpret_cast<const uint32_t*>(code.data());
     VkShaderModule shader_module;
-    if (vkCreateShaderModule(m_LogicalDevice, &create_info, nullptr, &shader_module)
+    if (vkCreateShaderModule(logical_device, &create_info, nullptr, &shader_module)
         != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create shader module");
@@ -358,5 +371,5 @@ VkShaderModule omp::VulkanContext::createShaderModule(const std::vector<char>& c
 
 void omp::VulkanContext::destroyShaderModule(VkShaderModule module)
 {
-    vkDestroyShaderModule(m_LogicalDevice, module, nullptr);
+    vkDestroyShaderModule(logical_device, module, nullptr);
 }

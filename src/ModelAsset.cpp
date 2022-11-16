@@ -1,7 +1,7 @@
 #include "ModelAsset.h"
 
 omp::ModelAsset::ModelAsset()
-    : Asset()
+        : Asset()
 {
 
 }
@@ -11,12 +11,12 @@ void omp::ModelAsset::initialize()
 
 }
 
-void omp::ModelAsset::serializeData(nlohmann::json &data)
+void omp::ModelAsset::serializeData(nlohmann::json& data)
 {
     write_modelPath(data);
 }
 
-void omp::ModelAsset::deserializeData(const nlohmann::json &data)
+void omp::ModelAsset::deserializeData(const nlohmann::json& data)
 {
     modelPath = read_modelPath(data);
 }

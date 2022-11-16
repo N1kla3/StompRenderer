@@ -1,4 +1,5 @@
 #pragma once
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -9,36 +10,37 @@
 #include "AssetLoader.h"
 #include "Logs.h"
 
-namespace omp{
-class AssetManager
+namespace omp
 {
-private:
-    std::unordered_map<std::string, std::shared_ptr<Asset>> m_Assets;
+    class AssetManager
+    {
+    private:
+        std::unordered_map<std::string, std::shared_ptr<Asset>> m_Assets;
 
-    AssetManager();
-    ~AssetManager() = default;
-public:
+        AssetManager();
+        ~AssetManager() = default;
+    public:
 
-    AssetManager(const AssetManager&) = delete;
-    AssetManager operator=(const AssetManager&) = delete;
-    AssetManager(AssetManager&&) = delete;
-    AssetManager operator=(AssetManager&&) = delete;
-    static AssetManager& GetAssetManager();
+        AssetManager(const AssetManager&) = delete;
+        AssetManager operator=(const AssetManager&) = delete;
+        AssetManager(AssetManager&&) = delete;
+        AssetManager operator=(AssetManager&&) = delete;
+        static AssetManager& getAssetManager();
 
-    template<class T>
-    requires std::is_base_of_v<Asset, T>
-    void createAsset(const std::string& inName, const std::string& inPath);
+        template<class T>
+        requires std::is_base_of_v<Asset, T>
+        void createAsset(const std::string& inName, const std::string& inPath);
 
-    void saveAsset(const std::string& inName);
-    void deleteAsset(const std::string& inName);
-    std::shared_ptr<Asset> getAsset(const std::string& inName);
+        void saveAsset(const std::string& inName);
+        void deleteAsset(const std::string& inName);
+        std::shared_ptr<Asset> getAsset(const std::string& inName);
 
-private:
-    void loadAssetsFromDrive();
-    void loadAssetsFromDrive(const std::string& pathDirectory);
-    void loadAsset(const std::string& inPath);
+    private:
+        void loadAssetsFromDrive();
+        void loadAssetsFromDrive(const std::string& pathDirectory);
+        void loadAsset(const std::string& inPath);
 
-}; // Asset Manager
+    }; // Asset Manager
 
     template<class T>
     requires std::is_base_of_v<Asset, T>

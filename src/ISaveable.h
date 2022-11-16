@@ -3,10 +3,11 @@
 
 #include <string>
 
-namespace omp{
-class ISaveable
+namespace omp
 {
-public:
-    virtual void saveAssetToFile(const std::string& path) = 0;
-};
+    class ISaveable
+    {
+    public:
+        virtual void saveAssetToFile(const std::string& path) = 0;
+    };
 }

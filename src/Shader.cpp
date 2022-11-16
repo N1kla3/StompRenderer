@@ -4,41 +4,41 @@
 #include "Logs.h"
 
 omp::Shader::Shader(
-        const std::shared_ptr<VulkanContext> &context,
-        const std::string &vertexPath,
-        const std::string &fragmentPath
-        )
+        const std::shared_ptr<VulkanContext>& context,
+        const std::string& vertexPath,
+        const std::string& fragmentPath
+)
         : m_Context(context)
 {
-    auto vertShaderCode = readFile(vertexPath);
-    auto fragShaderCode = readFile(fragmentPath);
+    auto vert_shader_code = readFile(vertexPath);
+    auto frag_shader_code = readFile(fragmentPath);
 
-    VkShaderModule vertShaderModule = m_Context->createShaderModule(vertShaderCode);
-    VkShaderModule fragShaderModule = m_Context->createShaderModule(fragShaderCode);
-    m_ShaderModules[0] = vertShaderModule;
-    m_ShaderModules[1] = fragShaderModule;
+    VkShaderModule vert_shader_module = m_Context->createShaderModule(vert_shader_code);
+    VkShaderModule frag_shader_module = m_Context->createShaderModule(frag_shader_code);
+    m_ShaderModules[0] = vert_shader_module;
+    m_ShaderModules[1] = frag_shader_module;
 
     // Vertex shader
-    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    VkPipelineShaderStageCreateInfo vert_shader_stage_info{};
+    vert_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vert_shader_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
 
-    vertShaderStageInfo.module = vertShaderModule;
-    vertShaderStageInfo.pName = "main";
+    vert_shader_stage_info.module = vert_shader_module;
+    vert_shader_stage_info.pName = "main";
 
     // Fragment shader
-    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    VkPipelineShaderStageCreateInfo frag_shader_stage_info{};
+    frag_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    frag_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    fragShaderStageInfo.module = fragShaderModule;
-    fragShaderStageInfo.pName = "main";
+    frag_shader_stage_info.module = frag_shader_module;
+    frag_shader_stage_info.pName = "main";
 
     // Stages
-    m_ShaderStages = {vertShaderStageInfo, fragShaderStageInfo};
+    m_ShaderStages = {vert_shader_stage_info, frag_shader_stage_info};
 }
 
-std::vector<char> omp::Shader::readFile(const std::string &filename)
+std::vector<char> omp::Shader::readFile(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -47,10 +47,10 @@ std::vector<char> omp::Shader::readFile(const std::string &filename)
         throw std::runtime_error("failed to open file");
     }
 
-    size_t fileSize = (size_t) file.tellg();
-    std::vector<char> buffer(fileSize);
+    size_t file_size = (size_t) file.tellg();
+    std::vector<char> buffer(file_size);
     file.seekg(0);
-    file.read(buffer.data(), fileSize);
+    file.read(buffer.data(), file_size);
 
     file.close();
     return buffer;
@@ -58,8 +58,8 @@ std::vector<char> omp::Shader::readFile(const std::string &filename)
 
 omp::Shader::~Shader()
 {
-    for (auto moduel : m_ShaderModules)
+    for (auto module: m_ShaderModules)
     {
-        m_Context->destroyShaderModule(moduel);
+        m_Context->destroyShaderModule(module);
     }
 }

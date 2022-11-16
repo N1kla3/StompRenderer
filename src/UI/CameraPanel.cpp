@@ -1,14 +1,14 @@
 #include "CameraPanel.h"
 #include "imgui.h"
 
-omp::CameraPanel::CameraPanel(const std::shared_ptr<Camera> &camera)
-    : ImguiUnit()
-    , m_Camera(camera)
+omp::CameraPanel::CameraPanel(const std::shared_ptr<Camera>& camera)
+        : ImguiUnit()
+        , m_Camera(camera)
 {
 
 }
 
-void omp::CameraPanel::renderUI(float DeltaTime)
+void omp::CameraPanel::renderUi(float deltaTime)
 {
 
     ImGui::Begin("Camera Panel");

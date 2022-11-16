@@ -1,55 +1,58 @@
 #pragma once
+
 #include "vulkan/vulkan.h"
 #include <memory>
 
 
-namespace omp{
-class GraphicsPipeline
+namespace omp
 {
-public:
-    GraphicsPipeline(VkDevice inLogicalDevice);
-    ~GraphicsPipeline();
+    class GraphicsPipeline
+    {
+    public:
+        GraphicsPipeline(VkDevice inLogicalDevice);
+        ~GraphicsPipeline();
 
-    void StartCreation();
-    void StartDefaultCreation();
-    void CreateVertexInfo();
-    void CreateInputAssembly();
-    void CreateViewport(VkExtent2D);
-    void CreateRasterizer();
-    void CreateMultisamplingInfo(VkSampleCountFlagBits rasterizationSamples);
-    void CreateColorBlending();
-    void CreatePipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
-    void CreateShaders(const std::shared_ptr<class Shader>& shader);
-    void ConfirmCreation(VkRenderPass renderPass);
+        void startCreation();
+        void startDefaultCreation();
+        void createVertexInfo();
+        void createInputAssembly();
+        void createViewport(VkExtent2D scissorExtent);
+        void createRasterizer();
+        void createMultisamplingInfo(VkSampleCountFlagBits rasterizationSamples);
+        void createColorBlending();
+        void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
+        void createShaders(const std::shared_ptr<class Shader>& shader);
+        void confirmCreation(VkRenderPass renderPass);
 
-    VkPipeline GetGraphicsPipeline() { return m_GraphicsPipeline; }
-    VkPipelineLayout GetPipelineLayout() { return m_PipelineLayout; }
+        VkPipeline getGraphicsPipeline() { return m_GraphicsPipeline; }
 
-private:
-    bool m_IsCreated = false;
-    VkDevice m_LogicalDevice;
+        VkPipelineLayout getPipelineLayout() { return m_PipelineLayout; }
 
-    // PIPELINE //
-    // ======== //
-    VkPipelineVertexInputStateCreateInfo m_VertexInputInfo{};
-    VkPipelineInputAssemblyStateCreateInfo m_InputAssembly{};
-    VkViewport m_Viewport{};
-    VkRect2D m_Scissor{};
-    VkPipelineViewportStateCreateInfo m_ViewportState{};
-    VkPipelineRasterizationStateCreateInfo m_Rasterizer{};
-    VkPipelineMultisampleStateCreateInfo m_Multisampling{};
-    VkPipelineColorBlendAttachmentState m_ColorBlendAttachment{};
-    VkPipelineColorBlendStateCreateInfo m_ColorBlending{};
-    VkPushConstantRange m_ConstantRange{};
-    VkPipelineDepthStencilStateCreateInfo m_DepthStencil{};
-    std::shared_ptr<omp::Shader> m_Shader;
+    private:
+        bool m_IsCreated = false;
+        VkDevice m_LogicalDevice;
 
-    VkPipelineLayoutCreateInfo m_PipelineLayoutInfo{};
+        // PIPELINE //
+        // ======== //
+        VkPipelineVertexInputStateCreateInfo m_VertexInputInfo{};
+        VkPipelineInputAssemblyStateCreateInfo m_InputAssembly{};
+        VkViewport m_Viewport{};
+        VkRect2D m_Scissor{};
+        VkPipelineViewportStateCreateInfo m_ViewportState{};
+        VkPipelineRasterizationStateCreateInfo m_Rasterizer{};
+        VkPipelineMultisampleStateCreateInfo m_Multisampling{};
+        VkPipelineColorBlendAttachmentState m_ColorBlendAttachment{};
+        VkPipelineColorBlendStateCreateInfo m_ColorBlending{};
+        VkPushConstantRange m_ConstantRange{};
+        VkPipelineDepthStencilStateCreateInfo m_DepthStencil{};
+        std::shared_ptr<omp::Shader> m_Shader;
 
-    VkPipelineLayout m_PipelineLayout;
-    VkPipeline m_GraphicsPipeline;
+        VkPipelineLayoutCreateInfo m_PipelineLayoutInfo{};
+
+        VkPipelineLayout m_PipelineLayout;
+        VkPipeline m_GraphicsPipeline;
 
 
-    void TryDestroyVulkanObjects();
-};
+        void tryDestroyVulkanObjects();
+    };
 }

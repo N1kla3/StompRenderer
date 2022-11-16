@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <unordered_map>
 #include <functional>
@@ -6,11 +7,11 @@
 #include "ModelAsset.h"
 #include "Asset.h"
 
-#define ImplementClass(ClassName)\
+#define IMPLEMENT_CLASS(ClassName)\
 template<>\
 struct Classes<ClassName>\
 {\
-    inline static const std::string Type = #ClassName;\
+    inline static const std::string TYPE = #ClassName;\
     using ClassType = ClassName;\
     inline static Asset* CreateClassAsset()\
     {\
@@ -18,41 +19,43 @@ struct Classes<ClassName>\
     }\
 };\
 
-#define ClassDetectionPair(ClassName) {AssetLoader::Classes<ClassName>::Type, &AssetLoader::Classes<ClassName>::CreateClassAsset}
+#define CLASS_DETECTION_PAIR(ClassName) {AssetLoader::Classes<ClassName>::TYPE, &AssetLoader::Classes<ClassName>::CreateClassAsset}
 
 
 namespace omp
 {
     class AssetLoader
     {
-        static Asset* LoadAssetFromStorage(const std::string& path);
-        static Asset* CreateClassFromString(const std::string& name);
+        static Asset* loadAssetFromStorage(const std::string& path);
+        static Asset* createClassFromString(const std::string& name);
 
         template<class T>
         struct Classes
         {
-            inline static const std::string Type = "Undefined";
+            inline static const std::string TYPE = "Undefined";
             using ClassType = T;
+
             inline static Asset* CreateClassAsset()
             {
                 return Asset::createAsset<T>();
             }
         };
 
-        ImplementClass(MaterialAsset);
+        IMPLEMENT_CLASS(MaterialAsset);
 
-        ImplementClass(ModelAsset);
+        IMPLEMENT_CLASS(ModelAsset);
 
-        inline static const std::unordered_map<std::string, std::function<Asset*()>> ClassNames
-            {
-                    ClassDetectionPair(MaterialAsset),
-                    ClassDetectionPair(ModelAsset)
-            };
+        inline static const std::unordered_map<std::string, std::function<Asset*()>> CLASS_NAMES
+                {
+                        CLASS_DETECTION_PAIR(MaterialAsset),
+                        CLASS_DETECTION_PAIR(ModelAsset)
+                };
     public:
         AssetLoader() = delete;
         ~AssetLoader() = delete;
         AssetLoader& operator=(const AssetLoader&) = delete;
         AssetLoader& operator=(AssetLoader&&) = delete;
+
         friend class AssetManager;
     };
 }

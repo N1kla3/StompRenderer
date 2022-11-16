@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vulkan/vulkan.h>
 #include "glm/vec2.hpp"
 #include "glm/vec3.hpp"
@@ -6,12 +7,16 @@
 #include "Material.h"
 #include "MaterialInstance.h"
 #include <array>
+
 #define GLM_ENABLE_EXPERIMENTAL
+
 #include <glm/gtx/hash.hpp>
 #include <vector>
 
-namespace omp{
+namespace omp
+{
     class Model;
+
     struct Vertex;
     struct ModelPushConstant;
 }
@@ -20,9 +25,9 @@ struct omp::ModelPushConstant
 {
     glm::mat4 model;
 
-    glm::vec4 m_Ambient;
-    glm::vec4 m_Diffusive;
-    glm::vec4 m_Specular;
+    glm::vec4 ambient;
+    glm::vec4 diffusive;
+    glm::vec4 specular;
 };
 
 struct omp::Vertex
@@ -32,7 +37,7 @@ struct omp::Vertex
     glm::vec2 tex_coord;
     glm::vec3 normal;
 
-    static VkVertexInputBindingDescription getBindingDescription()
+    static VkVertexInputBindingDescription GetBindingDescription()
     {
         VkVertexInputBindingDescription binding_description{};
         binding_description.binding = 0;
@@ -41,7 +46,7 @@ struct omp::Vertex
         return binding_description;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions()
+    static std::array<VkVertexInputAttributeDescription, 4> GetAttributeDescriptions()
     {
         std::array<VkVertexInputAttributeDescription, 4> attribute_descriptions{};
         attribute_descriptions[0].binding = 0;
@@ -73,15 +78,16 @@ struct omp::Vertex
     }
 };
 
-namespace std {
+namespace std
+{
     template<>
     struct hash<omp::Vertex>
     {
         size_t operator()(omp::Vertex const& vertex) const
         {
             return ((hash<glm::vec3>()(vertex.pos) ^
-                    (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-                    (hash<glm::vec2>()(vertex.tex_coord) << 1);//TODO add normal
+                     (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+                   (hash<glm::vec2>()(vertex.tex_coord) << 1);//TODO add normal
         }
     };
 }
@@ -117,22 +123,27 @@ public:
     //void ScaleModel(const glm::vec3& scale);
     //void SetTransform();
 
-    void SetName(const std::string& inName) { m_Name = inName; }
-    void SetMaterial(const std::shared_ptr<Material>& InMaterial);
-    void AddVertex(const omp::Vertex& InVertex);
-    void AddVertices(const std::vector<Vertex>& InVertices);
-    void AddIndex(uint32_t InIndex);
-    void AddIndices(const std::vector<uint32_t>& InIndices);
+    void setName(const std::string& inName) { m_Name = inName; }
 
-    const std::string& GetName() const { return m_Name; }
-    std::shared_ptr<MaterialInstance>& GetMaterialInstance() { return m_MaterialInstance; }
-    glm::mat4 GetTransform() const;
-    const std::vector<Vertex>& GetVertices() const { return m_Vertices; }
-    const std::vector<uint32_t>& GetIndices() const { return m_Indices; }
+    void setMaterial(const std::shared_ptr<Material>& inMaterial);
+    void addVertex(const omp::Vertex& inVertex);
+    void addVertices(const std::vector<Vertex>& inVertices);
+    void addIndex(uint32_t inIndex);
+    void addIndices(const std::vector<uint32_t>& inIndices);
 
-    glm::vec3& GetPosition();
-    glm::vec3& GetRotation();
-    glm::vec3& GetScale();
+    const std::string& getName() const { return m_Name; }
+
+    std::shared_ptr<MaterialInstance>& getMaterialInstance() { return m_MaterialInstance; }
+
+    glm::mat4 getTransform() const;
+
+    const std::vector<Vertex>& getVertices() const { return m_Vertices; }
+
+    const std::vector<uint32_t>& getIndices() const { return m_Indices; }
+
+    glm::vec3& getPosition();
+    glm::vec3& getRotation();
+    glm::vec3& getScale();
 };
 
 
