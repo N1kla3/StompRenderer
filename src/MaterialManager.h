@@ -11,7 +11,7 @@ namespace omp
 {
     class MaterialManager
     {
-        std::weak_ptr<VulkanContext> m_VkHelper;
+        std::weak_ptr<VulkanContext> m_VulkanContext;
 
         std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
         std::unordered_map<std::string, std::shared_ptr<omp::Material>> m_Materials;
@@ -19,9 +19,15 @@ namespace omp
         std::shared_ptr<omp::Texture> m_DefaultTexture;
         std::shared_ptr<omp::Texture> m_EmptyTexture;
 
+        MaterialManager();
     public:
-        explicit MaterialManager(const std::shared_ptr<VulkanContext>& helper);
+        inline static MaterialManager& getMaterialManager()
+        {
+            static MaterialManager single;
+            return single;
+        }
         ~MaterialManager();
+        void specifyVulkanContext(const std::shared_ptr<omp::VulkanContext>& inContext);
 
         std::shared_ptr<omp::Texture> loadTextureInstantly(const std::string& path);
         std::shared_ptr<omp::Texture> loadTextureLazily(const std::string& path);

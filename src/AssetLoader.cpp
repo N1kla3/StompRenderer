@@ -26,12 +26,12 @@ omp::Asset* omp::AssetLoader::loadAssetFromStorage(const std::string& path)
             }
         }
         stream.close();
-        VERROR(AssetManager, "Something wrong with path: ", path);
+        VERROR(AssetManager, "Something wrong with path: {1}", path);
         return nullptr;
     }
     else
     {
-        VERROR(AssetManager, "File name extension is incorrect: ", path);
+        VERROR(AssetManager, "File name extension is incorrect: {1}", path);
         return nullptr;
     }
 }
@@ -42,6 +42,6 @@ omp::Asset* omp::AssetLoader::createClassFromString(const std::string& name)
     {
         return std::invoke(CLASS_NAMES.at(name));
     }
-    ERROR(AssetManager, "Cant create class with name: ", name);
+    ERROR(AssetManager, "Cant create class with name: {1}", name);
     return nullptr;
 }

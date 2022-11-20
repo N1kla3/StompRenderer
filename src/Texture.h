@@ -14,9 +14,9 @@ namespace omp
     {
         enum
         {
-            LoadedToGPU = 1 << 1,
-            LoadedToCPU = 1 << 2,
-            LoadedToUI = 1 << 3
+            LOADED_TO_GPU = 1 << 1,
+            LOADED_TO_CPU = 1 << 2,
+            LOADED_TO_UI = 1 << 3
         };
 
         std::string m_ContentPath;
@@ -40,10 +40,13 @@ namespace omp
 
     public:
         explicit Texture(const std::string& inPath);
-        Texture(const std::shared_ptr<VulkanContext>& helper);
+        Texture(const std::string& inPath, const std::shared_ptr<VulkanContext>& helper);
 
-        void fullLoad(const std::string& path);
-        void lazyLoad(const std::string& path);
+        void fullLoad();
+        void lazyLoad();
+
+        void specifyVulkanContext(const std::shared_ptr<VulkanContext>& inHelper);
+        bool hasVulkanContext() const { return !m_VulkanContext.expired(); }
 
         void destroyVkObjects();
         uint64_t getTextureId();
@@ -56,7 +59,7 @@ namespace omp
     protected:
         // Subroutines //
         // =========== //
-        void loadTextureToCpu(const std::string& path);
+        void loadTextureToCpu();
         void loadToGpu();
         void loadToUi();
 

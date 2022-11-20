@@ -13,7 +13,7 @@ void omp::Asset::saveAssetToFile(const std::string& inPath)
         nlohmann::json data;
         serializeData(data);
         stream << std::setw(4) << data << std::endl;
-        INFO(AssetManager, "Asset saved successfully: ", inPath);
+        INFO(AssetManager, "Asset saved successfully: {1}", inPath);
     }
 
     stream.close();

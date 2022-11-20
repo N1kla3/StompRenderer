@@ -6,10 +6,10 @@
 #include "imgui_impl_vulkan.h"
 #include "stb_image.h"
 
-omp::Texture::Texture(const std::shared_ptr<VulkanContext>& helper)
-        : m_VulkanContext(helper)
+omp::Texture::Texture(const std::string& inPath, const std::shared_ptr<VulkanContext>& helper)
+        : Texture(inPath)
 {
-
+    m_VulkanContext = helper;
 }
 
 void omp::Texture::destroyVkObjects()
@@ -22,20 +22,25 @@ void omp::Texture::destroyVkObjects()
 
 uint64_t omp::Texture::getTextureId()
 {
-    if (!hasFlags(LoadedToUI))
+    if (!hasFlags(LOADED_TO_UI))
     {
         loadToUi();
     }
     return m_Id;
 }
 
-void omp::Texture::loadTextureToCpu(const std::string& path)
+void omp::Texture::loadTextureToCpu()
 {
-    removeFlags(LoadedToGPU | LoadedToCPU | LoadedToUI);
+    removeFlags(LOADED_TO_GPU | LOADED_TO_CPU | LOADED_TO_UI);
 
-    m_ContentPath = path;
+    if (m_ContentPath.empty())
+    {
+        VWARN(Rendering, "Incorrect path to load texture");
+        return;
+    }
+
     int tex_channels;
-    m_Pixels = stbi_load(path.c_str(), &m_Width, &m_Height, &tex_channels, STBI_rgb_alpha);
+    m_Pixels = stbi_load(m_ContentPath.c_str(), &m_Width, &m_Height, &tex_channels, STBI_rgb_alpha);
     m_Size = m_Width * m_Height * 4;
 
     m_MipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(m_Width, m_Height)))) + 1;
@@ -45,26 +50,28 @@ void omp::Texture::loadTextureToCpu(const std::string& path)
         throw std::runtime_error("Failed to load texture image!");
     }
 
-    addFlags(LoadedToCPU);
+    addFlags(LOADED_TO_CPU);
 }
 
 void omp::Texture::loadToGpu()
 {
-    if (hasFlags(LoadedToGPU))
+    if (hasFlags(LOADED_TO_GPU) || !hasVulkanContext())
     {
+        VERROR(Rendering, "Texture cant be loaded to GPU");
         return;
     }
 
-    if (!hasFlags(LoadedToCPU))
+    if (!hasFlags(LOADED_TO_CPU))
     {
         VERROR(Rendering, "Texture not loaded to CPU {1} ", m_ContentPath);
+        return;
     }
 
     createSampler();
     createImage();
     createImageView();
 
-    addFlags(LoadedToGPU);
+    addFlags(LOADED_TO_GPU);
 }
 
 void omp::Texture::createSampler()
@@ -140,19 +147,19 @@ void omp::Texture::createImageView()
                                                                  VK_IMAGE_ASPECT_COLOR_BIT, m_MipLevels);
 }
 
-void omp::Texture::fullLoad(const std::string& path)
+void omp::Texture::fullLoad()
 {
-    if (hasFlags(LoadedToGPU))
+    if (hasFlags(LOADED_TO_GPU))
     {
         destroyVkObjects();
     }
-    loadTextureToCpu(path);
+    loadTextureToCpu();
     loadToGpu();
 }
 
-void omp::Texture::lazyLoad(const std::string& path)
+void omp::Texture::lazyLoad()
 {
-    loadTextureToCpu(path);
+    loadTextureToCpu();
 }
 
 void omp::Texture::removeFlags(uint16_t flags)
@@ -172,17 +179,17 @@ bool omp::Texture::hasFlags(uint16_t flags) const
 
 void omp::Texture::loadToUi()
 {
-    if (!hasFlags(LoadedToGPU))
+    if (!hasFlags(LOADED_TO_GPU))
     {
         loadToGpu();
     }
     m_Id = ImGui_ImplVulkan_AddTexture(m_TextureSampler, m_TextureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    addFlags(LoadedToUI);
+    addFlags(LOADED_TO_UI);
 }
 
 VkImageView omp::Texture::getImageView()
 {
-    if (!hasFlags(LoadedToGPU))
+    if (!hasFlags(LOADED_TO_GPU))
     {
         loadToGpu();
     }
@@ -191,7 +198,7 @@ VkImageView omp::Texture::getImageView()
 
 VkImage omp::Texture::getImage()
 {
-    if (!hasFlags(LoadedToGPU))
+    if (!hasFlags(LOADED_TO_GPU))
     {
         loadToGpu();
     }
@@ -200,7 +207,7 @@ VkImage omp::Texture::getImage()
 
 VkSampler omp::Texture::getSampler()
 {
-    if (!hasFlags(LoadedToGPU))
+    if (!hasFlags(LOADED_TO_GPU))
     {
         loadToGpu();
     }
@@ -208,7 +215,13 @@ VkSampler omp::Texture::getSampler()
 }
 
 omp::Texture::Texture(const std::string& inPath)
+        : m_ContentPath(inPath)
 {
+    lazyLoad();
+}
 
+void omp::Texture::specifyVulkanContext(const std::shared_ptr<VulkanContext>& inHelper)
+{
+    m_VulkanContext = inHelper;
 }
 

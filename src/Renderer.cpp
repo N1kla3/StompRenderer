@@ -105,7 +105,6 @@ void Renderer::cleanup()
         vkDestroyFence(m_LogicalDevice, m_InFlightFences[i], nullptr);
     }
 
-    m_MaterialManager.reset();
     cleanupSwapChain();
 
     vkDestroyCommandPool(m_LogicalDevice, m_CommandPools, nullptr);
@@ -422,6 +421,7 @@ void Renderer::createLogicalDevice()
 
     m_VulkanContext = std::make_shared<omp::VulkanContext>(m_LogicalDevice, m_PhysDevice, m_CommandPools,
                                                            m_GraphicsQueue);
+    omp::MaterialManager::getMaterialManager().specifyVulkanContext(m_VulkanContext);
 }
 
 void Renderer::createSurface()
@@ -1354,7 +1354,7 @@ void Renderer::createDescriptorSets()
         light_info.range = sizeof(omp::Light);
 
         VkDescriptorImageInfo image_info{};
-        auto texture = m_MaterialManager->getDefaultTexture().lock();
+        auto texture = omp::MaterialManager::getMaterialManager().getDefaultTexture().lock();
         image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         image_info.imageView = texture->getImageView();
         image_info.sampler = texture->getSampler();
@@ -1471,18 +1471,18 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
 
 void Renderer::createTextureImage()
 {
-    m_MaterialManager->loadTextureLazily("../textures/viking.png");
-    m_MaterialManager->loadTextureLazily("../textures/container.png");
-    m_MaterialManager->loadTextureLazily("../textures/container_specular.png");
+    omp::MaterialManager::getMaterialManager().loadTextureLazily("../textures/viking.png");
+    omp::MaterialManager::getMaterialManager().loadTextureLazily("../textures/container.png");
+    omp::MaterialManager::getMaterialManager().loadTextureLazily("../textures/container_specular.png");
 
-    m_DefaultMaterial = m_MaterialManager->createMaterial("default");
+    m_DefaultMaterial = omp::MaterialManager::getMaterialManager().createMaterial("default");
     // TODO: remove hardcoding
     m_DefaultMaterial->addTexture(omp::ETextureType::Texture,
-                                  m_MaterialManager->getTexture("../textures/container.png"));
+                                  omp::MaterialManager::getMaterialManager().getTexture("../textures/container.png"));
     m_DefaultMaterial->addTexture(omp::ETextureType::DiffusiveMap,
-                                  m_MaterialManager->getTexture("../textures/container_specular.png"));
+                                  omp::MaterialManager::getMaterialManager().getTexture("../textures/container_specular.png"));
     m_DefaultMaterial->addTexture(omp::ETextureType::SpecularMap,
-                                  m_MaterialManager->getTexture("../textures/container_specular.png"));
+                                  omp::MaterialManager::getMaterialManager().getTexture("../textures/container_specular.png"));
     m_DefaultMaterial->setShaderName("Light");
 }
 
@@ -1702,8 +1702,8 @@ bool Renderer::hasStencilComponent(VkFormat format)
 void Renderer::loadLightObject(const std::string& name, const std::string& textureName)
 {
     auto model = loadModel(name, textureName);
-    auto mat = m_MaterialManager->createMaterial("default_no_light");
-    mat->addTexture(omp::ETextureType::Texture, m_MaterialManager->getDefaultTexture().lock());
+    auto mat = omp::MaterialManager::getMaterialManager().createMaterial("default_no_light");
+    mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
     mat->setShaderName("Simple");
     model->setMaterial(mat);
 
@@ -2122,10 +2122,10 @@ void Renderer::renderAllUi()
 
     // TODO remove
     ImGui::Begin("Imagessss");
-    if (m_MaterialManager->getTexture("../textures/viking.png"))
+    if (omp::MaterialManager::getMaterialManager().getTexture("../textures/viking.png"))
     {
         ImGui::Image(
-                (ImTextureID) (m_MaterialManager->getTexture("../textures/viking.png")->getTextureId()), {100, 100});
+                (ImTextureID) (omp::MaterialManager::getMaterialManager().getTexture("../textures/viking.png")->getTextureId()), {100, 100});
     }
 
     ImGui::End();
@@ -2165,7 +2165,6 @@ void Renderer::onViewportResize(size_t imageIndex)
 void Renderer::createMaterialManager()
 {
     m_VulkanContext->setCommandPool(m_CommandPools);
-    m_MaterialManager = std::make_unique<omp::MaterialManager>(m_VulkanContext);
 }
 
 omp::GraphicsPipeline* Renderer::findGraphicsPipeline(const std::string& name)

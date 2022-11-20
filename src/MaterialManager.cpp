@@ -1,18 +1,6 @@
 #include "MaterialManager.h"
 #include "Logs.h"
 
-omp::MaterialManager::MaterialManager(const std::shared_ptr<VulkanContext>& helper)
-        : m_VkHelper(helper)
-{
-    static const std::string default_path = "../textures/default.png";
-    static const std::string empty_path = "../textures/empty.jpg";
-    m_DefaultTexture = loadTextureLazily(default_path);
-    m_EmptyTexture = loadTextureLazily(empty_path);
-
-    m_Textures.insert({default_path, m_DefaultTexture});
-    m_Textures.insert({empty_path, m_EmptyTexture});
-}
-
 omp::MaterialManager::~MaterialManager()
 {
     for (auto& texture_pair: m_Textures)
@@ -23,10 +11,20 @@ omp::MaterialManager::~MaterialManager()
 
 std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureInstantly(const std::string& path)
 {
-    auto texture_ptr = std::make_shared<Texture>(m_VkHelper.lock());
-    texture_ptr->fullLoad(path);
+    if (m_Textures.find(path) != m_Textures.end())
+    {
+        return m_Textures.at(path);
+    }
+
+    auto texture_ptr = std::make_shared<Texture>(path);
+    if (!m_VulkanContext.expired())
+    {
+        texture_ptr->specifyVulkanContext(m_VulkanContext.lock());
+    }
+    texture_ptr->fullLoad();
     m_Textures.insert({path, texture_ptr});
     return texture_ptr;
+
 }
 
 std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureLazily(const std::string& path)
@@ -36,8 +34,12 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureLazily(const std:
         return m_Textures.at(path);
     }
 
-    auto texture_ptr = std::make_shared<Texture>(m_VkHelper.lock());
-    texture_ptr->lazyLoad(path);
+    auto texture_ptr = std::make_shared<Texture>(path);
+    if (!m_VulkanContext.expired())
+    {
+        texture_ptr->specifyVulkanContext(m_VulkanContext.lock());
+    }
+    texture_ptr->lazyLoad();
     m_Textures.insert({path, texture_ptr});
     return texture_ptr;
 }
@@ -58,4 +60,24 @@ std::shared_ptr<omp::Material> omp::MaterialManager::createMaterial(const std::s
     mat->m_Manager = this;
     m_Materials.insert({name, mat});
     return mat;
+}
+
+omp::MaterialManager::MaterialManager()
+{
+    static const std::string default_path = "../textures/default.png";
+    static const std::string empty_path = "../textures/empty.jpg";
+    m_DefaultTexture = loadTextureLazily(default_path);
+    m_EmptyTexture = loadTextureLazily(empty_path);
+
+    m_Textures.insert({default_path, m_DefaultTexture});
+    m_Textures.insert({empty_path, m_EmptyTexture});
+}
+
+void omp::MaterialManager::specifyVulkanContext(const std::shared_ptr<omp::VulkanContext>& inContext)
+{
+    m_VulkanContext = inContext;
+    for (auto& [name, texture] : m_Textures)
+    {
+        texture->specifyVulkanContext(inContext);
+    }
 }

@@ -384,7 +384,6 @@ private:
     std::vector<VkFramebuffer> m_ImguiFramebuffers;
     VkDescriptorPool m_ImguiDescriptorPool;
 
-    std::unique_ptr<omp::MaterialManager> m_MaterialManager;
     std::shared_ptr<omp::VulkanContext> m_VulkanContext;
 
     VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
