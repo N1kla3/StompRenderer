@@ -134,6 +134,8 @@ void Renderer::cleanup()
 
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_DescriptorSetLayout, nullptr);
 
+    omp::MaterialManager::getMaterialManager().clearGpuState();
+
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

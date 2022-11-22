@@ -14,10 +14,13 @@ omp::Texture::Texture(const std::string& inPath, const std::shared_ptr<VulkanCon
 
 void omp::Texture::destroyVkObjects()
 {
-    vkDestroySampler(m_VulkanContext.lock()->logical_device, m_TextureSampler, nullptr);
-    vkDestroyImageView(m_VulkanContext.lock()->logical_device, m_TextureImageView, nullptr);
-    vkDestroyImage(m_VulkanContext.lock()->logical_device, m_TextureImage, nullptr);
-    vkFreeMemory(m_VulkanContext.lock()->logical_device, m_TextureImageMemory, nullptr);
+    if (hasVulkanContext())
+    {
+        vkDestroySampler(m_VulkanContext.lock()->logical_device, m_TextureSampler, nullptr);
+        vkDestroyImageView(m_VulkanContext.lock()->logical_device, m_TextureImageView, nullptr);
+        vkDestroyImage(m_VulkanContext.lock()->logical_device, m_TextureImage, nullptr);
+        vkFreeMemory(m_VulkanContext.lock()->logical_device, m_TextureImageMemory, nullptr);
+    }
 }
 
 uint64_t omp::Texture::getTextureId()

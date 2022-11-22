@@ -4,6 +4,8 @@
 
 namespace omp
 {
+    class Material;
+
     class MaterialAsset : public Asset
     {
     public:
@@ -15,5 +17,7 @@ namespace omp
 
         DECLARE_SERIALIZABLE_MEMBER(std::vector<std::string>, TexturePaths);
         DECLARE_SERIALIZABLE_MEMBER(std::string, ShaderName);
+
+        std::weak_ptr<omp::Material> m_Material;
     };
 }

@@ -94,6 +94,7 @@ set(SOURCE
 set(TESTS
         InitializationTests.cpp
         AssetSystemTests.cpp
+        MaterialAssetTest.cpp
         )
 
 set(IMGUI

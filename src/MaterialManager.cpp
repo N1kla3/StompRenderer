@@ -1,14 +1,6 @@
 #include "MaterialManager.h"
 #include "Logs.h"
 
-omp::MaterialManager::~MaterialManager()
-{
-    for (auto& texture_pair: m_Textures)
-    {
-        texture_pair.second->destroyVkObjects();
-    }
-}
-
 std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureInstantly(const std::string& path)
 {
     if (m_Textures.find(path) != m_Textures.end())
@@ -79,5 +71,13 @@ void omp::MaterialManager::specifyVulkanContext(const std::shared_ptr<omp::Vulka
     for (auto& [name, texture] : m_Textures)
     {
         texture->specifyVulkanContext(inContext);
+    }
+}
+
+void omp::MaterialManager::clearGpuState() const
+{
+    for (auto& texture_pair: m_Textures)
+    {
+        texture_pair.second->destroyVkObjects();
     }
 }

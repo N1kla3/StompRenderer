@@ -1,4 +1,5 @@
 #include "MaterialAsset.h"
+#include "MaterialManager.h"
 #include "Material.h"
 
 omp::MaterialAsset::MaterialAsset()
@@ -9,7 +10,17 @@ omp::MaterialAsset::MaterialAsset()
 
 void omp::MaterialAsset::initialize()
 {
-    std::shared_ptr<omp::Material> material = std::make_shared<omp::Material>(m_Name);
+    std::shared_ptr<omp::Material>&& material = omp::MaterialManager::getMaterialManager().createMaterial(m_Name);
+    int index = 0;
+    for (auto& texture_path : TexturePaths)
+    {
+        auto&& texture = omp::MaterialManager::getMaterialManager().loadTextureLazily(texture_path);
+        material->addTexture(static_cast<ETextureType>(index + static_cast<uint32_t>(ETextureType::Texture)), std::move(texture));
+        index++;
+    }
+    material->setShaderName(ShaderName);
+
+    m_Material = std::move(material);
 }
 
 void omp::MaterialAsset::serializeData(nlohmann::json& data)

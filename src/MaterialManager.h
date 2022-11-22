@@ -7,6 +7,8 @@
 #include "Texture.h"
 #include "Material.h"
 
+class Renderer;
+
 namespace omp
 {
     class MaterialManager
@@ -20,14 +22,14 @@ namespace omp
         std::shared_ptr<omp::Texture> m_EmptyTexture;
 
         MaterialManager();
+        void clearGpuState() const;
+        void specifyVulkanContext(const std::shared_ptr<omp::VulkanContext>& inContext);
     public:
         inline static MaterialManager& getMaterialManager()
         {
             static MaterialManager single;
             return single;
         }
-        ~MaterialManager();
-        void specifyVulkanContext(const std::shared_ptr<omp::VulkanContext>& inContext);
 
         std::shared_ptr<omp::Texture> loadTextureInstantly(const std::string& path);
         std::shared_ptr<omp::Texture> loadTextureLazily(const std::string& path);
@@ -39,5 +41,8 @@ namespace omp
         std::weak_ptr<omp::Texture> getDefaultTexture() const { return m_DefaultTexture; }
 
         std::weak_ptr<omp::Texture> getEmptyTexture() const { return m_EmptyTexture; }
+
+        friend class ::Renderer;
     };
 } // omp
+
