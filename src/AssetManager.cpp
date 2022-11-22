@@ -67,7 +67,7 @@ void omp::AssetManager::loadAsset(const std::string& inPath)
             std::shared_ptr<Asset> asset_ptr(loading_asset);
             m_Assets.insert({asset_ptr->getPath(), asset_ptr});
             asset_ptr->initialize();
-            INFO(AssetManager, "Asset loaded successfully:", asset_ptr->getPath());
+            INFO(AssetManager, "Asset loaded successfully: {0}", asset_ptr->getPath());
         }
 
         stream.close();

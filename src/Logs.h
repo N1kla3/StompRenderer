@@ -8,6 +8,7 @@ namespace omp
 {
 
     void InitializeLogs();
+    void InitializeTestLogs();
 
 }
 
