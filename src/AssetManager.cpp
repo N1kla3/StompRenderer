@@ -12,22 +12,22 @@ omp::AssetManager::AssetManager()
     loadAssetsFromDrive();
 }
 
-void omp::AssetManager::saveAsset(const std::string& inName)
+void omp::AssetManager::saveAsset(const std::string& inPath)
 {
-    if (m_Assets.find(inName) == m_Assets.end())
+    if (m_Assets.find(inPath) == m_Assets.end())
     {
-        ERROR(AssetManager, "Cant save asset " + inName);
+        ERROR(AssetManager, "Cant save asset " + inPath);
     }
 
-    auto& asset = m_Assets.at(inName);
+    auto& asset = m_Assets.at(inPath);
     asset->saveToLastValidPath();
 }
 
-void omp::AssetManager::deleteAsset(const std::string& inName)
+void omp::AssetManager::deleteAsset(const std::string& inPath)
 {
-    if (m_Assets.find(inName) == m_Assets.end())
+    if (m_Assets.find(inPath) == m_Assets.end())
     {
-        ERROR(AssetManager, "Cant delete asset " + inName);
+        ERROR(AssetManager, "Cant delete asset " + inPath);
     }
 }
 
@@ -47,12 +47,12 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
         }
         if (iter.path().extension().string() == Asset::ASSET_FORMAT)
         {
-            loadAsset(iter.path().string());
+            loadAsset_internal(iter.path().string());
         }
     }
 }
 
-void omp::AssetManager::loadAsset(const std::string& inPath)
+void omp::AssetManager::loadAsset_internal(const std::string& inPath)
 {
     Asset* loading_asset = AssetLoader::loadAssetFromStorage(inPath);
     if (loading_asset)
@@ -80,13 +80,19 @@ omp::AssetManager& omp::AssetManager::getAssetManager()
     return singleton;
 }
 
-std::shared_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string& inName)
+std::shared_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string& inPath)
 {
-    if (m_Assets.find(inName) == m_Assets.end())
+    if (m_Assets.find(inPath) == m_Assets.end())
     {
-        ERROR(AssetManager, "Cant find asset " + inName);
+        ERROR(AssetManager, "Cant find asset " + inPath);
         return nullptr;
     }
-    return m_Assets.at(inName);
+    return m_Assets.at(inPath);
+}
+
+std::shared_ptr<omp::Asset> omp::AssetManager::loadAsset(const std::string& inPath)
+{
+    loadAsset_internal(inPath);
+    return getAsset(inPath);
 }
 

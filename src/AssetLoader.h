@@ -42,7 +42,6 @@ namespace omp
         };
 
         IMPLEMENT_CLASS(MaterialAsset);
-
         IMPLEMENT_CLASS(ModelAsset);
 
         inline static const std::unordered_map<std::string, std::function<Asset*()>> CLASS_NAMES
@@ -55,6 +54,14 @@ namespace omp
         ~AssetLoader() = delete;
         AssetLoader& operator=(const AssetLoader&) = delete;
         AssetLoader& operator=(AssetLoader&&) = delete;
+
+        template<class T>
+        requires std::is_base_of_v<Asset, T>
+        static std::string getClassString(T* Asset)
+        {
+            auto st = typeid(T).name();
+            return Classes<omp::MaterialAsset>::TYPE;
+        }
 
         friend class AssetManager;
     };

@@ -31,14 +31,15 @@ namespace omp
         requires std::is_base_of_v<Asset, T>
         void createAsset(const std::string& inName, const std::string& inPath);
 
-        void saveAsset(const std::string& inName);
-        void deleteAsset(const std::string& inName);
-        std::shared_ptr<Asset> getAsset(const std::string& inName);
+        std::shared_ptr<Asset> loadAsset(const std::string& inPath);
+        void saveAsset(const std::string& inPath);
+        void deleteAsset(const std::string& inPath);
+        std::shared_ptr<Asset> getAsset(const std::string& inPath);
 
     private:
         void loadAssetsFromDrive();
         void loadAssetsFromDrive(const std::string& pathDirectory);
-        void loadAsset(const std::string& inPath);
+        void loadAsset_internal(const std::string& inPath);
 
     }; // Asset Manager
 

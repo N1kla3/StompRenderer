@@ -36,7 +36,6 @@ namespace omp
         template<typename T>
         T loadValueFromJson(const nlohmann::json& inJson, const std::string& inName);
 
-    private:
         virtual void saveAssetToFile(const std::string& inPath) override;
     public:
         virtual ~Asset() = default;
@@ -49,7 +48,7 @@ namespace omp
 
         void setPath(const std::string& inPath) { m_Path = inPath; }
 
-        void saveToLastValidPath();
+        bool saveToLastValidPath();
 
         std::string getName() const { return m_Name; }
 
@@ -62,7 +61,10 @@ namespace omp
         inline static const std::string ASSET_FOLDER = "../assets/";
         inline static const std::string MODELS_FOLDER = "../models/";
 
-        inline static const std::string ASSET_FORMAT = ".ass";
+        inline static const std::string ASSET_FORMAT = ".json";
+
+        inline static const std::string NAME_MEMBER = "Name";
+        inline static const std::string CLASS_MEMBER = "Class";
 
         friend class AssetManager;
     };

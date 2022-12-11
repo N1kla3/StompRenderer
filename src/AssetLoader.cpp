@@ -14,19 +14,23 @@ omp::Asset* omp::AssetLoader::loadAssetFromStorage(const std::string& path)
         {
             nlohmann::json data;
             stream >> data;
-            if (data["Class"].is_string() && data["Name"].is_string())
+            if (data[Asset::CLASS_MEMBER].is_string() && data[Asset::NAME_MEMBER].is_string())
             {
-                std::string class_name = data["Class"].get<std::string>();
+                std::string class_name = data[Asset::CLASS_MEMBER].get<std::string>();
 
                 stream.close();
                 auto* obj = createClassFromString(class_name);
-                obj->setName(data["Name"]);
+                obj->setName(data[Asset::NAME_MEMBER]);
                 obj->setPath(path);
                 return obj;
             }
+            VERROR(AssetManager, "Class or Name member not specified: {}", path);
+        }
+        else
+        {
+            VERROR(AssetManager, "Something wrong with path: {}", path);
         }
         stream.close();
-        VERROR(AssetManager, "Something wrong with path: {}", path);
         return nullptr;
     }
     else
