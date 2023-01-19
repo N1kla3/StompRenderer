@@ -13,6 +13,13 @@ protected:
     }
 };
 
+const std::string g_ShaderTest = "shader";
+const std::vector<std::string> g_TestTexturePaths = { "../textures/container.png", "../textures/viking.png" };
+const std::string g_NameOne = "test";
+const std::string g_NameTwo = "apple";
+const std::string g_PathOne = "../tests/testAssets/test.json";
+const std::string g_PathTwo = "../tests/testAssets/sec.json";
+
 class Test_MaterialAsset : public omp::MaterialAsset
 {
 public:
@@ -20,37 +27,46 @@ public:
     void setShaderName(const std::string& nae) { ShaderName = nae; }
 };
 
-TEST_F(MaterialAssetSuite, MaterialAsset__Test__Saving)
+TEST_F(MaterialAssetSuite, MaterialAsset__Test__FirstSave)
 {
-    const std::string test_shader_name = "shader";
-    const std::vector<std::string> test_texture_paths = { "one", "two" };
-
     omp::AssetManager& manager = omp::AssetManager::getAssetManager();
-    manager.createAsset<Test_MaterialAsset>("test", "../tests/testAssets/test.json");
-    auto&& asset = manager.getAsset("test");
+    manager.createAsset<Test_MaterialAsset>(g_NameOne, g_PathOne);
+
+    auto&& asset = manager.getAsset(g_PathOne);
+    ASSERT_TRUE(asset);
+
     auto&& my_asset = std::dynamic_pointer_cast<Test_MaterialAsset>(asset);
-    my_asset->setName("uoui");
-    my_asset->setTexturePaths(test_texture_paths);
-    my_asset->setShaderName(test_shader_name);
+    ASSERT_TRUE(my_asset);
+    my_asset->setName(g_NameTwo);
+    my_asset->setTexturePaths(g_TestTexturePaths);
+    my_asset->setShaderName(g_ShaderTest);
 
     ASSERT_TRUE(asset->saveToLastValidPath());
 }
 
-TEST_F(MaterialAssetSuite, MaterialAsset__Test__yeah)
+TEST_F(MaterialAssetSuite, MaterialAsset__Test__SecondSave)
 {
-    omp::AssetManager::getAssetManager().createAsset<omp::MaterialAsset>("test", "../tests/testAssets/sec.json");
+    //omp::AssetManager::getAssetManager().createAsset<omp::MaterialAsset>(g_NameTwo, g_PathTwo);
+
 }
 
-TEST_F(MaterialAssetSuite, MaterialAsset__Test__Loading)
+TEST_F(MaterialAssetSuite, MaterialAsset__Test__FirstLoad)
 {
     auto& manager = omp::AssetManager::getAssetManager();
-    auto&& asset = manager.loadAsset("../tests/testAssets/sec.json");
-    ASSERT_TRUE(asset->getName() == "test");
-    ASSERT_TRUE(std::dynamic_pointer_cast<omp::MaterialAsset>(asset));
+    auto&& asset = manager.loadAsset(g_PathOne);
+
+    auto&& asset_casted = std::dynamic_pointer_cast<omp::MaterialAsset>(asset);
+    ASSERT_TRUE(asset_casted);
+    ASSERT_TRUE(asset_casted->getName() == g_NameTwo);
+    ASSERT_TRUE(asset_casted->getTexturePaths() == g_TestTexturePaths);
+    ASSERT_TRUE(asset_casted->getShaderName() == g_ShaderTest);
     ASSERT_FALSE(std::dynamic_pointer_cast<Test_MaterialAsset>(asset));
 }
 
-TEST_F(MaterialAssetSuite, MaterialAsset__Test__inherit)
+TEST_F(MaterialAssetSuite, MaterialAsset__Test__SecondLoad)
 {
-
+    //omp::AssetManager& manager = omp::AssetManager::getAssetManager();
+    //manager.createAsset<Test_MaterialAsset>(g_NameOne, g_PathOne);
+    //auto&& asset = manager.getAsset(g_NameOne);
+    //auto&& my_asset = std::dynamic_pointer_cast<Test_MaterialAsset>(asset);
 }

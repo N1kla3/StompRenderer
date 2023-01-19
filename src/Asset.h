@@ -5,7 +5,9 @@
 #include "UI/AssetRepresentation.h"
 #include "nlohmann/json.hpp"
 
+// BE CAREFUL, THIS APPLIES PUBLIC SPECIFIER
 #define DECLARE_SERIALIZABLE_MEMBER(Type, Name) \
+protected:                                                \
 Type Name;                                    \
 std::string Name##_Name = #Name;              \
 void write_##Name(nlohmann::json& inJson)     \
@@ -15,7 +17,9 @@ void write_##Name(nlohmann::json& inJson)     \
 Type read_##Name(const nlohmann::json& inJson)        \
 {                                                \
     return loadValueFromJson<Type>(inJson, Name##_Name);\
-}
+}                                               \
+public:\
+Type get##Name() const { return Name; }
 
 namespace omp
 {

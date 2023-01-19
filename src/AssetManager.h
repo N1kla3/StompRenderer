@@ -50,6 +50,6 @@ namespace omp
         std::shared_ptr<Asset> asset_ptr = std::make_shared<T>();
         asset_ptr->setName(inName);
         asset_ptr->saveAssetToFile(inPath);
-        m_Assets.insert({inName, asset_ptr});
+        m_Assets.insert({inPath, asset_ptr});
     }
 }

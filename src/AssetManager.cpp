@@ -65,6 +65,7 @@ void omp::AssetManager::loadAsset_internal(const std::string& inPath)
             stream >> data;
             loading_asset->deserializeData(data);// memory leak watch
             std::shared_ptr<Asset> asset_ptr(loading_asset);
+            m_Assets.erase(asset_ptr->getPath());
             m_Assets.insert({asset_ptr->getPath(), asset_ptr});
             asset_ptr->initialize();
             INFO(AssetManager, "Asset loaded successfully: {0}", asset_ptr->getPath());
