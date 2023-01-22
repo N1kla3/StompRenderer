@@ -46,11 +46,16 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::getTexture(const std::string
     return nullptr;
 }
 
-std::shared_ptr<omp::Material> omp::MaterialManager::createMaterial(const std::string& name)
+std::shared_ptr<omp::Material> omp::MaterialManager::createOrGetMaterial(const std::string& path)
 {
-    auto mat = std::make_shared<omp::Material>(name);
+    if (m_Materials.find(path) != m_Materials.end())
+    {
+        return m_Materials.at(path);
+    }
+
+    auto mat = std::make_shared<omp::Material>(path);
     mat->m_Manager = this;
-    m_Materials.insert({name, mat});
+    m_Materials.insert({path, mat});
     return mat;
 }
 

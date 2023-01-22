@@ -1477,7 +1477,7 @@ void Renderer::createTextureImage()
     omp::MaterialManager::getMaterialManager().loadTextureLazily("../textures/container.png");
     omp::MaterialManager::getMaterialManager().loadTextureLazily("../textures/container_specular.png");
 
-    m_DefaultMaterial = omp::MaterialManager::getMaterialManager().createMaterial("default");
+    m_DefaultMaterial = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default");
     // TODO: remove hardcoding
     m_DefaultMaterial->addTexture(omp::ETextureType::Texture,
                                   omp::MaterialManager::getMaterialManager().getTexture("../textures/container.png"));
@@ -1704,7 +1704,7 @@ bool Renderer::hasStencilComponent(VkFormat format)
 void Renderer::loadLightObject(const std::string& name, const std::string& textureName)
 {
     auto model = loadModel(name, textureName);
-    auto mat = omp::MaterialManager::getMaterialManager().createMaterial("default_no_light");
+    auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default_no_light");
     mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
     mat->setShaderName("Simple");
     model->setMaterial(mat);

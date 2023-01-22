@@ -46,8 +46,17 @@ TEST_F(MaterialAssetSuite, MaterialAsset__Test__FirstSave)
 
 TEST_F(MaterialAssetSuite, MaterialAsset__Test__SecondSave)
 {
-    //omp::AssetManager::getAssetManager().createAsset<omp::MaterialAsset>(g_NameTwo, g_PathTwo);
+    omp::AssetManager& manager = omp::AssetManager::getAssetManager();
+    manager.createAsset<Test_MaterialAsset>(g_NameTwo, g_PathTwo);
 
+    auto&& asset = manager.getAsset(g_PathTwo);
+    ASSERT_TRUE(asset);
+
+    auto&& my_asset = std::dynamic_pointer_cast<Test_MaterialAsset>(asset);
+    ASSERT_TRUE(my_asset);
+    my_asset->setName(g_NameOne);
+
+    ASSERT_TRUE(asset->saveToLastValidPath());
 }
 
 TEST_F(MaterialAssetSuite, MaterialAsset__Test__FirstLoad)
@@ -65,8 +74,13 @@ TEST_F(MaterialAssetSuite, MaterialAsset__Test__FirstLoad)
 
 TEST_F(MaterialAssetSuite, MaterialAsset__Test__SecondLoad)
 {
-    //omp::AssetManager& manager = omp::AssetManager::getAssetManager();
-    //manager.createAsset<Test_MaterialAsset>(g_NameOne, g_PathOne);
-    //auto&& asset = manager.getAsset(g_NameOne);
-    //auto&& my_asset = std::dynamic_pointer_cast<Test_MaterialAsset>(asset);
+    auto& manager = omp::AssetManager::getAssetManager();
+    auto&& asset = manager.loadAsset(g_PathTwo);
+
+    auto&& asset_casted = std::dynamic_pointer_cast<omp::MaterialAsset>(asset);
+    ASSERT_TRUE(asset_casted);
+    ASSERT_TRUE(asset_casted->getName() == g_NameOne);
+    ASSERT_TRUE(asset_casted->getTexturePaths() == std::vector<std::string>{});
+    ASSERT_TRUE(asset_casted->getShaderName() == "");
+    ASSERT_FALSE(std::dynamic_pointer_cast<Test_MaterialAsset>(asset));
 }

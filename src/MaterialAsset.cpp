@@ -10,7 +10,7 @@ omp::MaterialAsset::MaterialAsset()
 
 void omp::MaterialAsset::initialize()
 {
-    std::shared_ptr<omp::Material>&& material = omp::MaterialManager::getMaterialManager().createMaterial(m_Name);
+    std::shared_ptr<omp::Material>&& material = omp::MaterialManager::getMaterialManager().createOrGetMaterial(m_Name);
     int index = 0;
     for (auto& texture_path : TexturePaths)
     {

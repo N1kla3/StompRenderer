@@ -34,7 +34,7 @@ namespace omp
         std::shared_ptr<omp::Texture> loadTextureInstantly(const std::string& path);
         std::shared_ptr<omp::Texture> loadTextureLazily(const std::string& path);
 
-        std::shared_ptr<omp::Material> createMaterial(const std::string& name);
+        std::shared_ptr<omp::Material> createOrGetMaterial(const std::string& path);
 
         std::shared_ptr<Texture> getTexture(const std::string& path) const;
 

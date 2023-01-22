@@ -26,6 +26,8 @@ set(SOURCE
         Model.cpp
         ModelAsset.h
         ModelAsset.cpp
+        ModelStatics.cpp
+        ModelStatics.h
         Scene.h
         Scene.cpp
         SceneAsset.h
@@ -95,6 +97,7 @@ set(TESTS
         InitializationTests.cpp
         AssetSystemTests.cpp
         MaterialAssetTest.cpp
+        ModelAssetTest.cpp
         )
 
 set(IMGUI
