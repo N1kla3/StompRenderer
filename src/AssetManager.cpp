@@ -54,7 +54,7 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 
 void omp::AssetManager::loadAsset_internal(const std::string& inPath)
 {
-    Asset* loading_asset = AssetLoader::loadAssetFromStorage(inPath);
+    auto&& loading_asset = AssetLoader::loadAssetFromStorage(inPath);
     if (loading_asset)
     {
         auto file = std::filesystem::directory_entry(inPath);
@@ -64,11 +64,10 @@ void omp::AssetManager::loadAsset_internal(const std::string& inPath)
             nlohmann::json data;
             stream >> data;
             loading_asset->deserializeData(data);// memory leak watch
-            std::shared_ptr<Asset> asset_ptr(loading_asset);
-            m_Assets.erase(asset_ptr->getPath());
-            m_Assets.insert({asset_ptr->getPath(), asset_ptr});
-            asset_ptr->initialize();
-            INFO(AssetManager, "Asset loaded successfully: {0}", asset_ptr->getPath());
+            m_Assets.erase(loading_asset->getPath());
+            m_Assets.insert({loading_asset->getPath(), loading_asset});
+            loading_asset->initialize();
+            INFO(AssetManager, "Asset loaded successfully: {0}", loading_asset->getPath());
         }
 
         stream.close();

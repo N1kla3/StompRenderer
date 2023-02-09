@@ -23,11 +23,14 @@ Type get##Name() const { return Name; }
 
 namespace omp
 {
+    class ClassTypeBase;
     class Asset : public ISaveable
     {
     protected:
         std::string m_Name = "";
         std::string m_Path = "";
+        // TODO find something more apropriate,
+        std::string m_ClassName = "";
         std::shared_ptr<AssetRepresentation> m_AssetRepresentation;
 
     protected:
@@ -40,13 +43,9 @@ namespace omp
         template<typename T>
         T loadValueFromJson(const nlohmann::json& inJson, const std::string& inName);
 
-        virtual void saveAssetToFile(const std::string& inPath) override;
+        virtual void saveAssetToFile(const std::string& inPath, const std::string& inClassName) override;
     public:
         virtual ~Asset() = default;
-
-        template<class T>
-        requires std::is_base_of_v<Asset, T> && std::is_default_constructible_v<T>
-        static T* createAsset() { return new T(); }
 
         void setName(const std::string& inName) { m_Name = inName; }
 

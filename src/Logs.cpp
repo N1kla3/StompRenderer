@@ -27,9 +27,11 @@ void omp::InitializeTestLogs()
     auto&& rendering_log = std::make_shared<spdlog::logger>("Rendering", begin(sinks), end(sinks));
     auto&& ui_log = std::make_shared<spdlog::logger>("UI", begin(sinks), end(sinks));
     auto&& asset_log = std::make_shared<spdlog::logger>("AssetManager", begin(sinks), end(sinks));
+    auto&& test_log = std::make_shared<spdlog::logger>("Testing", begin(sinks), end(sinks));
     spdlog::register_logger(rendering_log);
     spdlog::register_logger(ui_log);
     spdlog::register_logger(asset_log);
+    spdlog::register_logger(test_log);
     spdlog::set_pattern("[%D %H:%M:%S %z][thread %t]%^[%n][%l]%v%$");
     initialized = true;
 }

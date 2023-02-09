@@ -3,16 +3,6 @@
 #include "MaterialAsset.h"
 #include "Logs.h"
 
-class MaterialAssetSuite : public ::testing::Test
-{
-protected:
-
-    static void SetUpTestSuite()
-    {
-        omp::InitializeTestLogs();
-    }
-};
-
 const std::string g_ShaderTest = "shader";
 const std::vector<std::string> g_TestTexturePaths = { "../textures/container.png", "../textures/viking.png" };
 const std::string g_NameOne = "test";
@@ -25,6 +15,18 @@ class Test_MaterialAsset : public omp::MaterialAsset
 public:
     void setTexturePaths(const std::vector<std::string>& path) {TexturePaths = path;}
     void setShaderName(const std::string& nae) { ShaderName = nae; }
+};
+
+class MaterialAssetSuite : public ::testing::Test
+{
+protected:
+
+    static void SetUpTestSuite()
+    {
+        omp::InitializeTestLogs();
+
+        omp::AssetLoader::s_AssetClasses.insert(ADD_CLASS(Test_MaterialAsset));
+    }
 };
 
 TEST_F(MaterialAssetSuite, MaterialAsset__Test__FirstSave)
@@ -69,7 +71,7 @@ TEST_F(MaterialAssetSuite, MaterialAsset__Test__FirstLoad)
     ASSERT_TRUE(asset_casted->getName() == g_NameTwo);
     ASSERT_TRUE(asset_casted->getTexturePaths() == g_TestTexturePaths);
     ASSERT_TRUE(asset_casted->getShaderName() == g_ShaderTest);
-    ASSERT_FALSE(std::dynamic_pointer_cast<Test_MaterialAsset>(asset));
+    ASSERT_TRUE(std::dynamic_pointer_cast<Test_MaterialAsset>(asset));
 }
 
 TEST_F(MaterialAssetSuite, MaterialAsset__Test__SecondLoad)
@@ -82,5 +84,5 @@ TEST_F(MaterialAssetSuite, MaterialAsset__Test__SecondLoad)
     ASSERT_TRUE(asset_casted->getName() == g_NameOne);
     ASSERT_TRUE(asset_casted->getTexturePaths() == std::vector<std::string>{});
     ASSERT_TRUE(asset_casted->getShaderName() == "");
-    ASSERT_FALSE(std::dynamic_pointer_cast<Test_MaterialAsset>(asset));
+    ASSERT_TRUE(std::dynamic_pointer_cast<Test_MaterialAsset>(asset));
 }

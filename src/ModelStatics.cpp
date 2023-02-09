@@ -1,7 +1,7 @@
 #include "ModelStatics.h"
 #include "tiny_obj_loader.h"
 
-std::shared_ptr<omp::Model> omp::ModelStatics::loadModel(const std::string& name, const std::string& modelName)
+std::shared_ptr<omp::Model> omp::ModelStatics::LoadModel(const std::string& name, const std::string& modelName)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;

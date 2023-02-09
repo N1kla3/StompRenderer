@@ -6,6 +6,6 @@ namespace omp{
 
     struct ModelStatics
     {
-        static std::shared_ptr<omp::Model> loadModel(const std::string& name, const std::string& modelName);
+        static std::shared_ptr<omp::Model> LoadModel(const std::string& name, const std::string& modelName);
     };
 }

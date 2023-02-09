@@ -7,60 +7,48 @@
 #include "ModelAsset.h"
 #include "Asset.h"
 
-#define IMPLEMENT_CLASS(ClassName)\
-template<>\
-struct Classes<ClassName>\
-{\
-    inline static const std::string TYPE = #ClassName;\
-    using ClassType = ClassName;\
-    inline static Asset* CreateClassAsset()\
-    {\
-        return Asset::createAsset<ClassName>();\
-    }\
-};\
-
-#define CLASS_DETECTION_PAIR(ClassName) {AssetLoader::Classes<ClassName>::TYPE, &AssetLoader::Classes<ClassName>::CreateClassAsset}
-
+#define ADD_CLASS(ClassName) { typeid(std::decay_t<ClassName>).name(), new omp::ClassType<ClassName>() }
 
 namespace omp
 {
+    struct ClassTypeBase
+    {
+        virtual std::shared_ptr<Asset> CreateAsset() const = 0;
+    };
+
+    template<class T>
+    requires std::is_base_of_v<Asset, T> && std::is_default_constructible_v<T>
+    struct ClassType : public ClassTypeBase
+    {
+        using Type = T;
+
+        virtual std::shared_ptr<Asset> CreateAsset() const override
+        {
+            return std::make_shared<Type>();
+        }
+    };
+
     class AssetLoader
     {
-        static Asset* loadAssetFromStorage(const std::string& path);
-        static Asset* createClassFromString(const std::string& name);
+        static std::shared_ptr<omp::Asset> loadAssetFromStorage(const std::string& path);
+        static std::shared_ptr<omp::Asset> createClassFromString(const std::string& name);
 
-        template<class T>
-        struct Classes
-        {
-            inline static const std::string TYPE = "Undefined";
-            using ClassType = T;
-
-            inline static Asset* CreateClassAsset()
-            {
-                return Asset::createAsset<T>();
-            }
-        };
-
-        IMPLEMENT_CLASS(MaterialAsset);
-        IMPLEMENT_CLASS(ModelAsset);
-
-        inline static const std::unordered_map<std::string, std::function<Asset*()>> CLASS_NAMES
-                {
-                        CLASS_DETECTION_PAIR(MaterialAsset),
-                        CLASS_DETECTION_PAIR(ModelAsset)
-                };
     public:
+        inline static std::unordered_map<std::string, ClassTypeBase*> s_AssetClasses
+                {
+                        ADD_CLASS(MaterialAsset),
+                        ADD_CLASS(ModelAsset)
+                };
+
         AssetLoader() = delete;
         ~AssetLoader() = delete;
         AssetLoader& operator=(const AssetLoader&) = delete;
         AssetLoader& operator=(AssetLoader&&) = delete;
 
         template<class T>
-        requires std::is_base_of_v<Asset, T>
-        static std::string getClassString(T* Asset)
+        static std::string getClassString()
         {
-            auto st = typeid(T).name();
-            return Classes<omp::MaterialAsset>::TYPE;
+            return typeid(std::decay_t<T>).name();
         }
 
         friend class AssetManager;

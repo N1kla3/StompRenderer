@@ -4,7 +4,7 @@
 #include <fstream>
 #include "Logs.h"
 
-omp::Asset* omp::AssetLoader::loadAssetFromStorage(const std::string& path)
+std::shared_ptr<omp::Asset> omp::AssetLoader::loadAssetFromStorage(const std::string& path)
 {
     auto file = std::filesystem::directory_entry(path);
     if (file.path().extension().string() == Asset::ASSET_FORMAT)
@@ -19,7 +19,7 @@ omp::Asset* omp::AssetLoader::loadAssetFromStorage(const std::string& path)
                 std::string class_name = data[Asset::CLASS_MEMBER].get<std::string>();
 
                 stream.close();
-                auto* obj = createClassFromString(class_name);
+                auto&& obj = createClassFromString(class_name);
                 obj->setName(data[Asset::NAME_MEMBER]);
                 obj->setPath(path);
                 return obj;
@@ -40,12 +40,13 @@ omp::Asset* omp::AssetLoader::loadAssetFromStorage(const std::string& path)
     }
 }
 
-omp::Asset* omp::AssetLoader::createClassFromString(const std::string& name)
+std::shared_ptr<omp::Asset> omp::AssetLoader::createClassFromString(const std::string& name)
 {
-    if (CLASS_NAMES.find(name) != CLASS_NAMES.end())
+    if (s_AssetClasses.find(name) != s_AssetClasses.end())
     {
-        return std::invoke(CLASS_NAMES.at(name));
+        return  s_AssetClasses.at(name)->CreateAsset();
     }
     ERROR(AssetManager, "Cant create class with name: {}", name);
+    // TODO safety
     return nullptr;
 }

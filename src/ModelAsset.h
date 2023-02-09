@@ -15,8 +15,8 @@ namespace omp
         virtual void serializeData(nlohmann::json& data) override;
         virtual void deserializeData(const nlohmann::json& data) override;
 
-        DECLARE_SERIALIZABLE_MEMBER(std::string, modelPath);
-        DECLARE_SERIALIZABLE_MEMBER(std::string, materialPath);
+        DECLARE_SERIALIZABLE_MEMBER(std::string, ModelPath);
+        DECLARE_SERIALIZABLE_MEMBER(std::string, MaterialPath);
 
     };
 }
