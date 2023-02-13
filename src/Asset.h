@@ -2,8 +2,10 @@
 
 #include <memory>
 #include "ISaveable.h"
+#include "glm/vec3.hpp"
 #include "UI/AssetRepresentation.h"
 #include "nlohmann/json.hpp"
+#include "glm/vec4.hpp"
 
 // BE CAREFUL, THIS APPLIES PUBLIC SPECIFIER
 #define DECLARE_SERIALIZABLE_MEMBER(Type, Name) \
@@ -20,6 +22,46 @@ Type read_##Name(const nlohmann::json& inJson)        \
 }                                               \
 public:\
 Type get##Name() const { return Name; }
+
+namespace nlohmann {
+    template <>
+    struct adl_serializer<glm::vec3> {
+    static void to_json(json& j, const glm::vec3& inVector) {
+        j = json{
+            {"x", inVector.x},
+            {"y", inVector.y},
+            {"z", inVector.z}
+        };
+    }
+
+    static void from_json(const json& j, glm::vec3& inVector) {
+        j.at("x").get_to(inVector.x);
+        j.at("y").get_to(inVector.y);
+        j.at("z").get_to(inVector.z);
+    }
+};
+}
+
+namespace nlohmann {
+    template <>
+    struct adl_serializer<glm::vec4> {
+        static void to_json(json& j, const glm::vec4& inVector) {
+            j = json{
+                    {"x", inVector.x},
+                    {"y", inVector.y},
+                    {"z", inVector.z},
+                    {"w", inVector.w}
+            };
+        }
+
+        static void from_json(const json& j, glm::vec4& inVector) {
+            j.at("x").get_to(inVector.x);
+            j.at("y").get_to(inVector.y);
+            j.at("z").get_to(inVector.z);
+            j.at("w").get_to(inVector.w);
+        }
+    };
+}
 
 namespace omp
 {

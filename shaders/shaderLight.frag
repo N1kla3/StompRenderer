@@ -10,6 +10,7 @@ layout(location = 4) in vec3 outViewPosition;
 layout(binding = 1) uniform LightBufferObject
 {
     vec3 position;
+    float unused;
     vec3 ambient;
     float amb_str;
     vec3 diffusive;

@@ -98,6 +98,7 @@ set(TESTS
         AssetSystemTests.cpp
         MaterialAssetTest.cpp
         ModelAssetTest.cpp
+        SceneAssetTest.cpp
         )
 
 set(IMGUI
