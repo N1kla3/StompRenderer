@@ -47,7 +47,10 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
         }
         if (iter.path().extension().string() == Asset::ASSET_FORMAT)
         {
-            loadAsset_internal(iter.path().string());
+            if (!getAsset(iter.path().string()))
+            {
+                loadAsset_internal(iter.path().string());
+            }
         }
     }
 }
@@ -80,6 +83,12 @@ omp::AssetManager& omp::AssetManager::getAssetManager()
     return singleton;
 }
 
+std::shared_ptr<omp::Asset> omp::AssetManager::loadAsset(const std::string& inPath)
+{
+    loadAsset_internal(inPath);
+    return getAsset(inPath);
+}
+
 std::shared_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string& inPath)
 {
     if (m_Assets.find(inPath) == m_Assets.end())
@@ -90,9 +99,13 @@ std::shared_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string& inPat
     return m_Assets.at(inPath);
 }
 
-std::shared_ptr<omp::Asset> omp::AssetManager::loadAsset(const std::string& inPath)
+std::shared_ptr<omp::Asset> omp::AssetManager::tryGetAndLoadIfNot(const std::string& inPath)
 {
-    loadAsset_internal(inPath);
-    return getAsset(inPath);
+    if (m_Assets.find(inPath) == m_Assets.end())
+    {
+        loadAsset_internal(inPath);
+        return getAsset(inPath);
+    }
+    return m_Assets.at(inPath);
 }
 

@@ -34,7 +34,14 @@ namespace omp
         std::shared_ptr<Asset> loadAsset(const std::string& inPath);
         void saveAsset(const std::string& inPath);
         void deleteAsset(const std::string& inPath);
+
+        template<typename T>
+        std::shared_ptr<T> getAssetCasted(const std::string& inPath);
         std::shared_ptr<Asset> getAsset(const std::string& inPath);
+
+        template<typename T>
+        std::shared_ptr<T> tryGetAndLoadIfNot_casted(const std::string& inPath);
+        std::shared_ptr<Asset> tryGetAndLoadIfNot(const std::string& inPath);
 
     private:
         void loadAssetsFromDrive();
@@ -52,4 +59,20 @@ namespace omp
         asset_ptr->saveAssetToFile(inPath, omp::AssetLoader::getClassString<T>());
         m_Assets.insert({inPath, asset_ptr});
     }
+}
+
+template<typename T>
+std::shared_ptr<T> omp::AssetManager::getAssetCasted(const std::string& inPath)
+{
+    auto&& ptr = getAsset(inPath);
+    auto&& res = dynamic_pointer_cast<T>(ptr);
+    return res;
+}
+
+template<typename T>
+std::shared_ptr<T> omp::AssetManager::tryGetAndLoadIfNot_casted(const std::string& inPath)
+{
+    auto&& ptr = tryGetAndLoadIfNot(inPath);
+    auto&& res = dynamic_pointer_cast<T>(ptr);
+    return res;
 }

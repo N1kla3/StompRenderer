@@ -1,4 +1,5 @@
 #include "SceneAsset.h"
+#include "AssetManager.h"
 
 omp::SceneAsset::SceneAsset()
         : Asset()
@@ -8,17 +9,34 @@ omp::SceneAsset::SceneAsset()
 
 void omp::SceneAsset::initialize()
 {
+    m_Scene = std::make_shared<omp::Scene>();
+    for (auto& model_data : Models)
+    {
+        auto&& model = omp::AssetManager::getAssetManager().tryGetAndLoadIfNot_casted<omp::Model>(model_data.path);
+        if (model)
+        {
+            m_Scene->addModelToScene(model);
+        }
+        else
+        {
+            VWARN(AssetManager, "Cant load asset of Model class {0}", model_data.path);
+        }
+    }
 
 }
 
 void omp::SceneAsset::serializeData(nlohmann::json& data)
 {
-
+    write_Models(data);
+    write_Camera(data);
+    write_Light(data);
 }
 
 void omp::SceneAsset::deserializeData(const nlohmann::json& data)
 {
-
+    read_Models(data);
+    read_Camera(data);
+    read_Light(data);
 }
 
 void omp::to_json(omp::json& j, const omp::ModelForSceneData& model)
@@ -39,4 +57,40 @@ void omp::from_json(const omp::json& j, omp::ModelForSceneData& p)
     j.at("translation").get_to(p.translation);
     j.at("rotation").get_to(p.rotation);
     j.at("scale").get_to(p.scale);
+}
+
+void omp::to_json(omp::json& j, const omp::Light& light)
+{
+    j = json{
+            {"position", light.position},
+            {"ambient", light.ambient},
+            {"diffuse", light.diffuse},
+            {"specular", light.specular},
+    };
+}
+
+void omp::from_json(const omp::json& j, omp::Light& light)
+{
+    j.at("position").get_to(light.position);
+    j.at("ambient").get_to(light.ambient);
+    j.at("diffuse").get_to(light.diffuse);
+    j.at("specular").get_to(light.specular);
+}
+
+void omp::to_json(omp::json& j, const omp::CameraForSceneData& camera)
+{
+    j = json{
+            {"position", camera.position},
+            {"up", camera.up},
+            {"pitch", camera.pitch},
+            {"yaw", camera.yaw},
+    };
+}
+
+void omp::from_json(const omp::json& j, omp::CameraForSceneData& camera)
+{
+    j.at("position").get_to(camera.position);
+    j.at("up").get_to(camera.up);
+    j.at("yaw").get_to(camera.yaw);
+    j.at("pitch").get_to(camera.pitch);
 }

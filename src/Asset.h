@@ -26,23 +26,20 @@ Type get##Name() const { return Name; }
 namespace nlohmann {
     template <>
     struct adl_serializer<glm::vec3> {
-    static void to_json(json& j, const glm::vec3& inVector) {
-        j = json{
-            {"x", inVector.x},
-            {"y", inVector.y},
-            {"z", inVector.z}
-        };
-    }
+        static void to_json(json& j, const glm::vec3& inVector) {
+            j = json{
+                {"x", inVector.x},
+                {"y", inVector.y},
+                {"z", inVector.z}
+            };
+        }
 
-    static void from_json(const json& j, glm::vec3& inVector) {
-        j.at("x").get_to(inVector.x);
-        j.at("y").get_to(inVector.y);
-        j.at("z").get_to(inVector.z);
-    }
-};
-}
-
-namespace nlohmann {
+        static void from_json(const json& j, glm::vec3& inVector) {
+            j.at("x").get_to(inVector.x);
+            j.at("y").get_to(inVector.y);
+            j.at("z").get_to(inVector.z);
+        }
+    };
     template <>
     struct adl_serializer<glm::vec4> {
         static void to_json(json& j, const glm::vec4& inVector) {
