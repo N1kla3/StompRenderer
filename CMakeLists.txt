@@ -22,30 +22,30 @@ include_directories(imgui-docking/backends)
 set(SOURCE
         Renderer.cpp
         Renderer.h
-        Model.h
-        Model.cpp
+        Rendering/Model.h
+        Rendering/Model.cpp
         ModelAsset.h
         ModelAsset.cpp
-        ModelStatics.cpp
-        ModelStatics.h
+        Rendering/ModelStatics.cpp
+        Rendering/ModelStatics.h
         Scene.h
         Scene.cpp
         SceneAsset.h
         SceneAsset.cpp
-        Texture.h
-        Texture.cpp
+        Rendering/Texture.h
+        Rendering/Texture.cpp
         MaterialManager.h
         MaterialManager.cpp
-        Material.h
-        Material.cpp
+        Rendering/Material.h
+        Rendering/Material.cpp
         MaterialInstance.h
         MaterialInstance.cpp
         MaterialAsset.h
         MaterialAsset.cpp
-        VulkanContext.h
-        VulkanContext.cpp
-        Shader.h
-        Shader.cpp
+        Rendering/VulkanContext.h
+        Rendering/VulkanContext.cpp
+        Rendering/Shader.h
+        Rendering/Shader.cpp
         FileDialog.h
         FileDialog.cpp
         ISaveable.h
@@ -59,8 +59,8 @@ set(SOURCE
         Light.cpp
         LightObject.h
         LightObject.cpp
-        GraphicsPipeline.h
-        GraphicsPipeline.cpp
+        Rendering/GraphicsPipeline.h
+        Rendering/GraphicsPipeline.cpp
         AssetLoader.h
         AssetLoader.cpp
         UI/ImguiUnit.h

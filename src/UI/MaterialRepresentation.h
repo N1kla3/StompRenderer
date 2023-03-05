@@ -2,7 +2,7 @@
 
 #include "AssetRepresentation.h"
 #include <memory>
-#include "Texture.h"
+#include "Rendering/Texture.h"
 
 
 namespace omp

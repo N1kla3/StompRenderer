@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "Model.h"
+#include "Rendering/Model.h"
 
 namespace omp
 {

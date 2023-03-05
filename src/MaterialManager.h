@@ -3,9 +3,9 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "VulkanContext.h"
-#include "Texture.h"
-#include "Material.h"
+#include "Rendering/VulkanContext.h"
+#include "Rendering/Texture.h"
+#include "Rendering/Material.h"
 
 class Renderer;
 

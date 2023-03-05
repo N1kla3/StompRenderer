@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Model.h"
+#include "Rendering/Model.h"
 #include "Light.h"
 
 namespace omp

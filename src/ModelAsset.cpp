@@ -1,5 +1,5 @@
 #include "ModelAsset.h"
-#include "ModelStatics.h"
+#include "Rendering/ModelStatics.h"
 #include "MaterialManager.h"
 
 omp::ModelAsset::ModelAsset()

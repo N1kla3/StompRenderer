@@ -2,7 +2,7 @@
 
 #include <memory>
 #include "ImguiUnit.h"
-#include "Model.h"
+#include "Rendering/Model.h"
 #include "MaterialPanel.h"
 
 namespace omp

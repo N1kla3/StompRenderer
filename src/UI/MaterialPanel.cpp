@@ -1,6 +1,6 @@
 #include "MaterialPanel.h"
 #include "imgui.h"
-#include "Material.h"
+#include "Rendering/Material.h"
 #include "Logs.h"
 #include "MaterialInstance.h"
 

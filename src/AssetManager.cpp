@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include "nlohmann/json.hpp"
-#include "Material.h"
+#include "Rendering/Material.h"
 
 using namespace std::filesystem;
 

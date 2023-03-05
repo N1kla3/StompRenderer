@@ -27,11 +27,11 @@
 
 #include "Scene.h"
 #include "MaterialManager.h"
-#include "Shader.h"
+#include "Rendering/Shader.h"
 #include "Camera.h"
 #include "Light.h"
 #include "LightObject.h"
-#include "GraphicsPipeline.h"
+#include "Rendering/GraphicsPipeline.h"
 
 namespace
 {

@@ -1,6 +1,6 @@
 #include "MaterialAsset.h"
 #include "MaterialManager.h"
-#include "Material.h"
+#include "Rendering/Material.h"
 
 omp::MaterialAsset::MaterialAsset()
         : Asset()
