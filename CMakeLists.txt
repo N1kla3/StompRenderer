@@ -91,6 +91,10 @@ set(SOURCE
         tinyobjloader.cpp
         Logs.h
         Logs.cpp
+        Rendering/FrameBuffer.h
+        Rendering/FrameBuffer.cpp
+        Rendering/RenderPass.h
+        Rendering/RenderPass.cpp
         )
 
 set(TESTS
