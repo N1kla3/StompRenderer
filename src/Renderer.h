@@ -32,6 +32,8 @@
 #include "Light.h"
 #include "LightObject.h"
 #include "Rendering/GraphicsPipeline.h"
+#include "Rendering/RenderPass.h"
+#include "Rendering/FrameBuffer.h"
 
 namespace
 {
@@ -308,8 +310,10 @@ private:
 
     VkQueue m_PresentQueue;
 
+    uint32_t m_PresentKHRImagesNum;
+
     VkDescriptorSetLayout m_DescriptorSetLayout;
-    VkRenderPass m_RenderPass;
+    std::shared_ptr<omp::RenderPass> m_RenderPass;
 
     std::unordered_map<std::string, std::unique_ptr<omp::GraphicsPipeline>> m_Pipelines;
 
@@ -341,7 +345,7 @@ private:
 
     std::vector<VkImageView> m_SwapChainImageViews;
 
-    std::vector<VkFramebuffer> m_SwapChainFramebuffers;
+    std::vector<omp::FrameBuffer> m_SwapChainFramebuffers;
 
     std::vector<VkCommandBuffer> m_CommandBuffers;
 

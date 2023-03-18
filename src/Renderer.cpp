@@ -424,6 +424,7 @@ void Renderer::createLogicalDevice()
     m_VulkanContext = std::make_shared<omp::VulkanContext>(m_LogicalDevice, m_PhysDevice, m_CommandPools,
                                                            m_GraphicsQueue);
     omp::MaterialManager::getMaterialManager().specifyVulkanContext(m_VulkanContext);
+    m_RenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
 }
 
 void Renderer::createSurface()
@@ -540,17 +541,17 @@ void Renderer::createSwapChain()
     VkPresentModeKHR present_mode = chooseSwapPresentMode(swap_chain_support.present_modes);
     VkExtent2D extent = chooseSwapExtent(swap_chain_support.capabilities);
 
-    uint32_t image_count = swap_chain_support.capabilities.minImageCount + 1;
+    m_PresentKHRImagesNum = swap_chain_support.capabilities.minImageCount + 1;
     if (swap_chain_support.capabilities.maxImageCount > 0
-        && image_count > swap_chain_support.capabilities.maxImageCount)
+        && m_PresentKHRImagesNum > swap_chain_support.capabilities.maxImageCount)
     {
-        image_count = swap_chain_support.capabilities.maxImageCount;
+        m_PresentKHRImagesNum = swap_chain_support.capabilities.maxImageCount;
     }
 
     VkSwapchainCreateInfoKHR create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     create_info.surface = m_Surface;
-    create_info.minImageCount = image_count;
+    create_info.minImageCount = m_PresentKHRImagesNum;
     create_info.imageFormat = surface_format.format;
     create_info.imageColorSpace = surface_format.colorSpace;
     create_info.imageExtent = extent;
@@ -583,9 +584,9 @@ void Renderer::createSwapChain()
         throw std::runtime_error("Failed to create swap chain!");
     }
 
-    vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &image_count, nullptr);
-    m_SwapChainImages.resize(image_count);
-    vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &image_count, m_SwapChainImages.data());
+    vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &m_PresentKHRImagesNum, nullptr);
+    m_SwapChainImages.resize(m_PresentKHRImagesNum);
+    vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &m_PresentKHRImagesNum, m_SwapChainImages.data());
 
     m_SwapChainImageFormat = surface_format.format;
     m_SwapChainExtent = extent;
@@ -690,21 +691,17 @@ void Renderer::createRenderPass()
     dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-    std::array<VkAttachmentDescription, 3> attachments = {color_attachment, depth_attachment, color_attachment_resolve};
+    m_RenderPass->startConfiguration();
 
-    VkRenderPassCreateInfo render_pass_info{};
-    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    render_pass_info.attachmentCount = static_cast<uint32_t>(attachments.size());
-    render_pass_info.pAttachments = attachments.data();
-    render_pass_info.subpassCount = 1;
-    render_pass_info.pSubpasses = &subpass;
-    render_pass_info.dependencyCount = 1;
-    render_pass_info.pDependencies = &dependency;
+    m_RenderPass->addAttachment(std::move(color_attachment));
+    m_RenderPass->addAttachment(std::move(depth_attachment));
+    m_RenderPass->addAttachment(std::move(color_attachment_resolve));
 
-    if (vkCreateRenderPass(m_LogicalDevice, &render_pass_info, nullptr, &m_RenderPass) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create render pass!");
-    }
+    // reference leak if render pass not created in this method
+    m_RenderPass->addSubpass(std::move(subpass));
+    m_RenderPass->addDependency(std::move(dependency));
+
+    m_RenderPass->endConfiguration();
 }
 
 void Renderer::createFramebuffers()
@@ -723,7 +720,7 @@ void Renderer::createFramebufferAtImage(size_t index)
 
     VkFramebufferCreateInfo frame_buffer_info{};
     frame_buffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    frame_buffer_info.renderPass = m_RenderPass;
+    frame_buffer_info.renderPass = m_RenderPass->getRenderPass();
     frame_buffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());
     frame_buffer_info.pAttachments = attachments.data();
     frame_buffer_info.width = m_RenderViewport->getSize().x;//m_SwapChainExtent.width/2;
@@ -797,7 +794,7 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
 
     VkRenderPassBeginInfo render_pass_begin_info{};
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_begin_info.renderPass = m_RenderPass;
+    render_pass_begin_info.renderPass = m_RenderPass->getRenderPass();
     render_pass_begin_info.framebuffer = m_SwapChainFramebuffers[inIndex];
     render_pass_begin_info.renderArea.offset.x = m_RenderViewport->getOffset().x;
     render_pass_begin_info.renderArea.offset.y = m_RenderViewport->getOffset().y;
@@ -1041,7 +1038,7 @@ void Renderer::cleanupSwapChain()
     vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, static_cast<int32_t>(m_CommandBuffers.size()),
                          m_CommandBuffers.data());
     m_Pipelines.clear();
-    vkDestroyRenderPass(m_LogicalDevice, m_RenderPass, nullptr);
+    m_RenderPass->destroyInnerState();
 
     for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
     {

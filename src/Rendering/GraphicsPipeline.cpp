@@ -173,7 +173,7 @@ void omp::GraphicsPipeline::createShaders(const std::shared_ptr<struct Shader>& 
     m_Shader = std::move(shader);
 }
 
-void omp::GraphicsPipeline::confirmCreation(VkRenderPass renderPass)
+void omp::GraphicsPipeline::confirmCreation(const std::shared_ptr<omp::RenderPass>& renderPass)
 {
     VkPipelineDepthStencilStateCreateInfo depth_stencil{};
     depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -217,7 +217,7 @@ void omp::GraphicsPipeline::confirmCreation(VkRenderPass renderPass)
     pipeline_info.pDynamicState = &dynamic_state;
 
     pipeline_info.layout = m_PipelineLayout;
-    pipeline_info.renderPass = renderPass;
+    pipeline_info.renderPass = renderPass->getRenderPass();
     pipeline_info.subpass = 0;
 
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;

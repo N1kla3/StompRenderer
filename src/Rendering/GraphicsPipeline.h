@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vulkan/vulkan.h"
+#include "RenderPass.h"
 #include <memory>
 
 
@@ -22,7 +23,7 @@ namespace omp
         void createColorBlending();
         void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
         void createShaders(const std::shared_ptr<class Shader>& shader);
-        void confirmCreation(VkRenderPass renderPass);
+        void confirmCreation(const std::shared_ptr<omp::RenderPass>& renderPass);
 
         VkPipeline getGraphicsPipeline() { return m_GraphicsPipeline; }
 

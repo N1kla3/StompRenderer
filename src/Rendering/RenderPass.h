@@ -4,38 +4,35 @@
 
 namespace omp
 {
-    struct RenderPassAttachment
-    {
-        VkAttachmentDescription description;
-        VkAttachmentReference reference;
-    };
 
     class RenderPass
     {
     public:
         RenderPass(VkDevice inLogicalDevice);
+        ~RenderPass();
+        void destroyInnerState();
 
     private:
-        // Cache //
-        // ===== //
-        int m_AttachmentCounter = 0;
-
-
         // State //
         // ===== //
+        bool m_IsCreated;
+
         VkDevice m_LogicalDevice;
-        std::vector<RenderPassAttachment> m_Attachments;
+        VkRenderPass m_VulkanRenderPass;
+        std::vector<VkAttachmentDescription> m_Attachments;
+        std::vector<VkSubpassDescription> m_Subpasses;
+        std::vector<VkSubpassDependency> m_Dependencies;
 
 
         // Methods //
         // ======= //
     public:
         bool startConfiguration();
-        void addAttachment(VkAttachmentDescription description, VkAttachmentReference reference);
-        void addAttachment(RenderPassAttachment&& attachment);
+        void addAttachment(VkAttachmentDescription&& attachment);
+        void addSubpass(VkSubpassDescription&& subpassInfo);
+        void addDependency(VkSubpassDependency&& dependency);
         bool endConfiguration();
 
-        bool startRenderPass();
-        bool endRenderPass();
+        VkRenderPass getRenderPass() const { return m_VulkanRenderPass; }
     };
 }
