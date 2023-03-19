@@ -382,10 +382,10 @@ private:
 
     VkDebugUtilsMessengerEXT m_DebugMessenger;
 
-    VkRenderPass m_ImguiRenderPass;
+    std::shared_ptr<omp::RenderPass> m_ImguiRenderPass;
     VkCommandPool m_ImguiCommandPool;
     std::vector<VkCommandBuffer> m_ImguiCommandBuffers;
-    std::vector<VkFramebuffer> m_ImguiFramebuffers;
+    std::vector<omp::FrameBuffer> m_ImguiFramebuffers;
     VkDescriptorPool m_ImguiDescriptorPool;
 
     std::shared_ptr<omp::VulkanContext> m_VulkanContext;

@@ -425,6 +425,7 @@ void Renderer::createLogicalDevice()
                                                            m_GraphicsQueue);
     omp::MaterialManager::getMaterialManager().specifyVulkanContext(m_VulkanContext);
     m_RenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
+    m_ImguiRenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
 }
 
 void Renderer::createSurface()
@@ -594,8 +595,8 @@ void Renderer::createSwapChain()
 
 void Renderer::createImageViews()
 {
-    m_SwapChainImageViews.resize(m_SwapChainImages.size());
-    for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+    m_SwapChainImageViews.resize(m_PresentKHRImagesNum);
+    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         m_SwapChainImageViews[i] = createImageView(m_SwapChainImages[i], m_SwapChainImageFormat,
                                                    VK_IMAGE_ASPECT_COLOR_BIT, 1);
@@ -738,7 +739,7 @@ void Renderer::createCommandPool()
 
 void Renderer::createCommandBuffers()
 {
-    m_CommandBuffers.resize(m_SwapChainFramebuffers.size());
+    m_CommandBuffers.resize(m_PresentKHRImagesNum);
 
     VkCommandBufferAllocateInfo allocate_info;
     allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -752,7 +753,7 @@ void Renderer::createCommandBuffers()
         throw std::runtime_error("failed to allocate command buffers");
     }
 
-    for (size_t i = 0; i < m_CommandBuffers.size(); i++)
+    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         createCommandBufferForImage(i);
     }
@@ -953,7 +954,7 @@ void Renderer::createSyncObjects()
     m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-    m_ImagesInFlight.resize(m_SwapChainImages.size(), VK_NULL_HANDLE);
+    m_ImagesInFlight.resize(m_PresentKHRImagesNum, VK_NULL_HANDLE);
 
     VkSemaphoreCreateInfo semaphore_info{};
     semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1047,12 +1048,12 @@ void Renderer::cleanupSwapChain()
 
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
 
-    for (auto framebuffer: m_ImguiFramebuffers)
+    for (auto& framebuffer: m_ImguiFramebuffers)
     {
-        vkDestroyFramebuffer(m_LogicalDevice, framebuffer, nullptr);
+        framebuffer.destroyInnerState();
     }
 
-    vkDestroyRenderPass(m_LogicalDevice, m_ImguiRenderPass, nullptr);
+    m_ImguiRenderPass->destroyInnerState();
 
     vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, m_ImguiCommandBuffers.data());
     vkDestroyCommandPool(m_LogicalDevice, m_ImguiCommandPool, nullptr);
@@ -1237,10 +1238,10 @@ void Renderer::createUniformBuffers()
 {
     VkDeviceSize buffer_size = sizeof(UniformBufferObject);
 
-    m_UniformBuffers.resize(m_SwapChainImages.size());
-    m_UniformBuffersMemory.resize(m_SwapChainImages.size());
+    m_UniformBuffers.resize(m_PresentKHRImagesNum);
+    m_UniformBuffersMemory.resize(m_PresentKHRImagesNum);
 
-    for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         createBuffer(buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -1249,10 +1250,10 @@ void Renderer::createUniformBuffers()
 
     buffer_size = sizeof(omp::Light);
 
-    m_LightBuffer.resize(m_SwapChainImages.size());
-    m_LightBufferMemory.resize(m_SwapChainImages.size());
+    m_LightBuffer.resize(m_PresentKHRImagesNum);
+    m_LightBufferMemory.resize(m_PresentKHRImagesNum);
 
-    for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         createBuffer(buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -1313,21 +1314,21 @@ void Renderer::createDescriptorPool()
 
 void Renderer::createDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> layouts(m_SwapChainImages.size(), m_DescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_DescriptorSetLayout);
 
     VkDescriptorSetAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocate_info.descriptorPool = m_DescriptorPool;
-    allocate_info.descriptorSetCount = static_cast<uint32_t>(m_SwapChainImages.size());
+    allocate_info.descriptorSetCount = m_PresentKHRImagesNum;
     allocate_info.pSetLayouts = layouts.data();
 
-    m_DescriptorSets.resize(m_SwapChainImages.size());
+    m_DescriptorSets.resize(m_PresentKHRImagesNum);
     if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, m_DescriptorSets.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to allocate descriptor sets!");
     }
 
-    for (size_t i = 0; i < m_SwapChainImages.size(); i++)
+    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         VkDescriptorBufferInfo buffer_info{};
         buffer_info.buffer = m_UniformBuffers[i];
@@ -1395,22 +1396,22 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
 {
     // TODO: multiple later
     std::vector<VkDescriptorSet> ds;
-    std::vector<VkDescriptorSetLayout> layouts(m_SwapChainImages.size(), m_DescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_DescriptorSetLayout);
 
     VkDescriptorSetAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocate_info.descriptorPool = m_DescriptorPool;
-    allocate_info.descriptorSetCount = static_cast<uint32_t>(m_SwapChainImages.size());
+    allocate_info.descriptorSetCount = m_PresentKHRImagesNum;
     allocate_info.pSetLayouts = layouts.data();
 
-    ds.resize(m_SwapChainImages.size());
+    ds.resize(m_PresentKHRImagesNum);
     if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, ds.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to allocate descriptor sets!");
     }
 
     // TODO performance
-    for (size_t index = 0; index < m_SwapChainImages.size(); index++)
+    for (size_t index = 0; index < m_PresentKHRImagesNum; index++)
     {
         VkDescriptorBufferInfo buffer_info{};
         buffer_info.buffer = m_UniformBuffers[index];
@@ -1811,10 +1812,10 @@ void Renderer::initializeImgui()
     init_info.DescriptorPool = m_ImguiDescriptorPool;
     init_info.Allocator = VK_NULL_HANDLE;
     init_info.MinImageCount = 2;
-    init_info.ImageCount = m_SwapChainImages.size();
+    init_info.ImageCount = m_PresentKHRImagesNum;
 
     // Imgui render pass should be created before call of this method
-    ImGui_ImplVulkan_Init(&init_info, m_ImguiRenderPass);
+    ImGui_ImplVulkan_Init(&init_info, m_ImguiRenderPass->getRenderPass());
 
     VkCommandBuffer command_buffer = beginSingleTimeCommands();
     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
@@ -1854,25 +1855,15 @@ void Renderer::createImguiRenderPass()
     dependency.srcAccessMask = 0;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-    VkRenderPassCreateInfo info{};
-    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    info.attachmentCount = 1;
-    info.pAttachments = &attachment;
-    info.subpassCount = 1;
-    info.pSubpasses = &subpass;
-    info.dependencyCount = 1;
-    info.pDependencies = &dependency;
-
-    if (vkCreateRenderPass(m_LogicalDevice, &info, nullptr, &m_ImguiRenderPass) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create imgui render pass");
-    }
+    m_ImguiRenderPass->startConfiguration();
+    m_ImguiRenderPass->addAttachment(std::move(attachment));
+    m_ImguiRenderPass->addSubpass(std::move(subpass));
+    m_ImguiRenderPass->addDependency(std::move(dependency));
+    m_ImguiRenderPass->endConfiguration();
 }
 
 void Renderer::createImguiCommandPools()
 {
-    auto size = m_SwapChainImageViews.size();
-
     VkCommandPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     pool_info.queueFamilyIndex = findQueueFamilies(m_PhysDevice).graphics_family.value();
@@ -1902,8 +1893,8 @@ void Renderer::createImguiCommandBuffers()
 
         VkRenderPassBeginInfo begin_info{};
         begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        begin_info.renderPass = m_ImguiRenderPass;
-        begin_info.framebuffer = m_ImguiFramebuffers[i];
+        begin_info.renderPass = m_ImguiRenderPass->getRenderPass();
+        begin_info.framebuffer = m_ImguiFramebuffers[i].getVulkanFrameBuffer();
         begin_info.renderArea.extent.width = m_SwapChainExtent.width;
         begin_info.renderArea.extent.height = m_SwapChainExtent.height;
         begin_info.clearValueCount = 1;
@@ -1938,23 +1929,11 @@ void Renderer::createImguiCommandBuffers()
 
 void Renderer::createImguiFramebuffers()
 {
-    auto size = m_SwapChainImageViews.size();
-    m_ImguiFramebuffers.resize(size);
-    for (size_t i = 0; i < size; i++)
+    m_ImguiFramebuffers.resize(m_PresentKHRImagesNum);
+    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
-        VkFramebufferCreateInfo info{};
-        info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        info.renderPass = m_ImguiRenderPass;
-        info.attachmentCount = 1;
-        info.pAttachments = &m_SwapChainImageViews[i];
-        info.width = m_SwapChainExtent.width;
-        info.height = m_SwapChainExtent.height;
-        info.layers = 1;
-
-        if (vkCreateFramebuffer(m_LogicalDevice, &info, nullptr, &m_ImguiFramebuffers[i]))
-        {
-            throw std::runtime_error("Failed to create imgui framebuffer");
-        }
+        omp::FrameBuffer frame_buffer(m_LogicalDevice, {m_SwapChainImageViews[i]}, m_ImguiRenderPass, m_SwapChainExtent.width, m_SwapChainExtent.height);
+        m_ImguiFramebuffers[i] = frame_buffer;
     }
 }
 
@@ -1974,8 +1953,8 @@ void Renderer::createImguiCommandBufferAtIndex(uint32_t imageIndex)
 
     VkRenderPassBeginInfo begin_info{};
     begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    begin_info.renderPass = m_ImguiRenderPass;
-    begin_info.framebuffer = m_ImguiFramebuffers[imageIndex];
+    begin_info.renderPass = m_ImguiRenderPass->getRenderPass();
+    begin_info.framebuffer = m_ImguiFramebuffers[imageIndex].getVulkanFrameBuffer();
     begin_info.renderArea.extent.width = m_SwapChainExtent.width;
     begin_info.renderArea.extent.height = m_SwapChainExtent.height;
     begin_info.clearValueCount = 1;
