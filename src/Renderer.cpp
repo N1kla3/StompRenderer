@@ -706,9 +706,9 @@ void Renderer::createRenderPass()
 
 void Renderer::createFramebuffers()
 {
-    m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
+    m_SwapChainFramebuffers.resize(m_PresentKHRImagesNum);
 
-    for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
+    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         createFramebufferAtImage(i);
     }
@@ -716,22 +716,9 @@ void Renderer::createFramebuffers()
 
 void Renderer::createFramebufferAtImage(size_t index)
 {
-    std::array<VkImageView, 3> attachments = {m_ColorImageView, m_DepthImageView, m_SwapChainImageViews[index]};
-
-    VkFramebufferCreateInfo frame_buffer_info{};
-    frame_buffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    frame_buffer_info.renderPass = m_RenderPass->getRenderPass();
-    frame_buffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());
-    frame_buffer_info.pAttachments = attachments.data();
-    frame_buffer_info.width = m_RenderViewport->getSize().x;//m_SwapChainExtent.width/2;
-    frame_buffer_info.height = m_RenderViewport->getSize().y;//m_SwapChainExtent.height/2;
-    frame_buffer_info.layers = 1;
-
-    if (vkCreateFramebuffer(m_LogicalDevice, &frame_buffer_info, nullptr, &m_SwapChainFramebuffers[index])
-        != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create framebuffer!");
-    }
+    std::vector<VkImageView> attachments{m_ColorImageView, m_DepthImageView, m_SwapChainImageViews[index]};
+    omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, m_RenderViewport->getSize().x, m_RenderViewport->getSize().y);
+    m_SwapChainFramebuffers[index] = frame_buffer;
 }
 
 void Renderer::createCommandPool()
@@ -795,7 +782,7 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
     VkRenderPassBeginInfo render_pass_begin_info{};
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_begin_info.renderPass = m_RenderPass->getRenderPass();
-    render_pass_begin_info.framebuffer = m_SwapChainFramebuffers[inIndex];
+    render_pass_begin_info.framebuffer = m_SwapChainFramebuffers[inIndex].getVulkanFrameBuffer();
     render_pass_begin_info.renderArea.offset.x = m_RenderViewport->getOffset().x;
     render_pass_begin_info.renderArea.offset.y = m_RenderViewport->getOffset().y;
     render_pass_begin_info.renderArea.extent.height = m_RenderViewport->getSize().y;//m_SwapChainExtent.height/2;
@@ -1031,9 +1018,9 @@ void Renderer::cleanupSwapChain()
     vkDestroyImage(m_LogicalDevice, m_ColorImage, nullptr);
     vkFreeMemory(m_LogicalDevice, m_ColorImageMemory, nullptr);
 
-    for (size_t i = 0; i < m_SwapChainFramebuffers.size(); i++)
+    for (auto& frame_buffer : m_SwapChainFramebuffers)
     {
-        vkDestroyFramebuffer(m_LogicalDevice, m_SwapChainFramebuffers[i], nullptr);
+        frame_buffer.destroyInnerState();
     }
     vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, static_cast<int32_t>(m_CommandBuffers.size()),
                          m_CommandBuffers.data());
@@ -2156,7 +2143,7 @@ void Renderer::createImguiWidgets()
 
 void Renderer::onViewportResize(size_t imageIndex)
 {
-    vkDestroyFramebuffer(m_LogicalDevice, m_SwapChainFramebuffers[imageIndex], nullptr);
+    m_SwapChainFramebuffers[imageIndex].destroyInnerState();
     createFramebufferAtImage(imageIndex);
     createCommandBufferForImage(imageIndex);
 }

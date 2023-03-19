@@ -11,23 +11,30 @@ namespace omp
     public:
         FrameBuffer() = default;
         FrameBuffer(VkDevice device);
-        FrameBuffer(VkDevice device, const std::vector<VkImageView>& imagesViews, const std::shared_ptr<omp::RenderPass>& renderPass, float width, float height);
+        FrameBuffer(VkDevice device, const std::vector<VkImageView>& imagesViews, const std::shared_ptr<omp::RenderPass>& renderPass, uint32_t width, uint32_t height);
         ~FrameBuffer();
 
         void destroyInnerState();
 
+        void bindRenderPass(const std::shared_ptr<omp::RenderPass>& renderPass);
         void addImages(const std::vector<VkImageView>& imagesViews);
         void setSizes(uint32_t width, uint32_t height);
 
         void finishCreation();
 
 
+        // Accessors //
+        // ========= //
+        VkFramebuffer getVulkanFrameBuffer() const { return m_VulkanBuffer; }
+
+
     private:
         // State //
         // ===== //
+        bool m_ShouldDestroy = false;
         VkDevice m_LogicalDevice;
         VkFramebuffer m_VulkanBuffer;
-        VkFramebufferCreateInfo m_CreateInfo;
+        VkFramebufferCreateInfo m_CreateInfo{};
         std::vector<VkImageView> m_ImageAttachments;
 
 
