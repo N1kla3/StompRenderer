@@ -34,6 +34,7 @@
 #include "Rendering/GraphicsPipeline.h"
 #include "Rendering/RenderPass.h"
 #include "Rendering/FrameBuffer.h"
+#include "Logs.h"
 
 namespace
 {
@@ -81,6 +82,34 @@ struct UniformBufferObject
     glm::mat4 view;
     glm::mat4 proj;
     glm::vec3 view_position;
+};
+
+struct CommandBufferScope
+{
+    VkCommandBuffer buffer;
+    bool is_allocated = false;
+
+
+    void clearBuffer(VkDevice device, VkCommandPool pool)
+    {
+        if (!is_allocated)
+        {
+            VWARN(Renderer, "Cant free already cleared command buffer");
+            return;
+        }
+        vkFreeCommandBuffers(device, pool, 1, &buffer);
+        is_allocated = false;
+    }
+
+    void reAllocate(VkDevice device, VkCommandPool pool, VkCommandBufferAllocateInfo bufferInfo)
+    {
+        if (is_allocated)
+        {
+            vkFreeCommandBuffers(device, pool, 1, &buffer);
+        }
+        vkAllocateCommandBuffers(device, &bufferInfo, &buffer);
+        is_allocated = true;
+    }
 };
 
 const std::string g_ModelPath = "../models/cube.obj";
@@ -134,6 +163,7 @@ private:
     void drawFrame();
 
     void cleanup();
+    void destroyAllCommandBuffers();
 
     void createInstance();
 
@@ -153,6 +183,17 @@ private:
 
     void createFramebufferAtImage(size_t index);
 
+
+    void prepareCommandBuffer(CommandBufferScope& bufferScope, VkCommandPool inCommandPool);
+    void setViewport(VkCommandBuffer inCommandBuffer);
+    void beginRenderPass(
+            omp::RenderPass* inRenderPass,
+            VkCommandBuffer inCommandBuffer,
+            omp::FrameBuffer& inFrameBuffer,
+            const std::vector<VkClearValue>& clearValues,
+            VkRect2D rect = VkRect2D());
+    void endRenderPass(omp::RenderPass* inRenderPass, VkCommandBuffer inCommandBuffer);
+
     void createBuffer(
             VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
             VkDeviceMemory& bufferMemory);
@@ -167,8 +208,7 @@ private:
 
     void updateUniformBuffer(uint32_t currentImage);
 
-    void createCommandBuffers();
-    void createCommandBufferForImage(size_t index);
+    void prepareFrameForImage(size_t inIndex);
 
     void createCommandPool();
 
@@ -202,8 +242,6 @@ private:
     void createImguiRenderPass();
 
     void createImguiCommandPools();
-    void createImguiCommandBuffers();
-    void createImguiCommandBufferAtIndex(uint32_t imageIndex);
     void renderAllUi();
     void createImguiWidgets();
     void createImguiFramebuffers();
@@ -317,7 +355,7 @@ private:
 
     std::unordered_map<std::string, std::unique_ptr<omp::GraphicsPipeline>> m_Pipelines;
 
-    VkCommandPool m_CommandPools;
+    VkCommandPool m_CommandPool;
     VkDescriptorPool m_DescriptorPool;
     std::vector<VkDescriptorSet> m_DescriptorSets;
 
@@ -347,7 +385,7 @@ private:
 
     std::vector<omp::FrameBuffer> m_SwapChainFramebuffers;
 
-    std::vector<VkCommandBuffer> m_CommandBuffers;
+    std::vector<CommandBufferScope> m_CommandBuffers;
 
     std::vector<VkSemaphore> m_ImageAvailableSemaphores;
     std::vector<VkSemaphore> m_RenderFinishedSemaphores;
@@ -384,7 +422,7 @@ private:
 
     std::shared_ptr<omp::RenderPass> m_ImguiRenderPass;
     VkCommandPool m_ImguiCommandPool;
-    std::vector<VkCommandBuffer> m_ImguiCommandBuffers;
+    std::vector<CommandBufferScope> m_ImguiCommandBuffers;
     std::vector<omp::FrameBuffer> m_ImguiFramebuffers;
     VkDescriptorPool m_ImguiDescriptorPool;
 

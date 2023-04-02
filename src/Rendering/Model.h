@@ -28,6 +28,15 @@ struct omp::ModelPushConstant
     glm::vec4 ambient;
     glm::vec4 diffusive;
     glm::vec4 specular;
+
+    ModelPushConstant(const glm::mat4& inModel, const glm::vec4& inAmbient, const glm::vec4& inDiffusive, const glm::vec4& inSpecular)
+        : model(inModel)
+        , ambient(inAmbient)
+        , diffusive(inDiffusive)
+        , specular(inSpecular)
+    {
+
+    }
 };
 
 struct omp::Vertex

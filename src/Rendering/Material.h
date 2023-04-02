@@ -51,6 +51,7 @@ namespace omp
 
         void addTexture(ETextureType type, const std::shared_ptr<Texture>& texture);
         void removeTexture(const TextureData& data);
+        void resetSets() { m_IsInitialized = false; }
 
         std::array<TextureData, MAX_TEXTURES> getTextureData() const;
 

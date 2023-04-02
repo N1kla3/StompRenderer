@@ -24,6 +24,7 @@ namespace omp
         MaterialManager();
         void clearGpuState() const;
         void specifyVulkanContext(const std::shared_ptr<omp::VulkanContext>& inContext);
+        std::unordered_map<std::string, std::shared_ptr<omp::Material>>& getMaterials() { return m_Materials; };
     public:
         inline static MaterialManager& getMaterialManager()
         {
@@ -41,6 +42,7 @@ namespace omp
         std::weak_ptr<omp::Texture> getDefaultTexture() const { return m_DefaultTexture; }
 
         std::weak_ptr<omp::Texture> getEmptyTexture() const { return m_EmptyTexture; }
+
 
         friend class ::Renderer;
     };

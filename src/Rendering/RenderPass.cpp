@@ -3,6 +3,9 @@
 
 bool omp::RenderPass::startConfiguration()
 {
+    m_Attachments.clear();
+    m_Dependencies.clear();
+    m_Subpasses.clear();
     return true;
 }
 

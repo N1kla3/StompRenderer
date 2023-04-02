@@ -80,7 +80,8 @@ void Renderer::initVulkan()
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
-    createCommandBuffers();
+    m_CommandBuffers.resize(m_PresentKHRImagesNum);
+    m_ImguiCommandBuffers.resize(m_PresentKHRImagesNum);
     createSyncObjects();
 
 }
@@ -107,7 +108,9 @@ void Renderer::cleanup()
 
     cleanupSwapChain();
 
-    vkDestroyCommandPool(m_LogicalDevice, m_CommandPools, nullptr);
+    destroyAllCommandBuffers();
+    vkDestroyCommandPool(m_LogicalDevice, m_CommandPool, nullptr);
+    vkDestroyCommandPool(m_LogicalDevice, m_ImguiCommandPool, nullptr);
 
     if (g_EnableValidationLayers)
     {
@@ -133,6 +136,7 @@ void Renderer::cleanup()
     }
 
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_DescriptorSetLayout, nullptr);
+    vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
 
     omp::MaterialManager::getMaterialManager().clearGpuState();
 
@@ -421,7 +425,7 @@ void Renderer::createLogicalDevice()
     vkGetDeviceQueue(m_LogicalDevice, indices.graphics_family.value(), 0, &m_GraphicsQueue);
     vkGetDeviceQueue(m_LogicalDevice, indices.present_family.value(), 0, &m_PresentQueue);
 
-    m_VulkanContext = std::make_shared<omp::VulkanContext>(m_LogicalDevice, m_PhysDevice, m_CommandPools,
+    m_VulkanContext = std::make_shared<omp::VulkanContext>(m_LogicalDevice, m_PhysDevice, m_CommandPool,
                                                            m_GraphicsQueue);
     omp::MaterialManager::getMaterialManager().specifyVulkanContext(m_VulkanContext);
     m_RenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
@@ -731,84 +735,50 @@ void Renderer::createCommandPool()
     pool_info.queueFamilyIndex = queue_family_indices.graphics_family.value();
     pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if (vkCreateCommandPool(m_LogicalDevice, &pool_info, nullptr, &m_CommandPools) != VK_SUCCESS)
+    if (vkCreateCommandPool(m_LogicalDevice, &pool_info, nullptr, &m_CommandPool) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create command pool");
     }
 }
 
-void Renderer::createCommandBuffers()
+void Renderer::prepareFrameForImage(size_t inIndex)
 {
-    m_CommandBuffers.resize(m_PresentKHRImagesNum);
+    prepareCommandBuffer(m_ImguiCommandBuffers[inIndex], m_ImguiCommandPool);
 
-    VkCommandBufferAllocateInfo allocate_info;
-    allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocate_info.commandPool = m_CommandPools;
-    allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocate_info.commandBufferCount = (uint32_t) m_CommandBuffers.size();
-    allocate_info.pNext = nullptr;
+    std::vector<VkClearValue> clear_value{1};
+    clear_value[0].color = g_ClearColor;
 
-    if (vkAllocateCommandBuffers(m_LogicalDevice, &allocate_info, m_CommandBuffers.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate command buffers");
-    }
+    VkRect2D rect{};
+    rect.extent.height = m_SwapChainExtent.height;
+    rect.extent.width = m_SwapChainExtent.width;
+    beginRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[inIndex].buffer, m_ImguiFramebuffers[inIndex], clear_value, rect);
 
-    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
-    {
-        createCommandBufferForImage(i);
-    }
-}
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    renderAllUi();
+    ImGui::Render();
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[inIndex].buffer);
 
-void Renderer::createCommandBufferForImage(size_t inIndex)
-{
-    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, 1, &m_CommandBuffers[inIndex]);
+    endRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[inIndex].buffer);
 
-    VkCommandBufferAllocateInfo buffer_info{};
-    buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    buffer_info.commandPool = m_CommandPools;
-    buffer_info.commandBufferCount = 1;
-    vkAllocateCommandBuffers(m_LogicalDevice, &buffer_info, &m_CommandBuffers[inIndex]);
 
-    VkCommandBufferBeginInfo begin_info{};
-    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    begin_info.flags = 0;
-    begin_info.pInheritanceInfo = nullptr;
+    // Main Render pass
+    VkCommandBuffer& main_buffer = m_CommandBuffers[inIndex].buffer;
+    prepareCommandBuffer(m_CommandBuffers[inIndex], m_CommandPool);
 
-    if (vkBeginCommandBuffer(m_CommandBuffers[inIndex], &begin_info) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to begin recording command buffer!");
-    }
-
-    VkRenderPassBeginInfo render_pass_begin_info{};
-    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    render_pass_begin_info.renderPass = m_RenderPass->getRenderPass();
-    render_pass_begin_info.framebuffer = m_SwapChainFramebuffers[inIndex].getVulkanFrameBuffer();
-    render_pass_begin_info.renderArea.offset.x = m_RenderViewport->getOffset().x;
-    render_pass_begin_info.renderArea.offset.y = m_RenderViewport->getOffset().y;
-    render_pass_begin_info.renderArea.extent.height = m_RenderViewport->getSize().y;//m_SwapChainExtent.height/2;
-    render_pass_begin_info.renderArea.extent.width = m_RenderViewport->getSize().x;//m_SwapChainExtent.width/2;
-
-    std::array<VkClearValue, 2> clear_values{};
+    std::vector<VkClearValue> clear_values{2};
     clear_values[0].color = g_ClearColor;
     clear_values[1].depthStencil = {1.0f, 0};
 
-    render_pass_begin_info.clearValueCount = static_cast<uint32_t>(clear_values.size());
-    render_pass_begin_info.pClearValues = clear_values.data();
-
-    VkViewport viewport;
-    viewport.x = m_RenderViewport->getOffset().x;
-    viewport.y = m_RenderViewport->getOffset().y;
-    viewport.height = m_RenderViewport->getSize().y;
-    viewport.width = m_RenderViewport->getSize().x;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    vkCmdBeginRenderPass(m_CommandBuffers[inIndex], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdSetViewport(m_CommandBuffers[inIndex], 0, 1, &viewport);
+    rect.offset.x = m_RenderViewport->getOffset().x;
+    rect.offset.y = m_RenderViewport->getOffset().y;
+    rect.extent.height = m_RenderViewport->getSize().y;
+    rect.extent.width = m_RenderViewport->getSize().x;
+    beginRenderPass(m_RenderPass.get(), main_buffer, m_SwapChainFramebuffers[inIndex], clear_values, rect);
+    setViewport(main_buffer);
 
     VkDeviceSize offsets[] = {0};
-
     for (size_t index = 0; index < m_CurrentScene->getModels().size(); index++)
     {
         auto& current_model = m_CurrentScene->getModels()[index];
@@ -816,26 +786,23 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
         auto material = material_instance->getStaticMaterial();
 
 
-        vkCmdBindPipeline(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           findGraphicsPipeline(material_instance->getShaderName())->getGraphicsPipeline());
 
-        vkCmdBindVertexBuffers(m_CommandBuffers[inIndex], 0, 1, &m_VertexBuffers[index], offsets);
-        vkCmdBindIndexBuffer(m_CommandBuffers[inIndex], m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &m_VertexBuffers[index], offsets);
+        vkCmdBindIndexBuffer(main_buffer, m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
 
-        omp::ModelPushConstant constant;
-        constant.model = current_model->getTransform();
-        constant.ambient = material_instance->getAmbient();
-        constant.diffusive = material_instance->getDiffusive();
-        constant.specular = material_instance->getSpecular();
-        vkCmdPushConstants(m_CommandBuffers[inIndex],
+        omp::ModelPushConstant constant{ current_model->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
+        vkCmdPushConstants(main_buffer,
                            findGraphicsPipeline(material_instance->getShaderName())->getPipelineLayout(),
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                            0, sizeof(omp::ModelPushConstant), &constant);
 
 
+        // TODO: MATERIALS ARE TOTAL SHIT
         if (material.lock()->isInitialized())
         {
-            vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+            vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                     findGraphicsPipeline(material_instance->getShaderName())->getPipelineLayout(),
                                     0, 1, &material.lock()->getDescriptorSet()[inIndex],
                                     0, nullptr);
@@ -843,20 +810,16 @@ void Renderer::createCommandBufferForImage(size_t inIndex)
         else
         {
             createDescriptorSetsForMaterial(material.lock());
-            vkCmdBindDescriptorSets(m_CommandBuffers[inIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+            vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                     findGraphicsPipeline(material_instance->getShaderName())->getPipelineLayout(),
                                     0, 1, &m_DefaultMaterial->getDescriptorSet()[inIndex],
                                     0, nullptr);
         }
-        vkCmdDrawIndexed(m_CommandBuffers[inIndex],
+        vkCmdDrawIndexed(main_buffer,
                          static_cast<uint32_t>(m_CurrentScene->getModels()[index]->getIndices().size()), 1, 0, 0, 0);
     }
 
-    vkCmdEndRenderPass(m_CommandBuffers[inIndex]);
-    if (vkEndCommandBuffer(m_CommandBuffers[inIndex]) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to record command buffer");
-    }
+    endRenderPass(m_RenderPass.get(), main_buffer);
 }
 
 void Renderer::drawFrame()
@@ -882,22 +845,17 @@ void Renderer::drawFrame()
     }
     else
     {
-        //vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, &m_ImguiCommandBuffers[image_index]);
-        createImguiCommandBufferAtIndex(image_index);
-        createCommandBufferForImage(image_index);
+        prepareFrameForImage(image_index);
     }
-    onViewportResize(image_index);
+    //onViewportResize(image_index);
 
     if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
     {
         vkWaitForFences(m_LogicalDevice, 1, &m_ImagesInFlight[image_index], VK_TRUE, UINT64_MAX);
     }
-
     m_ImagesInFlight[image_index] = m_InFlightFences[m_CurrentFrame];
 
     updateUniformBuffer(image_index);
-    //vkResetCommandPool(m_LogicalDevice, m_ImguiCommandPool, 0);
-
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -908,8 +866,8 @@ void Renderer::drawFrame()
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
 
-    std::array<VkCommandBuffer, 2> command_buffers{m_ImguiCommandBuffers[image_index], m_CommandBuffers[image_index]};
-    submit_info.commandBufferCount = 2;
+    std::array<VkCommandBuffer, 2> command_buffers{m_ImguiCommandBuffers[image_index].buffer, m_CommandBuffers[image_index].buffer};
+    submit_info.commandBufferCount = static_cast<uint32_t>(command_buffers.size());
     submit_info.pCommandBuffers = command_buffers.data();
 
     VkSemaphore signal_semaphores[] = {m_RenderFinishedSemaphores[m_CurrentFrame]};
@@ -997,14 +955,10 @@ void Renderer::recreateSwapChain()
     createDepthResources();
     createFramebuffers();
     createUniformBuffers();
-    createDescriptorPool();
     createDescriptorSets();
-    createCommandBuffers();
 
     createImguiRenderPass();
     createImguiFramebuffers();
-    createImguiCommandPools();
-    createImguiCommandBuffers();
 
     ImGui_ImplVulkan_SetMinImageCount(2);
 }
@@ -1023,8 +977,6 @@ void Renderer::cleanupSwapChain()
     {
         frame_buffer.destroyInnerState();
     }
-    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, static_cast<int32_t>(m_CommandBuffers.size()),
-                         m_CommandBuffers.data());
     m_Pipelines.clear();
     m_RenderPass->destroyInnerState();
 
@@ -1046,17 +998,20 @@ void Renderer::cleanupSwapChain()
         vkFreeMemory(m_LogicalDevice, m_LightBufferMemory[i], nullptr);
     }
 
-    vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
-
     for (auto& framebuffer: m_ImguiFramebuffers)
     {
         framebuffer.destroyInnerState();
     }
 
-    m_ImguiRenderPass->destroyInnerState();
+    for (auto& [u, material] : omp::MaterialManager::getMaterialManager().getMaterials())
+    {
+        vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, material->getDescriptorSet().size(), material->getDescriptorSet().data());
+        material->resetSets();
+    }
 
-    vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, m_ImguiCommandBuffers.data());
-    vkDestroyCommandPool(m_LogicalDevice, m_ImguiCommandPool, nullptr);
+    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_DescriptorSets.size(), m_DescriptorSets.data());
+
+    m_ImguiRenderPass->destroyInnerState();
 }
 
 void Renderer::framebufferResizeCallback(GLFWwindow* window, int width, int height)
@@ -1304,6 +1259,7 @@ void Renderer::createDescriptorPool()
     pool_info.poolSizeCount = static_cast<uint32_t>(pool_sizes.size());
     pool_info.pPoolSizes = pool_sizes.data();
     pool_info.maxSets = 1000;
+    pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     static_cast<uint32_t>(m_SwapChainImages.size());
 
     if (vkCreateDescriptorPool(m_LogicalDevice, &pool_info, nullptr, &m_DescriptorPool) != VK_SUCCESS)
@@ -1453,6 +1409,10 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
                                static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
     }
 
+    if (material->isInitialized())
+    {
+        vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, material->getDescriptorSet().size(), material->getDescriptorSet().data());
+    }
     material->setDescriptorSet(ds);
 }
 
@@ -1522,7 +1482,7 @@ VkCommandBuffer Renderer::beginSingleTimeCommands()
     VkCommandBufferAllocateInfo alloc_info{};
     alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandPool = m_CommandPools;
+    alloc_info.commandPool = m_CommandPool;
     alloc_info.commandBufferCount = 1;
 
     VkCommandBuffer command_buffer;
@@ -1547,7 +1507,7 @@ void Renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 
     vkQueueSubmit(m_GraphicsQueue, 1, &submit_info, VK_NULL_HANDLE);
     vkQueueWaitIdle(m_GraphicsQueue);
-    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPools, 1, &commandBuffer);
+    vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, 1, &commandBuffer);
 }
 
 void Renderer::transitionImageLayout(
@@ -1823,7 +1783,6 @@ void Renderer::initializeImgui()
 
     createImguiFramebuffers();
     createImguiCommandPools();
-    createImguiCommandBuffers();
 }
 
 void Renderer::createImguiRenderPass()
@@ -1875,58 +1834,6 @@ void Renderer::createImguiCommandPools()
     }
 }
 
-void Renderer::createImguiCommandBuffers()
-{
-    auto size = m_ImguiFramebuffers.size();
-    m_ImguiCommandBuffers.resize(size);
-    VkCommandBufferAllocateInfo buffer_info{};
-    buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    buffer_info.commandPool = m_ImguiCommandPool;
-    buffer_info.commandBufferCount = size;
-    vkAllocateCommandBuffers(m_LogicalDevice, &buffer_info, m_ImguiCommandBuffers.data());
-
-    for (size_t i = 0; i < size; i++)
-    {
-        VkClearValue clear_value{};
-        clear_value.color = g_ClearColor;
-
-        VkRenderPassBeginInfo begin_info{};
-        begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        begin_info.renderPass = m_ImguiRenderPass->getRenderPass();
-        begin_info.framebuffer = m_ImguiFramebuffers[i].getVulkanFrameBuffer();
-        begin_info.renderArea.extent.width = m_SwapChainExtent.width;
-        begin_info.renderArea.extent.height = m_SwapChainExtent.height;
-        begin_info.clearValueCount = 1;
-        begin_info.pClearValues = &clear_value;
-
-        VkCommandBufferBeginInfo buffer_begin_info{};
-        buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        buffer_begin_info.flags = 0;
-        buffer_begin_info.pInheritanceInfo = nullptr;
-
-        if (vkBeginCommandBuffer(m_ImguiCommandBuffers[i], &buffer_begin_info) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to begin recording imgui command buffer!");
-        }
-
-        vkCmdBeginRenderPass(m_ImguiCommandBuffers[i], &begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-        ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        renderAllUi();
-        ImGui::Render();
-
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[i]);
-        vkCmdEndRenderPass(m_ImguiCommandBuffers[i]);
-        if (vkEndCommandBuffer(m_ImguiCommandBuffers[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to record command buffer");
-        }
-    }
-}
-
 void Renderer::createImguiFramebuffers()
 {
     m_ImguiFramebuffers.resize(m_PresentKHRImagesNum);
@@ -1934,55 +1841,6 @@ void Renderer::createImguiFramebuffers()
     {
         omp::FrameBuffer frame_buffer(m_LogicalDevice, {m_SwapChainImageViews[i]}, m_ImguiRenderPass, m_SwapChainExtent.width, m_SwapChainExtent.height);
         m_ImguiFramebuffers[i] = frame_buffer;
-    }
-}
-
-void Renderer::createImguiCommandBufferAtIndex(uint32_t imageIndex)
-{
-    vkFreeCommandBuffers(m_LogicalDevice, m_ImguiCommandPool, 1, &m_ImguiCommandBuffers[imageIndex]);
-
-    VkCommandBufferAllocateInfo buffer_info{};
-    buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    buffer_info.commandPool = m_ImguiCommandPool;
-    buffer_info.commandBufferCount = 1;
-    vkAllocateCommandBuffers(m_LogicalDevice, &buffer_info, &m_ImguiCommandBuffers[imageIndex]);
-
-    VkClearValue clear_value{};
-    clear_value.color = g_ClearColor;
-
-    VkRenderPassBeginInfo begin_info{};
-    begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    begin_info.renderPass = m_ImguiRenderPass->getRenderPass();
-    begin_info.framebuffer = m_ImguiFramebuffers[imageIndex].getVulkanFrameBuffer();
-    begin_info.renderArea.extent.width = m_SwapChainExtent.width;
-    begin_info.renderArea.extent.height = m_SwapChainExtent.height;
-    begin_info.clearValueCount = 1;
-    begin_info.pClearValues = &clear_value;
-
-    VkCommandBufferBeginInfo buffer_begin_info{};
-    buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    buffer_begin_info.flags = 0;
-    buffer_begin_info.pInheritanceInfo = nullptr;
-
-    if (vkBeginCommandBuffer(m_ImguiCommandBuffers[imageIndex], &buffer_begin_info) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to begin recording imgui command buffer!");
-    }
-
-    vkCmdBeginRenderPass(m_ImguiCommandBuffers[imageIndex], &begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    renderAllUi();
-    ImGui::Render();
-
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[imageIndex]);
-    vkCmdEndRenderPass(m_ImguiCommandBuffers[imageIndex]);
-    if (vkEndCommandBuffer(m_ImguiCommandBuffers[imageIndex]) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to record command buffer");
     }
 }
 
@@ -2124,12 +1982,12 @@ void Renderer::onViewportResize(size_t imageIndex)
 {
     m_SwapChainFramebuffers[imageIndex].destroyInnerState();
     createFramebufferAtImage(imageIndex);
-    createCommandBufferForImage(imageIndex);
+    prepareFrameForImage(imageIndex);
 }
 
 void Renderer::createMaterialManager()
 {
-    m_VulkanContext->setCommandPool(m_CommandPools);
+    m_VulkanContext->setCommandPool(m_CommandPool);
 }
 
 omp::GraphicsPipeline* Renderer::findGraphicsPipeline(const std::string& name)
@@ -2140,5 +1998,78 @@ omp::GraphicsPipeline* Renderer::findGraphicsPipeline(const std::string& name)
     }
 
     throw "No shader with such name";
+}
+
+void Renderer::beginRenderPass(
+        omp::RenderPass* inRenderPass,
+        VkCommandBuffer inCommandBuffer,
+        omp::FrameBuffer& inFrameBuffer,
+        const std::vector<VkClearValue>& clearValues,
+        VkRect2D rect)
+{
+    VkRenderPassBeginInfo render_pass_begin_info{};
+    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_pass_begin_info.renderPass = inRenderPass->getRenderPass();
+    render_pass_begin_info.framebuffer = inFrameBuffer.getVulkanFrameBuffer();
+    render_pass_begin_info.renderArea = rect;
+
+    render_pass_begin_info.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    render_pass_begin_info.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(inCommandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void Renderer::endRenderPass(omp::RenderPass* inRenderPass, VkCommandBuffer inCommandBuffer)
+{
+    vkCmdEndRenderPass(inCommandBuffer);
+    if (vkEndCommandBuffer(inCommandBuffer) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to record command buffer");
+    }
+}
+
+void Renderer::prepareCommandBuffer(CommandBufferScope& bufferScope, VkCommandPool inCommandPool)
+{
+    VkCommandBufferAllocateInfo buffer_info{};
+    buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    buffer_info.commandPool = inCommandPool;
+    buffer_info.commandBufferCount = 1;
+    bufferScope.reAllocate(m_LogicalDevice, inCommandPool, buffer_info);
+
+    VkCommandBufferBeginInfo begin_info{};
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin_info.flags = 0;
+    begin_info.pInheritanceInfo = nullptr;
+
+    if (vkBeginCommandBuffer(bufferScope.buffer, &begin_info) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
+}
+
+void Renderer::setViewport(VkCommandBuffer inCommandBuffer)
+{
+    VkViewport viewport;
+    viewport.x = m_RenderViewport->getOffset().x;
+    viewport.y = m_RenderViewport->getOffset().y;
+    viewport.height = m_RenderViewport->getSize().y;
+    viewport.width = m_RenderViewport->getSize().x;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    vkCmdSetViewport(inCommandBuffer, 0, 1, &viewport);
+}
+
+void Renderer::destroyAllCommandBuffers()
+{
+    for (auto& scope : m_CommandBuffers)
+    {
+        scope.clearBuffer(m_LogicalDevice, m_CommandPool);
+    }
+    for (auto& scope : m_ImguiCommandBuffers)
+    {
+        scope.clearBuffer(m_LogicalDevice, m_ImguiCommandPool);
+    }
 }
 
