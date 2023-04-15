@@ -112,7 +112,7 @@ struct CommandBufferScope
     }
 };
 
-const std::string g_ModelPath = "../models/cube.obj";
+const std::string g_ModelPath = "../models/cube2.obj";
 const std::string g_TexturePath = "../textures/container.png";
 const VkClearColorValue g_ClearColor = {0.52f, 0.48f, 0.52f, 1.0f};
 
