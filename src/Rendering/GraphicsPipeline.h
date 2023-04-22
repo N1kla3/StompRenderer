@@ -21,7 +21,9 @@ namespace omp
         void createRasterizer();
         void createMultisamplingInfo(VkSampleCountFlagBits rasterizationSamples);
         void createColorBlending();
-        void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
+        template<typename T>
+        void definePushConstant(VkShaderStageFlags stageFlags);
+        void addPipelineSetLayout(VkDescriptorSetLayout descriptorSetLayout);
         void createShaders(const std::shared_ptr<class Shader>& shader);
         void confirmCreation(const std::shared_ptr<omp::RenderPass>& renderPass);
 
@@ -49,6 +51,7 @@ namespace omp
         std::shared_ptr<omp::Shader> m_Shader;
 
         VkPipelineLayoutCreateInfo m_PipelineLayoutInfo{};
+        std::vector<VkDescriptorSetLayout> m_SetLayoutsHandles;
 
         VkPipelineLayout m_PipelineLayout;
         VkPipeline m_GraphicsPipeline;
@@ -56,4 +59,18 @@ namespace omp
 
         void tryDestroyVulkanObjects();
     };
+}
+
+template<typename T>
+void omp::GraphicsPipeline::definePushConstant(VkShaderStageFlags stageFlags)
+{
+    // Push constant for model
+    VkPushConstantRange constant_range{};
+    constant_range.size = sizeof(T);
+    constant_range.offset = 0;
+    constant_range.stageFlags = stageFlags;// TODO: better with ranges to save space in shader
+    m_ConstantRange = constant_range;
+
+    m_PipelineLayoutInfo.pushConstantRangeCount = 1;
+    m_PipelineLayoutInfo.pPushConstantRanges = &m_ConstantRange;
 }

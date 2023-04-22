@@ -147,25 +147,13 @@ void omp::GraphicsPipeline::createColorBlending()
     m_ColorBlending = color_blending;
 }
 
-void omp::GraphicsPipeline::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout)
+void omp::GraphicsPipeline::addPipelineSetLayout(VkDescriptorSetLayout descriptorSetLayout)
 {
+    m_SetLayoutsHandles.push_back(descriptorSetLayout);
 
-    // Push constant for model
-    VkPushConstantRange constant_range{};
-    constant_range.size = sizeof(omp::ModelPushConstant);
-    constant_range.offset = 0;
-    constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT |
-                                VK_SHADER_STAGE_FRAGMENT_BIT;// TODO: better with ranges to save space in shader
-    m_ConstantRange = constant_range;
-
-    VkPipelineLayoutCreateInfo pipeline_layout_info{};
-    pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipeline_layout_info.setLayoutCount = 1;
-    pipeline_layout_info.pSetLayouts = &descriptorSetLayout;
-    pipeline_layout_info.pushConstantRangeCount = 1;
-    pipeline_layout_info.pPushConstantRanges = &m_ConstantRange;
-
-    m_PipelineLayoutInfo = pipeline_layout_info;
+    m_PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    m_PipelineLayoutInfo.setLayoutCount = m_SetLayoutsHandles.size();
+    m_PipelineLayoutInfo.pSetLayouts = m_SetLayoutsHandles.data();
 }
 
 void omp::GraphicsPipeline::createShaders(const std::shared_ptr<struct Shader>& shader)

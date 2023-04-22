@@ -21,8 +21,6 @@ namespace omp
     public:
         MaterialInstance(const std::shared_ptr<Material>& materialCreateFrom);
 
-        std::string getShaderName() const;
-
         std::weak_ptr<Material> getStaticMaterial() const { return m_StaticMaterial; }
 
         glm::vec4 getAmbient() const { return m_Ambient; }

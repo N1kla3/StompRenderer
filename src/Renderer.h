@@ -208,7 +208,7 @@ private:
 
     void updateUniformBuffer(uint32_t currentImage);
 
-    void prepareFrameForImage(size_t inIndex);
+    void prepareFrameForImage(size_t KHRImageIndex);
 
     void createCommandPool();
 
@@ -231,7 +231,8 @@ private:
     void createDescriptorPool();
 
     void createDescriptorSets();
-    void createDescriptorSetsForMaterial(const std::shared_ptr<omp::Material>& material);
+
+    void retrieveMaterialRenderState(const std::shared_ptr<omp::Material>& material);
 
     void recreateSwapChain();
 
@@ -350,14 +351,17 @@ private:
 
     uint32_t m_PresentKHRImagesNum;
 
-    VkDescriptorSetLayout m_DescriptorSetLayout;
+    VkDescriptorSetLayout m_UboDescriptorSetLayout;
+    VkDescriptorSetLayout m_TexturesDescriptorSetLayout;
+
     std::shared_ptr<omp::RenderPass> m_RenderPass;
 
     std::unordered_map<std::string, std::unique_ptr<omp::GraphicsPipeline>> m_Pipelines;
 
     VkCommandPool m_CommandPool;
     VkDescriptorPool m_DescriptorPool;
-    std::vector<VkDescriptorSet> m_DescriptorSets;
+    std::vector<VkDescriptorSet> m_UboDescriptorSets;
+    std::vector<VkDescriptorSet> m_MaterialSets;
 
     std::unordered_map<omp::Vertex, uint32_t> m_UniqueVertices;
 

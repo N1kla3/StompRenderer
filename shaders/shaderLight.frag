@@ -7,7 +7,7 @@ layout(location = 2) in vec3 outNormal;
 layout(location = 3) in vec3 outPosition;
 layout(location = 4) in vec3 outViewPosition;
 
-layout(binding = 1) uniform LightBufferObject
+layout(set = 0, binding = 1) uniform LightBufferObject
 {
     vec3 position;
     float unused;
@@ -19,9 +19,9 @@ layout(binding = 1) uniform LightBufferObject
     float spec_str;
 } light;
 
-layout(binding = 2) uniform sampler2D texSampler;
-layout(binding = 3) uniform sampler2D diffMap;
-layout(binding = 4) uniform sampler2D specMap;
+layout(set = 1, binding = 0) uniform sampler2D texSampler;
+layout(set = 1, binding = 1) uniform sampler2D diffMap;
+layout(set = 1, binding = 2) uniform sampler2D specMap;
 
 //push constants block
 layout( push_constant ) uniform constants

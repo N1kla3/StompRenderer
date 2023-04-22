@@ -14,7 +14,7 @@ omp::Texture::Texture(const std::string& inPath, const std::shared_ptr<VulkanCon
 
 void omp::Texture::destroyVkObjects()
 {
-    if (hasVulkanContext())
+    if (hasVulkanContext() && hasFlags(LOADED_TO_GPU))
     {
         vkDestroySampler(m_VulkanContext.lock()->logical_device, m_TextureSampler, nullptr);
         vkDestroyImageView(m_VulkanContext.lock()->logical_device, m_TextureImageView, nullptr);

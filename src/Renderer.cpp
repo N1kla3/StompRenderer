@@ -135,7 +135,8 @@ void Renderer::cleanup()
         vkFreeMemory(m_LogicalDevice, memory, nullptr);
     }
 
-    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_DescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_UboDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_TexturesDescriptorSetLayout, nullptr);
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
 
     omp::MaterialManager::getMaterialManager().clearGpuState();
@@ -617,7 +618,9 @@ void Renderer::createGraphicsPipeline()
     light_pipe->startDefaultCreation();
     light_pipe->createMultisamplingInfo(m_MSAASamples);
     light_pipe->createViewport(m_SwapChainExtent);
-    light_pipe->createPipelineLayout(m_DescriptorSetLayout);
+    light_pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    light_pipe->addPipelineSetLayout(m_UboDescriptorSetLayout);
+    light_pipe->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
     light_pipe->createShaders(light_shader);
     light_pipe->confirmCreation(m_RenderPass);
 
@@ -629,7 +632,9 @@ void Renderer::createGraphicsPipeline()
     pipe->startDefaultCreation();
     pipe->createMultisamplingInfo(m_MSAASamples);
     pipe->createViewport(m_SwapChainExtent);
-    pipe->createPipelineLayout(m_DescriptorSetLayout);
+    pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    pipe->addPipelineSetLayout(m_UboDescriptorSetLayout);
+    pipe->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
     pipe->createShaders(shader);
     pipe->confirmCreation(m_RenderPass);
 
@@ -741,9 +746,9 @@ void Renderer::createCommandPool()
     }
 }
 
-void Renderer::prepareFrameForImage(size_t inIndex)
+void Renderer::prepareFrameForImage(size_t KHRImageIndex)
 {
-    prepareCommandBuffer(m_ImguiCommandBuffers[inIndex], m_ImguiCommandPool);
+    prepareCommandBuffer(m_ImguiCommandBuffers[KHRImageIndex], m_ImguiCommandPool);
 
     std::vector<VkClearValue> clear_value{1};
     clear_value[0].color = g_ClearColor;
@@ -751,21 +756,21 @@ void Renderer::prepareFrameForImage(size_t inIndex)
     VkRect2D rect{};
     rect.extent.height = m_SwapChainExtent.height;
     rect.extent.width = m_SwapChainExtent.width;
-    beginRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[inIndex].buffer, m_ImguiFramebuffers[inIndex], clear_value, rect);
+    beginRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[KHRImageIndex].buffer, m_ImguiFramebuffers[KHRImageIndex], clear_value, rect);
 
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     renderAllUi();
     ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[inIndex].buffer);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[KHRImageIndex].buffer);
 
-    endRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[inIndex].buffer);
+    endRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[KHRImageIndex].buffer);
 
 
     // Main Render pass
-    VkCommandBuffer& main_buffer = m_CommandBuffers[inIndex].buffer;
-    prepareCommandBuffer(m_CommandBuffers[inIndex], m_CommandPool);
+    VkCommandBuffer& main_buffer = m_CommandBuffers[KHRImageIndex].buffer;
+    prepareCommandBuffer(m_CommandBuffers[KHRImageIndex], m_CommandPool);
 
     std::vector<VkClearValue> clear_values{2};
     clear_values[0].color = g_ClearColor;
@@ -775,7 +780,7 @@ void Renderer::prepareFrameForImage(size_t inIndex)
     rect.offset.y = m_RenderViewport->getOffset().y;
     rect.extent.height = m_RenderViewport->getSize().y;
     rect.extent.width = m_RenderViewport->getSize().x;
-    beginRenderPass(m_RenderPass.get(), main_buffer, m_SwapChainFramebuffers[inIndex], clear_values, rect);
+    beginRenderPass(m_RenderPass.get(), main_buffer, m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
     setViewport(main_buffer);
 
     VkDeviceSize offsets[] = {0};
@@ -783,36 +788,48 @@ void Renderer::prepareFrameForImage(size_t inIndex)
     {
         auto& current_model = m_CurrentScene->getModels()[index];
         auto& material_instance = current_model->getMaterialInstance();
-        auto material = material_instance->getStaticMaterial();
+        auto material = material_instance->getStaticMaterial().lock();
+        if (!material)
+        {
+            WARN(Rendering, "Material is invalid in material instance");
+        }
+
+        VkPipeline model_pipeline = findGraphicsPipeline(material->getShaderName())->getGraphicsPipeline();
+        VkPipelineLayout model_pipeline_layout = findGraphicsPipeline(material->getShaderName())->getPipelineLayout();
+
+        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 
 
-        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          findGraphicsPipeline(material_instance->getShaderName())->getGraphicsPipeline());
+        vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                model_pipeline_layout,
+                                0, 1, &m_UboDescriptorSets[KHRImageIndex],
+                                0, nullptr);
 
         vkCmdBindVertexBuffers(main_buffer, 0, 1, &m_VertexBuffers[index], offsets);
         vkCmdBindIndexBuffer(main_buffer, m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
 
         omp::ModelPushConstant constant{ current_model->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
         vkCmdPushConstants(main_buffer,
-                           findGraphicsPipeline(material_instance->getShaderName())->getPipelineLayout(),
+                           model_pipeline_layout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                            0, sizeof(omp::ModelPushConstant), &constant);
 
 
         // TODO: MATERIALS ARE TOTAL SHIT
-        if (material.lock()->isInitialized())
+        if (material)
         {
+            retrieveMaterialRenderState(material);
             vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    findGraphicsPipeline(material_instance->getShaderName())->getPipelineLayout(),
-                                    0, 1, &material.lock()->getDescriptorSet()[inIndex],
+                                    model_pipeline_layout,
+                                    1, 1, &material->getDescriptorSet()[KHRImageIndex],
                                     0, nullptr);
         }
         else
         {
-            createDescriptorSetsForMaterial(material.lock());
+            // default material
             vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    findGraphicsPipeline(material_instance->getShaderName())->getPipelineLayout(),
-                                    0, 1, &m_DefaultMaterial->getDescriptorSet()[inIndex],
+                                    model_pipeline_layout,
+                                    1, 1, &m_DefaultMaterial->getDescriptorSet()[KHRImageIndex],
                                     0, nullptr);
         }
         vkCmdDrawIndexed(main_buffer,
@@ -1003,13 +1020,15 @@ void Renderer::cleanupSwapChain()
         framebuffer.destroyInnerState();
     }
 
+    // sus, why reset materials?
+    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_MaterialSets.size(), m_MaterialSets.data());
+    m_MaterialSets.clear();
     for (auto& [u, material] : omp::MaterialManager::getMaterialManager().getMaterials())
     {
-        vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, material->getDescriptorSet().size(), material->getDescriptorSet().data());
-        material->resetSets();
+        material->clearDescriptorSets();
     }
 
-    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_DescriptorSets.size(), m_DescriptorSets.data());
+    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_UboDescriptorSets.size(), m_UboDescriptorSets.data());
 
     m_ImguiRenderPass->destroyInnerState();
 }
@@ -1140,52 +1159,69 @@ void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize s
 void Renderer::createDescriptorSetLayout()
 {
     // TODO: need abstraction
-    VkDescriptorSetLayoutBinding ubo_layout_binding{};
-    ubo_layout_binding.binding = 0;
-    ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    ubo_layout_binding.descriptorCount = 1;
-    ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    ubo_layout_binding.pImmutableSamplers = nullptr;
 
-    VkDescriptorSetLayoutBinding light_layout_binding{};
-    light_layout_binding.binding = 1;
-    light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    light_layout_binding.descriptorCount = 1;
-    light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-    light_layout_binding.pImmutableSamplers = nullptr;
+    // UBO LAYOUT
+    {
+        VkDescriptorSetLayoutBinding ubo_layout_binding{};
+        ubo_layout_binding.binding = 0;
+        ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        ubo_layout_binding.descriptorCount = 1;
+        ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        ubo_layout_binding.pImmutableSamplers = nullptr;
 
+        VkDescriptorSetLayoutBinding light_layout_binding{};
+        light_layout_binding.binding = 1;
+        light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        light_layout_binding.descriptorCount = 1;
+        light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        light_layout_binding.pImmutableSamplers = nullptr;
+
+        std::array<VkDescriptorSetLayoutBinding, 2> ubo_bindings = {ubo_layout_binding, light_layout_binding};
+
+        VkDescriptorSetLayoutCreateInfo ubo_layout_info{};
+        ubo_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        ubo_layout_info.bindingCount = static_cast<uint32_t>(ubo_bindings.size());
+        ubo_layout_info.pBindings = ubo_bindings.data();
+
+        if (vkCreateDescriptorSetLayout(m_LogicalDevice, &ubo_layout_info, nullptr, &m_UboDescriptorSetLayout) !=
+            VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create ubo descriptor set layout!");
+        }
+    }
+
+    // TEXTURES LAYOUT
     VkDescriptorSetLayoutBinding sampler_layout_binding{};
-    sampler_layout_binding.binding = 2;
+    sampler_layout_binding.binding = 0;
     sampler_layout_binding.descriptorCount = 1;
     sampler_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     sampler_layout_binding.pImmutableSamplers = nullptr;
     sampler_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutBinding diffusive_layout_binding{};
-    diffusive_layout_binding.binding = 3;
+    diffusive_layout_binding.binding = 1;
     diffusive_layout_binding.descriptorCount = 1;
     diffusive_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     diffusive_layout_binding.pImmutableSamplers = nullptr;
     diffusive_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutBinding specular_layout_binding{};
-    specular_layout_binding.binding = 4;
+    specular_layout_binding.binding = 2;
     specular_layout_binding.descriptorCount = 1;
     specular_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     specular_layout_binding.pImmutableSamplers = nullptr;
     specular_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    std::array<VkDescriptorSetLayoutBinding, 5> bindings = {ubo_layout_binding, light_layout_binding, sampler_layout_binding,
-                                                            diffusive_layout_binding, specular_layout_binding};
+    std::array<VkDescriptorSetLayoutBinding, 3> texture_bindings = {sampler_layout_binding, diffusive_layout_binding, specular_layout_binding};
 
-    VkDescriptorSetLayoutCreateInfo layout_info{};
-    layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
-    layout_info.pBindings = bindings.data();
+    VkDescriptorSetLayoutCreateInfo texture_layout_info{};
+    texture_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    texture_layout_info.bindingCount = static_cast<uint32_t>(texture_bindings.size());
+    texture_layout_info.pBindings = texture_bindings.data();
 
-    if (vkCreateDescriptorSetLayout(m_LogicalDevice, &layout_info, nullptr, &m_DescriptorSetLayout) != VK_SUCCESS)
+    if (vkCreateDescriptorSetLayout(m_LogicalDevice, &texture_layout_info, nullptr, &m_TexturesDescriptorSetLayout) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to creat descriptor set layout!");
+        throw std::runtime_error("Failed to create texture descriptor set layout!");
     }
 }
 
@@ -1247,11 +1283,11 @@ void Renderer::createDescriptorPool()
     std::array<VkDescriptorPoolSize, 2> pool_sizes{};
     pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     // TODO think about size
-    pool_sizes[0].descriptorCount = 1000;
+    pool_sizes[0].descriptorCount = 10;
     static_cast<uint32_t>(m_SwapChainImages.size());
 
     pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pool_sizes[1].descriptorCount = 1000;
+    pool_sizes[1].descriptorCount = 10;
     static_cast<uint32_t>(m_SwapChainImages.size());
 
     VkDescriptorPoolCreateInfo pool_info{};
@@ -1270,7 +1306,7 @@ void Renderer::createDescriptorPool()
 
 void Renderer::createDescriptorSets()
 {
-    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_DescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_UboDescriptorSetLayout);
 
     VkDescriptorSetAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1278,8 +1314,8 @@ void Renderer::createDescriptorSets()
     allocate_info.descriptorSetCount = m_PresentKHRImagesNum;
     allocate_info.pSetLayouts = layouts.data();
 
-    m_DescriptorSets.resize(m_PresentKHRImagesNum);
-    if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, m_DescriptorSets.data()) != VK_SUCCESS)
+    m_UboDescriptorSets.resize(m_PresentKHRImagesNum);
+    if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, m_UboDescriptorSets.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to allocate descriptor sets!");
     }
@@ -1296,15 +1332,9 @@ void Renderer::createDescriptorSets()
         light_info.offset = 0;
         light_info.range = sizeof(omp::Light);
 
-        VkDescriptorImageInfo image_info{};
-        auto texture = omp::MaterialManager::getMaterialManager().getDefaultTexture().lock();
-        image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        image_info.imageView = texture->getImageView();
-        image_info.sampler = texture->getSampler();
-
-        std::array<VkWriteDescriptorSet, 5> descriptor_writes{};
+        std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_writes[0].dstSet = m_DescriptorSets[i];
+        descriptor_writes[0].dstSet = m_UboDescriptorSets[i];
         descriptor_writes[0].dstBinding = 0;
         descriptor_writes[0].dstArrayElement = 0;
         descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -1312,47 +1342,32 @@ void Renderer::createDescriptorSets()
         descriptor_writes[0].pBufferInfo = &buffer_info;
 
         descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_writes[1].dstSet = m_DescriptorSets[i];
+        descriptor_writes[1].dstSet = m_UboDescriptorSets[i];
         descriptor_writes[1].dstBinding = 1;
         descriptor_writes[1].dstArrayElement = 0;
         descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptor_writes[1].descriptorCount = 1;
         descriptor_writes[1].pBufferInfo = &light_info;
 
-        descriptor_writes[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_writes[2].dstSet = m_DescriptorSets[i];
-        descriptor_writes[2].dstBinding = 2;
-        descriptor_writes[2].dstArrayElement = 0;
-        descriptor_writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptor_writes[2].descriptorCount = 1;
-        descriptor_writes[2].pImageInfo = &image_info;
-
-        descriptor_writes[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_writes[3].dstSet = m_DescriptorSets[i];
-        descriptor_writes[3].dstBinding = 3;
-        descriptor_writes[3].dstArrayElement = 0;
-        descriptor_writes[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptor_writes[3].descriptorCount = 1;
-        descriptor_writes[3].pImageInfo = &image_info;
-
-        descriptor_writes[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_writes[4].dstSet = m_DescriptorSets[i];
-        descriptor_writes[4].dstBinding = 4;
-        descriptor_writes[4].dstArrayElement = 0;
-        descriptor_writes[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptor_writes[4].descriptorCount = 1;
-        descriptor_writes[4].pImageInfo = &image_info;
-
         vkUpdateDescriptorSets(m_LogicalDevice,
                                static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
     }
 }
 
-void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Material>& material)
+void Renderer::retrieveMaterialRenderState(const std::shared_ptr<omp::Material>& material)
 {
-    // TODO: multiple later
+    if (!material)
+    {
+        VWARN(Rendering, "Material is invalid");
+        return;
+    }
+    if (material->isPotentiallyReadyForRendering())
+    {
+        return;
+    }
+
     std::vector<VkDescriptorSet> ds;
-    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_DescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_TexturesDescriptorSetLayout);
 
     VkDescriptorSetAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1366,53 +1381,43 @@ void Renderer::createDescriptorSetsForMaterial(const std::shared_ptr<omp::Materi
         throw std::runtime_error("Failed to allocate descriptor sets!");
     }
 
+    const omp::MaterialRenderInfo* const material_render_info = material->getRenderInfo();
+
     // TODO performance
-    for (size_t index = 0; index < m_PresentKHRImagesNum; index++)
+    for (size_t index = 0; index < ds.size(); index++)
     {
-        VkDescriptorBufferInfo buffer_info{};
-        buffer_info.buffer = m_UniformBuffers[index];
-        buffer_info.offset = 0;
-        buffer_info.range = sizeof(UniformBufferObject);
-
-        VkDescriptorBufferInfo light_info{};
-        light_info.buffer = m_LightBuffer[index];
-        light_info.offset = 0;
-        light_info.range = sizeof(omp::Light);
-
         std::vector<VkWriteDescriptorSet> descriptor_writes{};
-        auto material_sets = material->getDescriptorWriteSets();
-        descriptor_writes.resize(material_sets.size() + 2);
+        descriptor_writes.reserve(ds.size());
 
-        descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_writes[0].dstSet = ds[index];
-        descriptor_writes[0].dstBinding = 0;
-        descriptor_writes[0].dstArrayElement = 0;
-        descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptor_writes[0].descriptorCount = 1;
-        descriptor_writes[0].pBufferInfo = &buffer_info;
+        std::vector<VkDescriptorImageInfo> image_infos;
+        image_infos.reserve(material_render_info->textures.size());
 
-        descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_writes[1].dstSet = ds[index];
-        descriptor_writes[1].dstBinding = 1;
-        descriptor_writes[1].dstArrayElement = 0;
-        descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptor_writes[1].descriptorCount = 1;
-        descriptor_writes[1].pBufferInfo = &light_info;
-
-        for (size_t index_write = 0; index_write < material_sets.size(); index_write++)
+        for (auto& data : material_render_info->textures)
         {
-            descriptor_writes[index_write + 2] = material_sets[index_write];
-            descriptor_writes[index_write + 2].dstSet = ds[index];
+            VkDescriptorImageInfo image_info{};
+            auto& texture = data.texture;
+            image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            image_info.imageView = texture->getImageView();
+            image_info.sampler = texture->getSampler();
+            image_infos.push_back(image_info);
+
+            VkWriteDescriptorSet descriptor_write{};
+            descriptor_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptor_write.dstSet = ds[index];
+            descriptor_write.dstBinding = data.binding_index;
+            descriptor_write.dstArrayElement = 0;
+            descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptor_write.descriptorCount = 1;
+            descriptor_write.pImageInfo = &image_infos.at(data.binding_index);
+
+            descriptor_writes.push_back(descriptor_write);
         }
 
         vkUpdateDescriptorSets(m_LogicalDevice,
                                static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
     }
+    m_MaterialSets.insert(m_MaterialSets.begin(), ds.begin(), ds.end());
 
-    if (material->isInitialized())
-    {
-        vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, material->getDescriptorSet().size(), material->getDescriptorSet().data());
-    }
     material->setDescriptorSet(ds);
 }
 

@@ -16,9 +16,18 @@ namespace omp
         std::string name;
     };
 
+    struct MaterialRenderInfo
+    {
+        static constexpr int MAX_TEXTURES = 3;
+
+        std::vector<TextureData> textures;
+
+        std::string shader_name;
+    };
+
     enum class ETextureType
     {
-        Texture = 2,
+        Texture = 0,
         DiffusiveMap,
         SpecularMap,
         Max
@@ -26,45 +35,35 @@ namespace omp
 
     class Material
     {
-    public:
-        static constexpr int MAX_TEXTURES = 3;
-
     private:
+        std::unique_ptr<omp::MaterialRenderInfo> m_RenderInfo;
+
         omp::MaterialManager* m_Manager = nullptr;
-        std::array<TextureData, MAX_TEXTURES> m_Textures;
-
-        bool m_IsDirty = true;
-        bool m_IsInitialized = false;
-
-        std::string m_ShaderName;
-
-        std::vector<VkWriteDescriptorSet> m_DescriptorWriteSets;
 
         std::vector<VkDescriptorSet> m_DescriptorSets;
-
-        std::vector<VkDescriptorImageInfo> m_ImageInfosCache{};
 
         void addTextureInternal(TextureData&& data);
 
     public:
+        Material();
         explicit Material(const std::string& name);
 
         void addTexture(ETextureType type, const std::shared_ptr<Texture>& texture);
         void removeTexture(const TextureData& data);
-        void resetSets() { m_IsInitialized = false; }
 
-        std::array<TextureData, MAX_TEXTURES> getTextureData() const;
+        std::vector<TextureData> getTextureData() const;
 
-        void setShaderName(const std::string& newName) { m_ShaderName = newName; };
+        void setShaderName(const std::string& newName) { m_RenderInfo->shader_name = newName; };
 
-        std::string getShaderName() const { return m_ShaderName; }
+        std::string getShaderName() const { return m_RenderInfo->shader_name; }
+
+        const omp::MaterialRenderInfo* const getRenderInfo() const { return m_RenderInfo.get(); }
 
         void setDescriptorSet(const std::vector<VkDescriptorSet>& ds);
         std::vector<VkDescriptorSet>& getDescriptorSet();
+        void clearDescriptorSets() { m_DescriptorSets.clear(); }
 
-        std::vector<VkWriteDescriptorSet> getDescriptorWriteSets();
-
-        bool isInitialized() const noexcept { return m_IsInitialized; }
+        bool isPotentiallyReadyForRendering() { return !m_DescriptorSets.empty(); }
 
         friend MaterialManager;
     };
