@@ -34,32 +34,31 @@ glm::mat4 omp::Camera::getViewMatrix() const
     return glm::lookAt(m_Position, m_Position + m_Front, m_Up);
 }
 
-void omp::Camera::processKeyboard(ECameraMovement direction, float deltaTime)
+void omp::Camera::processKeyboard(ECameraMovement direction)
 {
-    float velocity = deltaTime * m_MovementSpeed;
     if (direction == ECameraMovement::MOVE_FORWARD)
     {
-        m_Position += m_Front * velocity;
+        m_InputData.input_vector += m_Front;
     }
     if (direction == ECameraMovement::MOVE_BACK)
     {
-        m_Position -= m_Front * velocity;
+        m_InputData.input_vector -= m_Front;
     }
     if (direction == ECameraMovement::MOVE_LEFT)
     {
-        m_Position -= m_Right * velocity;
+        m_InputData.input_vector -= m_Right;
     }
     if (direction == ECameraMovement::MOVE_RIGHT)
     {
-        m_Position += m_Right * velocity;
+        m_InputData.input_vector += m_Right;
     }
     if (direction == ECameraMovement::MOVE_UP)
     {
-        m_Position += m_Up * velocity;
+        m_InputData.input_vector += m_Up;
     }
     if (direction == ECameraMovement::MOVE_DOWN)
     {
-        m_Position -= m_Up * velocity;
+        m_InputData.input_vector -= m_Up;
     }
 }
 
@@ -68,8 +67,8 @@ void omp::Camera::processMouseMovement(float xOffset, float yOffset, bool constr
     xOffset *= m_MouseSensitivity;
     yOffset *= m_MouseSensitivity;
 
-    m_Yaw += xOffset;
-    m_Pitch += yOffset;
+    m_InputData.yaw += xOffset;
+    m_InputData.pitch+= yOffset;
 
     if (constrainPitch)
     {
@@ -82,7 +81,6 @@ void omp::Camera::processMouseMovement(float xOffset, float yOffset, bool constr
             m_Pitch = -89.f;
         }
     }
-    updateCameraVectors();
 }
 
 void omp::Camera::processMouseScroll(float yOffset)
@@ -100,4 +98,18 @@ void omp::Camera::updateCameraVectors()
 
     m_Right = glm::normalize(glm::cross(m_Front, m_WorldUp));
     m_Up = glm::normalize(glm::cross(m_Right, m_Front));
+}
+
+void omp::Camera::applyInputs(float deltaTime)
+{
+    m_Yaw += m_InputData.yaw;
+    m_Pitch += m_InputData.pitch;
+    updateCameraVectors();
+    if (m_InputData.input_vector != glm::vec3{0.f})
+    {
+        m_InputData.input_vector = glm::normalize(m_InputData.input_vector);
+    }
+    m_Position += m_InputData.input_vector * deltaTime * m_MovementSpeed;
+
+    m_InputData.reset();
 }

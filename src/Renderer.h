@@ -161,6 +161,7 @@ private:
     void mainLoop();
 
     void drawFrame();
+    void tick(float deltaTime);
 
     void cleanup();
     void destroyAllCommandBuffers();

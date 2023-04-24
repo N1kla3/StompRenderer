@@ -6,7 +6,7 @@
 namespace omp
 {
 
-    class Light;
+    struct Light;
 
     class GlobalLightPanel : public ImguiUnit
     {

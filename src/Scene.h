@@ -22,7 +22,9 @@ namespace omp
         // ======= //
         void addModelToScene(const omp::Model& modelToAdd);
         void addModelToScene(const std::shared_ptr<omp::Model>& modelToAdd);
+        std::shared_ptr<omp::Model> getModel(const std::string& inName);
 
+        // TODO map, no ref
         std::vector<std::shared_ptr<omp::Model>>& getModels();
 
         bool isDirty() const

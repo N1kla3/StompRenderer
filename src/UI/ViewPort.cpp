@@ -66,29 +66,29 @@ void omp::ViewPort::renderUi(float deltaTime)
     // KEYBOARD INPUT
 
 
-    if (ImGui::IsKeyPressed(ImGuiKey_W))
+    if (ImGui::IsKeyDown(ImGuiKey_W))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_FORWARD, deltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_FORWARD);
     }
-    if (ImGui::IsKeyPressed(ImGuiKey_A))
+    if (ImGui::IsKeyDown(ImGuiKey_A))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_LEFT, deltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_LEFT);
     }
-    if (ImGui::IsKeyPressed(ImGuiKey_S))
+    if (ImGui::IsKeyDown(ImGuiKey_S))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_BACK, deltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_BACK);
     }
-    if (ImGui::IsKeyPressed(ImGuiKey_D))
+    if (ImGui::IsKeyDown(ImGuiKey_D))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_RIGHT, deltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_RIGHT);
     }
-    if (ImGui::IsKeyPressed(ImGuiKey_Q))
+    if (ImGui::IsKeyDown(ImGuiKey_Q))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_UP, deltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_UP);
     }
-    if (ImGui::IsKeyPressed(ImGuiKey_E))
+    if (ImGui::IsKeyDown(ImGuiKey_E))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_DOWN, deltaTime);
+        m_Camera->processKeyboard(ECameraMovement::MOVE_DOWN);
     }
 
 

@@ -67,8 +67,10 @@ void Renderer::initVulkan()
     createFramebuffers();
     createTextureImage();
     initializeImgui();
-    loadModel("First", g_ModelPath.c_str());
-    loadModel("Second", g_ModelPath.c_str());
+    loadModel("First", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
+    loadModel("Second", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
+    loadModel("third", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
+    loadModel("fourth", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
     loadLightObject("I see the light", "../models/cube.obj");
     //loadModel("Third");
     //loadModel("First1");
@@ -90,8 +92,15 @@ void Renderer::mainLoop()
 {
     while (!glfwWindowShouldClose(m_Window))
     {
+        static auto prev_time = std::chrono::high_resolution_clock::now();
+
+        auto current_time = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(current_time - prev_time).count();
+        prev_time = current_time;
+
         glfwPollEvents();
         drawFrame();
+        tick(time);
     }
 
     vkDeviceWaitIdle(m_LogicalDevice);
@@ -2076,5 +2085,11 @@ void Renderer::destroyAllCommandBuffers()
     {
         scope.clearBuffer(m_LogicalDevice, m_ImguiCommandPool);
     }
+}
+
+void Renderer::tick(float deltaTime)
+{
+    m_CurrentScene->getModel("fourth")->getRotation().x += 1*deltaTime;
+    m_Camera->applyInputs(deltaTime);
 }
 

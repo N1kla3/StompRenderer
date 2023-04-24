@@ -11,7 +11,21 @@ enum class ECameraMovement
     MOVE_UP,
     MOVE_DOWN
 };
-// TODO: camera is not smooth
+
+struct InputData
+{
+    glm::vec3 input_vector{0.f};
+    float yaw = 0.f;
+    float pitch = 0.f;
+
+    void reset()
+    {
+        input_vector = glm::vec3{0.f};
+        yaw = 0.f;
+        pitch = 0.f;
+    }
+};
+
 namespace omp
 {
     class Camera
@@ -45,9 +59,11 @@ namespace omp
 
         glm::vec3 getPosition() const { return m_Position; }
 
-        void processKeyboard(ECameraMovement direction, float deltaTime);
+        void processKeyboard(ECameraMovement direction);
         void processMouseMovement(float xOffset, float yOffset, bool constrainPitch = true);
         void processMouseScroll(float yOffset);
+
+        void applyInputs(float deltaTime);
 
         float getViewAngle() const { return m_ViewAngle; }
 
@@ -69,7 +85,9 @@ namespace omp
         float m_MouseSensitivity;
         float m_Zoom;
 
-        float m_ViewAngle = 90.f;
+        InputData m_InputData;
+
+        float m_ViewAngle = 60.f;
         float m_NearClipping = 0.1f;
         float m_FarClipping = 1000.f;
 
