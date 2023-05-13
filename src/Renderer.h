@@ -35,6 +35,7 @@
 #include "Rendering/RenderPass.h"
 #include "Rendering/FrameBuffer.h"
 #include "Logs.h"
+#include "LightSystem.h"
 
 namespace
 {
@@ -378,11 +379,7 @@ private:
     VkDeviceMemory m_ColorImageMemory;
     VkImageView m_ColorImageView;
 
-    std::vector<VkBuffer> m_UniformBuffers;
-    std::vector<VkDeviceMemory> m_UniformBuffersMemory;
-
-    std::vector<VkBuffer> m_LightBuffer;
-    std::vector<VkDeviceMemory> m_LightBufferMemory;
+    std::unique_ptr<omp::UniformBuffer> m_UboBuffer;
 
     std::vector<VkImage> m_SwapChainImages;
 
@@ -403,15 +400,10 @@ private:
     VkImageView m_DepthImageView;
 
     std::shared_ptr<omp::Scene> m_CurrentScene;
-    // Todo: maybe multiple later
-    // todo: event driven
     std::shared_ptr<omp::ViewPort> m_RenderViewport;
     std::shared_ptr<omp::ScenePanel> m_ScenePanel;
 
-    std::shared_ptr<omp::Camera> m_Camera;
-    std::shared_ptr<omp::Light> m_GlobalLight;
-
-    std::shared_ptr<omp::LightObject> m_LightObject;
+    std::unique_ptr<omp::LightSystem> m_LightSystem;
 
     std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 

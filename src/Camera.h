@@ -31,9 +31,9 @@ namespace omp
     class Camera
     {
     private:
-        static constexpr float YAW = -90.f;
+        static constexpr float YAW = 0.f;
         static constexpr float PITCH = 0.f;
-        static constexpr float SPEED = 100.f;
+        static constexpr float SPEED = 20.f;
         static constexpr float SENSITIVITY = 0.1f;
         static constexpr float ZOOM = 45.f;
 

@@ -59,6 +59,8 @@ set(SOURCE
         Light.cpp
         LightObject.h
         LightObject.cpp
+        LightSystem.h
+        LightSystem.cpp
         Rendering/GraphicsPipeline.h
         Rendering/GraphicsPipeline.cpp
         AssetLoader.h
@@ -95,6 +97,8 @@ set(SOURCE
         Rendering/FrameBuffer.cpp
         Rendering/RenderPass.h
         Rendering/RenderPass.cpp
+        Rendering/UniformBuffer.h
+        Rendering/UniformBuffer.cpp
         )
 
 set(TESTS

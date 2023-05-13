@@ -2,13 +2,14 @@
 
 #include <vector>
 #include "Rendering/Model.h"
+#include "Camera.h"
 
 namespace omp
 {
     class Scene
     {
     public:
-        Scene() = default;
+        Scene();
 
     private:
         // State //
@@ -16,6 +17,9 @@ namespace omp
         bool m_StateDirty = false;
 
         std::vector<std::shared_ptr<omp::Model>> m_Models;
+        std::shared_ptr<omp::Camera> m_CurrentCamera;
+
+        std::vector<std::shared_ptr<omp::Camera>> m_Cameras;
 
     public:
         // Methods //
@@ -26,6 +30,8 @@ namespace omp
 
         // TODO map, no ref
         std::vector<std::shared_ptr<omp::Model>>& getModels();
+
+        std::shared_ptr<omp::Camera> getCurrentCamera() const { return m_CurrentCamera; }
 
         bool isDirty() const
         {

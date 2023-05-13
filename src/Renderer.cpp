@@ -40,11 +40,8 @@ namespace
 
 Renderer::Renderer()
         : m_CurrentScene(std::make_shared<omp::Scene>())
-        , m_Camera(std::make_shared<omp::Camera>())
-        , m_GlobalLight(std::make_shared<omp::Light>())
+        , m_LightSystem(std::make_unique<omp::LightSystem>())
 {
-    m_LightObject = std::make_shared<omp::LightObject>();
-    m_LightObject->setLight(m_GlobalLight);
 }
 
 void Renderer::initVulkan()
@@ -71,7 +68,7 @@ void Renderer::initVulkan()
     loadModel("Second", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
     loadModel("third", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
     loadModel("fourth", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
-    loadLightObject("I see the light", "../models/cube.obj");
+    loadLightObject("I see the light", "../models/sphere.obj");
     //loadModel("Third");
     //loadModel("First1");
     //loadModel("Second1");
@@ -1012,6 +1009,7 @@ void Renderer::cleanupSwapChain()
     }
     vkDestroySwapchainKHR(m_LogicalDevice, m_SwapChain, nullptr);
 
+    /* Unique ptr will destory on recreate
     for (size_t i = 0; i < m_SwapChainImages.size(); i++)
     {
         vkDestroyBuffer(m_LogicalDevice, m_UniformBuffers[i], nullptr);
@@ -1023,6 +1021,7 @@ void Renderer::cleanupSwapChain()
         vkDestroyBuffer(m_LogicalDevice, m_LightBuffer[i], nullptr);
         vkFreeMemory(m_LogicalDevice, m_LightBufferMemory[i], nullptr);
     }
+     */
 
     for (auto& framebuffer: m_ImguiFramebuffers)
     {
@@ -1178,14 +1177,34 @@ void Renderer::createDescriptorSetLayout()
         ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
         ubo_layout_binding.pImmutableSamplers = nullptr;
 
-        VkDescriptorSetLayoutBinding light_layout_binding{};
-        light_layout_binding.binding = 1;
-        light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        light_layout_binding.descriptorCount = 1;
-        light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-        light_layout_binding.pImmutableSamplers = nullptr;
+        VkDescriptorSetLayoutBinding global_light_layout_binding{};
+        global_light_layout_binding.binding = 1;
+        global_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        global_light_layout_binding.descriptorCount = 1;
+        global_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        global_light_layout_binding.pImmutableSamplers = nullptr;
 
-        std::array<VkDescriptorSetLayoutBinding, 2> ubo_bindings = {ubo_layout_binding, light_layout_binding};
+        VkDescriptorSetLayoutBinding point_light_layout_binding{};
+        point_light_layout_binding.binding = 2;
+        point_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        point_light_layout_binding.descriptorCount = m_LightSystem->getPointLightSize();
+        point_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        point_light_layout_binding.pImmutableSamplers = nullptr;
+
+        VkDescriptorSetLayoutBinding spot_light_layout_binding{};
+        spot_light_layout_binding.binding = 3;
+        spot_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        spot_light_layout_binding.descriptorCount = m_LightSystem->getSpotLightSize();
+        spot_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        spot_light_layout_binding.pImmutableSamplers = nullptr;
+
+        std::array<VkDescriptorSetLayoutBinding, 4> ubo_bindings =
+            {
+                ubo_layout_binding,
+                global_light_layout_binding,
+                point_light_layout_binding,
+                spot_light_layout_binding
+            };
 
         VkDescriptorSetLayoutCreateInfo ubo_layout_info{};
         ubo_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -1237,40 +1256,32 @@ void Renderer::createDescriptorSetLayout()
 void Renderer::createUniformBuffers()
 {
     VkDeviceSize buffer_size = sizeof(UniformBufferObject);
+    m_UboBuffer = std::make_unique<omp::UniformBuffer>(m_VulkanContext, m_PresentKHRImagesNum, buffer_size);
 
-    m_UniformBuffers.resize(m_PresentKHRImagesNum);
-    m_UniformBuffersMemory.resize(m_PresentKHRImagesNum);
-
-    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
-    {
-        createBuffer(buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                     m_UniformBuffers[i], m_UniformBuffersMemory[i]);
-    }
-
-    buffer_size = sizeof(omp::Light);
-
+    //
+    buffer_size = sizeof(omp::GlobalLight);
     m_LightBuffer.resize(m_PresentKHRImagesNum);
     m_LightBufferMemory.resize(m_PresentKHRImagesNum);
-
     for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         createBuffer(buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                      m_LightBuffer[i], m_LightBufferMemory[i]);
     }
+    //
+    m_LightSystem->recreate();
 }
 
 void Renderer::updateUniformBuffer(uint32_t currentImage)
 {
     UniformBufferObject ubo{};
-    ubo.view = m_Camera->getViewMatrix();
+    ubo.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
     ubo.proj = glm::perspective(
-            glm::radians(m_Camera->getViewAngle()),
+            glm::radians(m_CurrentScene->getCurrentCamera()->getViewAngle()),
             (float) m_RenderViewport->getSize().x / (float) m_RenderViewport->getSize().y,
-            m_Camera->getNearClipping(), m_Camera->getFarClipping());
+            m_CurrentScene->getCurrentCamera()->getNearClipping(), m_CurrentScene->getCurrentCamera()->getFarClipping());
     ubo.proj[1][1] *= -1;
-    ubo.view_position = m_Camera->getPosition();
+    ubo.view_position = m_CurrentScene->getCurrentCamera()->getPosition();
 
     m_LightObject->updateLightObject();
 
@@ -1282,8 +1293,8 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
     }
 
     void* data;
-    vkMapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage], 0, sizeof(omp::Light), 0, &data);
-    memcpy(data, m_GlobalLight.get(), sizeof(omp::Light));
+    vkMapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage], 0, sizeof(omp::GlobalLight), 0, &data);
+    memcpy(data, m_GlobalLight.get(), sizeof(omp::GlobalLight));
     vkUnmapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage]);
 }
 
@@ -1339,7 +1350,7 @@ void Renderer::createDescriptorSets()
         VkDescriptorBufferInfo light_info{};
         light_info.buffer = m_LightBuffer[i];
         light_info.offset = 0;
-        light_info.range = sizeof(omp::Light);
+        light_info.range = sizeof(omp::GlobalLight);
 
         std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1975,12 +1986,12 @@ void Renderer::createImguiWidgets()
     // ORDER IS IMPORTANT DOCK NODES GO FIRST
 
     m_RenderViewport = std::make_shared<omp::ViewPort>();
-    m_RenderViewport->setCamera(m_Camera);
+    m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
     auto material_panel = std::make_shared<omp::MaterialPanel>();
     auto entity = std::make_shared<omp::EntityPanel>(material_panel);
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity);
     m_ScenePanel->setScene(m_CurrentScene);
-    auto camera_panel = std::make_shared<omp::CameraPanel>(m_Camera);
+    auto camera_panel = std::make_shared<omp::CameraPanel>(m_CurrentScene->getCurrentCamera());
     auto light_panel = std::make_shared<omp::GlobalLightPanel>(m_GlobalLight);
 
     m_Widgets.push_back(std::make_shared<omp::MainLayer>());
@@ -2090,6 +2101,6 @@ void Renderer::destroyAllCommandBuffers()
 void Renderer::tick(float deltaTime)
 {
     m_CurrentScene->getModel("fourth")->getRotation().x += 1*deltaTime;
-    m_Camera->applyInputs(deltaTime);
+    m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
 

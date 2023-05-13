@@ -29,3 +29,9 @@ std::shared_ptr<omp::Model> omp::Scene::getModel(const std::string& inName)
     });
     return *model;
 }
+
+omp::Scene::Scene()
+    : m_CurrentCamera(std::make_shared<omp::Camera>())
+{
+
+}

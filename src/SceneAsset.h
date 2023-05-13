@@ -27,8 +27,8 @@ namespace omp
     using json = nlohmann::json;
     void to_json(json& j, const omp::ModelForSceneData& model);
     void from_json(const json& j, omp::ModelForSceneData& p);
-    void to_json(json& j, const omp::Light& light);
-    void from_json(const json& j, omp::Light& light);
+    void to_json(json& j, const omp::GlobalLight& light);
+    void from_json(const json& j, omp::GlobalLight& light);
     void to_json(json& j, const omp::CameraForSceneData& camera);
     void from_json(const json& j, omp::CameraForSceneData& camera);
 
@@ -45,6 +45,6 @@ namespace omp
 
         DECLARE_SERIALIZABLE_MEMBER(std::vector<omp::ModelForSceneData>, Models);
         DECLARE_SERIALIZABLE_MEMBER(omp::CameraForSceneData, Camera);
-        DECLARE_SERIALIZABLE_MEMBER(omp::Light, Light);
+        DECLARE_SERIALIZABLE_MEMBER(omp::GlobalLight, Light);
     };
 };

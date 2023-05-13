@@ -59,19 +59,19 @@ void omp::from_json(const omp::json& j, omp::ModelForSceneData& p)
     j.at("scale").get_to(p.scale);
 }
 
-void omp::to_json(omp::json& j, const omp::Light& light)
+void omp::to_json(omp::json& j, const omp::GlobalLight& light)
 {
     j = json{
-            {"position", light.position},
+            {"position", light.position_or_direction},
             {"ambient", light.ambient},
             {"diffuse", light.diffuse},
             {"specular", light.specular},
     };
 }
 
-void omp::from_json(const omp::json& j, omp::Light& light)
+void omp::from_json(const omp::json& j, omp::GlobalLight& light)
 {
-    j.at("position").get_to(light.position);
+    j.at("position").get_to(light.position_or_direction);
     j.at("ambient").get_to(light.ambient);
     j.at("diffuse").get_to(light.diffuse);
     j.at("specular").get_to(light.specular);
