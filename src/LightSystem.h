@@ -30,7 +30,16 @@ namespace omp
         size_t getPointLightSize() const { return m_PointLights.size(); }
         size_t getSpotLightSize() const { return m_SpotLights.size(); }
 
+        size_t getGlobalLightBufferSize() const { return sizeof(GlobalLight); }
+        size_t getPointLightBufferSize() const { return m_PointLights.size() * sizeof(PointLight); }
+        size_t getSpotLightBufferSize() const { return m_SpotLights.size() * sizeof(SpotLight); }
+
+        VkBuffer getGlobalLightBuffer(uint32_t khr);
+        VkBuffer getPointLightBuffer(uint32_t khr);
+        VkBuffer getSpotLightBuffer(uint32_t khr);
+
         void recreate();
-        void mapMemory();
+        void update();
+        void mapMemory(uint32_t khrImage);
     };
 }

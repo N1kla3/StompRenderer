@@ -17,11 +17,13 @@ namespace omp
     public:
         UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrImageCount, VkDeviceSize bufferSize);
 
+        VkBuffer getBuffer(uint32_t khr) const { return m_Buffer.at(khr); }
+
         template<class T>
-        void mapMemory(T& memory, uint32_t imageIndex)
+        void mapMemory(T& memory, uint32_t imageIndex, uint32_t offset = 0)
         {
             void* data;
-            vkMapMemory(m_VulkanContext->logical_device, m_Memory[imageIndex], 0, sizeof(T), 0, &data);
+            vkMapMemory(m_VulkanContext->logical_device, m_Memory[imageIndex], offset, sizeof(T), 0, &data);
             memcpy(data, &memory, sizeof(T));
             vkUnmapMemory(m_VulkanContext->logical_device, m_Memory[imageIndex]);
         }

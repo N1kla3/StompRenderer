@@ -1258,17 +1258,6 @@ void Renderer::createUniformBuffers()
     VkDeviceSize buffer_size = sizeof(UniformBufferObject);
     m_UboBuffer = std::make_unique<omp::UniformBuffer>(m_VulkanContext, m_PresentKHRImagesNum, buffer_size);
 
-    //
-    buffer_size = sizeof(omp::GlobalLight);
-    m_LightBuffer.resize(m_PresentKHRImagesNum);
-    m_LightBufferMemory.resize(m_PresentKHRImagesNum);
-    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
-    {
-        createBuffer(buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                     m_LightBuffer[i], m_LightBufferMemory[i]);
-    }
-    //
     m_LightSystem->recreate();
 }
 
@@ -1283,19 +1272,10 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
     ubo.proj[1][1] *= -1;
     ubo.view_position = m_CurrentScene->getCurrentCamera()->getPosition();
 
-    m_LightObject->updateLightObject();
+    m_UboBuffer->mapMemory(ubo, currentImage);
 
-    {
-        void* data;
-        vkMapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
-        memcpy(data, &ubo, sizeof(ubo));
-        vkUnmapMemory(m_LogicalDevice, m_UniformBuffersMemory[currentImage]);
-    }
-
-    void* data;
-    vkMapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage], 0, sizeof(omp::GlobalLight), 0, &data);
-    memcpy(data, m_GlobalLight.get(), sizeof(omp::GlobalLight));
-    vkUnmapMemory(m_LogicalDevice, m_LightBufferMemory[currentImage]);
+    m_LightSystem->update();
+    m_LightSystem->mapMemory(currentImage);
 }
 
 void Renderer::createDescriptorPool()
@@ -1343,16 +1323,26 @@ void Renderer::createDescriptorSets()
     for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         VkDescriptorBufferInfo buffer_info{};
-        buffer_info.buffer = m_UniformBuffers[i];
+        buffer_info.buffer = m_UboBuffer->getBuffer(i);
         buffer_info.offset = 0;
         buffer_info.range = sizeof(UniformBufferObject);
 
-        VkDescriptorBufferInfo light_info{};
-        light_info.buffer = m_LightBuffer[i];
-        light_info.offset = 0;
-        light_info.range = sizeof(omp::GlobalLight);
+        VkDescriptorBufferInfo global_light_info{};
+        global_light_info.buffer = m_LightSystem->getGlobalLightBuffer(i);
+        global_light_info.offset = 0;
+        global_light_info.range = m_LightSystem->getGlobalLightBufferSize();
 
-        std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
+        VkDescriptorBufferInfo point_light_info{};
+        point_light_info.buffer = m_LightSystem->getPointLightBuffer(i);
+        point_light_info.offset = 0;
+        point_light_info.range = m_LightSystem->getPointLightBufferSize();
+
+        VkDescriptorBufferInfo spot_light_info{};
+        spot_light_info.buffer = m_LightSystem->getSpotLightBuffer(i);
+        spot_light_info.offset = 0;
+        spot_light_info.range = m_LightSystem->getSpotLightBufferSize();
+
+        std::array<VkWriteDescriptorSet, 4> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptor_writes[0].dstSet = m_UboDescriptorSets[i];
         descriptor_writes[0].dstBinding = 0;
@@ -1367,7 +1357,23 @@ void Renderer::createDescriptorSets()
         descriptor_writes[1].dstArrayElement = 0;
         descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptor_writes[1].descriptorCount = 1;
-        descriptor_writes[1].pBufferInfo = &light_info;
+        descriptor_writes[1].pBufferInfo = &global_light_info;
+
+        descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_writes[1].dstSet = m_UboDescriptorSets[i];
+        descriptor_writes[1].dstBinding = 2;
+        descriptor_writes[1].dstArrayElement = 0;
+        descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptor_writes[1].descriptorCount = m_LightSystem->getPointLightSize();
+        descriptor_writes[1].pBufferInfo = &point_light_info;
+
+        descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_writes[1].dstSet = m_UboDescriptorSets[i];
+        descriptor_writes[1].dstBinding = 3;
+        descriptor_writes[1].dstArrayElement = 0;
+        descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptor_writes[1].descriptorCount = m_LightSystem->getSpotLightSize();
+        descriptor_writes[1].pBufferInfo = &spot_light_info;
 
         vkUpdateDescriptorSets(m_LogicalDevice,
                                static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
