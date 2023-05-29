@@ -49,7 +49,7 @@ namespace omp
         bool hasVulkanContext() const { return !m_VulkanContext.expired(); }
 
         void destroyVkObjects();
-        uint64_t getTextureId();
+        VkDescriptorSet getTextureId();
         VkImageView getImageView();
         VkImage getImage();
         VkSampler getSampler();

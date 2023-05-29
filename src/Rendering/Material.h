@@ -9,6 +9,8 @@
 
 namespace omp
 {
+    class MaterialManager;
+
     struct TextureData
     {
         uint32_t binding_index;

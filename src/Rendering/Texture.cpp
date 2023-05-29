@@ -23,7 +23,7 @@ void omp::Texture::destroyVkObjects()
     }
 }
 
-uint64_t omp::Texture::getTextureId()
+VkDescriptorSet omp::Texture::getTextureId()
 {
     if (!hasFlags(LOADED_TO_UI))
     {

@@ -123,4 +123,8 @@ namespace ImGui
     void MyFunction(const char* name, const MyMatrix44& v);
 }
 */
-#define ImTextureID unsigned long long
+#ifdef _MSC_VER
+    #define ImTextureID unsigned long long
+#else
+    #define ImTextureID uintptr_t*
+#endif
