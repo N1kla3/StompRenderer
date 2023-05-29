@@ -40,7 +40,6 @@ namespace
 
 Renderer::Renderer()
         : m_CurrentScene(std::make_shared<omp::Scene>())
-        , m_LightSystem(std::make_unique<omp::LightSystem>())
 {
 }
 
@@ -64,11 +63,7 @@ void Renderer::initVulkan()
     createFramebuffers();
     createTextureImage();
     initializeImgui();
-    loadModel("First", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
-    loadModel("Second", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
-    loadModel("third", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
-    loadModel("fourth", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
-    loadLightObject("I see the light", "../models/sphere.obj");
+
     //loadModel("Third");
     //loadModel("First1");
     //loadModel("Second1");
@@ -537,7 +532,6 @@ VkExtent2D Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabiliti
                                    std::min<uint32_t>(capabilities.maxImageExtent.height,
                                                       actual_extent.height));
 
-        // TODO wtf happeing here
         int h, w;
         glfwGetFramebufferSize(m_Window, &w, &h);
         VkExtent2D actual_extent_sec = {static_cast<uint32_t>(w), static_cast<uint32_t>(h)};
@@ -602,6 +596,11 @@ void Renderer::createSwapChain()
 
     m_SwapChainImageFormat = surface_format.format;
     m_SwapChainExtent = extent;
+}
+
+void Renderer::postSwapChainInitialize()
+{
+    m_LightSystem = std::make_unique<omp::LightSystem>(m_VulkanContext, m_PresentKHRImagesNum);
 }
 
 void Renderer::createImageViews()
@@ -1359,21 +1358,21 @@ void Renderer::createDescriptorSets()
         descriptor_writes[1].descriptorCount = 1;
         descriptor_writes[1].pBufferInfo = &global_light_info;
 
-        descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_writes[1].dstSet = m_UboDescriptorSets[i];
-        descriptor_writes[1].dstBinding = 2;
-        descriptor_writes[1].dstArrayElement = 0;
-        descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptor_writes[1].descriptorCount = m_LightSystem->getPointLightSize();
-        descriptor_writes[1].pBufferInfo = &point_light_info;
+        descriptor_writes[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_writes[2].dstSet = m_UboDescriptorSets[i];
+        descriptor_writes[2].dstBinding = 2;
+        descriptor_writes[2].dstArrayElement = 0;
+        descriptor_writes[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptor_writes[2].descriptorCount = m_LightSystem->getPointLightSize();
+        descriptor_writes[2].pBufferInfo = &point_light_info;
 
-        descriptor_writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptor_writes[1].dstSet = m_UboDescriptorSets[i];
-        descriptor_writes[1].dstBinding = 3;
-        descriptor_writes[1].dstArrayElement = 0;
-        descriptor_writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptor_writes[1].descriptorCount = m_LightSystem->getSpotLightSize();
-        descriptor_writes[1].pBufferInfo = &spot_light_info;
+        descriptor_writes[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptor_writes[3].dstSet = m_UboDescriptorSets[i];
+        descriptor_writes[3].dstBinding = 3;
+        descriptor_writes[3].dstArrayElement = 0;
+        descriptor_writes[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptor_writes[3].descriptorCount = m_LightSystem->getSpotLightSize();
+        descriptor_writes[3].pBufferInfo = &spot_light_info;
 
         vkUpdateDescriptorSets(m_LogicalDevice,
                                static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
@@ -1675,18 +1674,6 @@ VkFormat Renderer::findDepthFormat()
 bool Renderer::hasStencilComponent(VkFormat format)
 {
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-}
-
-void Renderer::loadLightObject(const std::string& name, const std::string& textureName)
-{
-    auto model = loadModel(name, textureName);
-    auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default_no_light");
-    mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
-    mat->setShaderName("Simple");
-    model->setMaterial(mat);
-
-    // TODO make a lot of light objects
-    m_LightObject->setModel(model);
 }
 
 std::shared_ptr<omp::Model> Renderer::loadModel(const std::string& name, const std::string& modelName)
@@ -1998,7 +1985,7 @@ void Renderer::createImguiWidgets()
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity);
     m_ScenePanel->setScene(m_CurrentScene);
     auto camera_panel = std::make_shared<omp::CameraPanel>(m_CurrentScene->getCurrentCamera());
-    auto light_panel = std::make_shared<omp::GlobalLightPanel>(m_GlobalLight);
+    // auto light_panel = std::make_shared<omp::GlobalLightPanel>(m_GlobalLight);
 
     m_Widgets.push_back(std::make_shared<omp::MainLayer>());
     m_Widgets.push_back(m_RenderViewport);
@@ -2006,7 +1993,8 @@ void Renderer::createImguiWidgets()
     m_Widgets.push_back(std::move(material_panel));
     m_Widgets.push_back(m_ScenePanel);
     m_Widgets.push_back(std::move(camera_panel));
-    m_Widgets.push_back(std::move(light_panel));
+    // TODO: light ui
+    //m_Widgets.push_back(std::move(light_panel));
 }
 
 void Renderer::onViewportResize(size_t imageIndex)
@@ -2102,6 +2090,26 @@ void Renderer::destroyAllCommandBuffers()
     {
         scope.clearBuffer(m_LogicalDevice, m_ImguiCommandPool);
     }
+}
+
+void Renderer::InitializeScene()
+{
+    loadModel("First", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
+    loadModel("Second", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
+    loadModel("third", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
+    loadModel("fourth", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
+
+    #if 0
+    loadLightObject("I see the light", "../models/sphere.obj");
+    auto model = loadModel(name, textureName);
+    auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default_no_light");
+    mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
+    mat->setShaderName("Simple");
+    model->setMaterial(mat);
+
+    // TODO make a lot of light objects
+    m_LightObject->setModel(model);
+    #endif
 }
 
 void Renderer::tick(float deltaTime)

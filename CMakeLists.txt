@@ -58,7 +58,6 @@ set(SOURCE
         Light.h
         Light.cpp
         LightObject.h
-        LightObject.cpp
         LightSystem.h
         LightSystem.cpp
         Rendering/GraphicsPipeline.h

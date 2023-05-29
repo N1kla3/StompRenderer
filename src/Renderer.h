@@ -29,8 +29,6 @@
 #include "MaterialManager.h"
 #include "Rendering/Shader.h"
 #include "Camera.h"
-#include "Light.h"
-#include "LightObject.h"
 #include "Rendering/GraphicsPipeline.h"
 #include "Rendering/RenderPass.h"
 #include "Rendering/FrameBuffer.h"
@@ -162,6 +160,7 @@ private:
     void mainLoop();
 
     void drawFrame();
+    void InitializeScene();
     void tick(float deltaTime);
 
     void cleanup();
@@ -174,6 +173,8 @@ private:
     void createSurface();
 
     void createSwapChain();
+
+    void postSwapChainInitialize();
 
     void createImageViews();
 
@@ -199,8 +200,6 @@ private:
     void createBuffer(
             VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
             VkDeviceMemory& bufferMemory);
-
-    void loadLightObject(const std::string& name, const std::string& textureName);
 
     std::shared_ptr<omp::Model> loadModel(const std::string& name, const std::string& modelName);
 

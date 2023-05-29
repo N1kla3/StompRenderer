@@ -24,7 +24,7 @@ namespace omp
         LightObject();
         LightClass& getLight();
 
-        void updateLightObject(){};
+        inline void updateLightObject(){};
         void setModel(const std::shared_ptr<Model>& inModel);
     };
 }
@@ -42,7 +42,7 @@ omp::LightObject<LightType>::LightClass& omp::LightObject<LightType>::getLight()
 }
 
 template<>
-void omp::LightObject<omp::GlobalLight>::updateLightObject()
+inline void omp::LightObject<omp::GlobalLight>::updateLightObject()
 {
     auto& v = m_Model->getPosition();
     m_Light.position_or_direction.x = v.x;
@@ -51,7 +51,7 @@ void omp::LightObject<omp::GlobalLight>::updateLightObject()
 }
 
 template<>
-void omp::LightObject<omp::PointLight>::updateLightObject()
+inline void omp::LightObject<omp::PointLight>::updateLightObject()
 {
     auto& v = m_Model->getPosition();
     m_Light.position.x = v.x;
@@ -60,7 +60,7 @@ void omp::LightObject<omp::PointLight>::updateLightObject()
 }
 
 template<>
-void omp::LightObject<omp::SpotLight>::updateLightObject()
+inline void omp::LightObject<omp::SpotLight>::updateLightObject()
 {
     auto& pos = m_Model->getPosition();
     m_Light.position.x = pos.x;
