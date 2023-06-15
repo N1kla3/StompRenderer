@@ -34,13 +34,14 @@ void omp::LightSystem::mapMemory(uint32_t khrImage)
     int offset = 0;
     for (size_t index = 0; index < m_PointLights.size(); index++)
     {
-        m_PointBuffer->mapMemory(m_PointLights[index], khrImage, offset);
+        m_PointBuffer->mapMemory(m_PointLights[index].getLight(), khrImage, offset);
         offset += sizeof(PointLight);
     }
 
+    offset = 0;
     for (size_t index = 0; index < m_SpotLights.size(); index++)
     {
-        m_SpotBuffer->mapMemory(m_SpotLights[index], khrImage, offset);
+        m_SpotBuffer->mapMemory(m_SpotLights[index].getLight(), khrImage, offset);
         offset += sizeof(SpotLight);
     }
 }
@@ -70,4 +71,18 @@ VkBuffer omp::LightSystem::getSpotLightBuffer(uint32_t khr)
         return m_SpotBuffer->getBuffer(khr);
     }
     return 0;
+}
+
+void omp::LightSystem::setModelForEach(const std::shared_ptr<omp::Model>& inModel)
+{
+    m_GlobalLight.setModel(inModel);
+
+    for (auto& point_light : m_PointLights)
+    {
+        point_light.setModel(inModel);
+    }
+    for (auto& spot_light : m_SpotLights)
+    {
+        spot_light.setModel(inModel);
+    }
 }

@@ -65,8 +65,8 @@ void omp::GraphicsPipeline::createViewport(VkExtent2D scissorExtent)
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = 0;
-    viewport.height = 0;
+    viewport.width = scissorExtent.width;
+    viewport.height = scissorExtent.height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
     m_Viewport = viewport;
@@ -78,8 +78,8 @@ void omp::GraphicsPipeline::createViewport(VkExtent2D scissorExtent)
 
     VkPipelineViewportStateCreateInfo viewport_state{};
     viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewport_state.viewportCount = 0;
-    viewport_state.pViewports = 0;//&viewport;
+    viewport_state.viewportCount = 1;
+    viewport_state.pViewports = &m_Viewport;//&viewport;
     viewport_state.scissorCount = 1;
     viewport_state.pScissors = &m_Scissor;
 
@@ -182,12 +182,11 @@ void omp::GraphicsPipeline::confirmCreation(const std::shared_ptr<omp::RenderPas
     }
 
     VkDynamicState dynamic_states[] = {
-            VK_DYNAMIC_STATE_VIEWPORT,
             VK_DYNAMIC_STATE_LINE_WIDTH
     };
     VkPipelineDynamicStateCreateInfo dynamic_state{};
     dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamic_state.dynamicStateCount = 2;
+    dynamic_state.dynamicStateCount = 1;
     dynamic_state.pDynamicStates = dynamic_states;
 
     VkGraphicsPipelineCreateInfo pipeline_info{};

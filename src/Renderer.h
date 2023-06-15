@@ -144,6 +144,7 @@ public:
     {
         initWindow();
         initVulkan();
+        initializeScene();
         mainLoop();
         cleanup();
     }
@@ -160,7 +161,7 @@ private:
     void mainLoop();
 
     void drawFrame();
-    void InitializeScene();
+    void initializeScene();
     void tick(float deltaTime);
 
     void cleanup();

@@ -7,7 +7,7 @@ namespace omp
     class LightSystem
     {
     public:
-        static constexpr int LIGHT_COUNT = 4;
+        static constexpr int LIGHT_COUNT = 1;
         LightSystem(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrNum);
 
     private:
@@ -37,6 +37,9 @@ namespace omp
         VkBuffer getGlobalLightBuffer(uint32_t khr);
         VkBuffer getPointLightBuffer(uint32_t khr);
         VkBuffer getSpotLightBuffer(uint32_t khr);
+
+        // TODO: temp
+        void setModelForEach(const std::shared_ptr<omp::Model>& inModel);
 
         void recreate();
         void update();

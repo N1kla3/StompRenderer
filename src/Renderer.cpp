@@ -26,7 +26,7 @@
 #include "Logs.h"
 
 #ifdef NDEBUG
-const bool enableValidationLayers = false;
+const bool g_EnableValidationLayers = false;
 #else
 const bool g_EnableValidationLayers = true;
 #endif
@@ -51,6 +51,7 @@ void Renderer::initVulkan()
     pickPhysicalDevice();
     createLogicalDevice();
     createSwapChain();
+    postSwapChainInitialize();
     createImageViews();
     createImguiWidgets();
     createRenderPass();
@@ -64,13 +65,6 @@ void Renderer::initVulkan()
     createTextureImage();
     initializeImgui();
 
-    //loadModel("Third");
-    //loadModel("First1");
-    //loadModel("Second1");
-    //loadModel("Third1");
-    //loadModel("First2");
-    //loadModel("Second2");
-    //loadModel("Third2");
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -136,6 +130,9 @@ void Renderer::cleanup()
         vkFreeMemory(m_LogicalDevice, memory, nullptr);
     }
 
+    m_UboBuffer.reset();
+    m_LightSystem.reset();
+
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_UboDescriptorSetLayout, nullptr);
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_TexturesDescriptorSetLayout, nullptr);
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
@@ -177,7 +174,7 @@ void Renderer::createInstance()
     app_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
     app_info.pEngineName = "No Engine";
     app_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    app_info.apiVersion = VK_API_VERSION_1_0;
+    app_info.apiVersion = VK_API_VERSION_1_1;
 
     VkInstanceCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -732,7 +729,7 @@ void Renderer::createFramebuffers()
 void Renderer::createFramebufferAtImage(size_t index)
 {
     std::vector<VkImageView> attachments{m_ColorImageView, m_DepthImageView, m_SwapChainImageViews[index]};
-    omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, m_RenderViewport->getSize().x, m_RenderViewport->getSize().y);
+    omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, m_SwapChainExtent.width, m_SwapChainExtent.height);
     m_SwapChainFramebuffers[index] = frame_buffer;
 }
 
@@ -781,12 +778,12 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     clear_values[0].color = g_ClearColor;
     clear_values[1].depthStencil = {1.0f, 0};
 
-    rect.offset.x = m_RenderViewport->getOffset().x;
-    rect.offset.y = m_RenderViewport->getOffset().y;
-    rect.extent.height = m_RenderViewport->getSize().y;
-    rect.extent.width = m_RenderViewport->getSize().x;
+    //rect.offset.x = m_RenderViewport->getOffset().x;
+    //rect.offset.y = m_RenderViewport->getOffset().y;
+    //rect.extent.height = m_RenderViewport->getSize().y;
+    //rect.extent.width = m_RenderViewport->getSize().x;
     beginRenderPass(m_RenderPass.get(), main_buffer, m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
-    setViewport(main_buffer);
+    //setViewport(main_buffer);
 
     VkDeviceSize offsets[] = {0};
     for (size_t index = 0; index < m_CurrentScene->getModels().size(); index++)
@@ -1197,12 +1194,12 @@ void Renderer::createDescriptorSetLayout()
         spot_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
         spot_light_layout_binding.pImmutableSamplers = nullptr;
 
-        std::array<VkDescriptorSetLayoutBinding, 4> ubo_bindings =
+        std::array<VkDescriptorSetLayoutBinding, 2> ubo_bindings =
             {
                 ubo_layout_binding,
                 global_light_layout_binding,
-                point_light_layout_binding,
-                spot_light_layout_binding
+                //point_light_layout_binding,
+                //spot_light_layout_binding
             };
 
         VkDescriptorSetLayoutCreateInfo ubo_layout_info{};
@@ -1282,12 +1279,10 @@ void Renderer::createDescriptorPool()
     std::array<VkDescriptorPoolSize, 2> pool_sizes{};
     pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     // TODO think about size
-    pool_sizes[0].descriptorCount = 10;
-    static_cast<uint32_t>(m_SwapChainImages.size());
+    pool_sizes[0].descriptorCount = 100;
 
     pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     pool_sizes[1].descriptorCount = 10;
-    static_cast<uint32_t>(m_SwapChainImages.size());
 
     VkDescriptorPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1295,7 +1290,6 @@ void Renderer::createDescriptorPool()
     pool_info.pPoolSizes = pool_sizes.data();
     pool_info.maxSets = 1000;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    static_cast<uint32_t>(m_SwapChainImages.size());
 
     if (vkCreateDescriptorPool(m_LogicalDevice, &pool_info, nullptr, &m_DescriptorPool) != VK_SUCCESS)
     {
@@ -1341,7 +1335,7 @@ void Renderer::createDescriptorSets()
         spot_light_info.offset = 0;
         spot_light_info.range = m_LightSystem->getSpotLightBufferSize();
 
-        std::array<VkWriteDescriptorSet, 4> descriptor_writes{};
+        std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptor_writes[0].dstSet = m_UboDescriptorSets[i];
         descriptor_writes[0].dstBinding = 0;
@@ -1358,12 +1352,13 @@ void Renderer::createDescriptorSets()
         descriptor_writes[1].descriptorCount = 1;
         descriptor_writes[1].pBufferInfo = &global_light_info;
 
+        #if 0
         descriptor_writes[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptor_writes[2].dstSet = m_UboDescriptorSets[i];
         descriptor_writes[2].dstBinding = 2;
         descriptor_writes[2].dstArrayElement = 0;
         descriptor_writes[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptor_writes[2].descriptorCount = m_LightSystem->getPointLightSize();
+        descriptor_writes[2].descriptorCount = 1;
         descriptor_writes[2].pBufferInfo = &point_light_info;
 
         descriptor_writes[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1371,8 +1366,9 @@ void Renderer::createDescriptorSets()
         descriptor_writes[3].dstBinding = 3;
         descriptor_writes[3].dstArrayElement = 0;
         descriptor_writes[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptor_writes[3].descriptorCount = m_LightSystem->getSpotLightSize();
+        descriptor_writes[3].descriptorCount = 1;
         descriptor_writes[3].pBufferInfo = &spot_light_info;
+        #endif
 
         vkUpdateDescriptorSets(m_LogicalDevice,
                                static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
@@ -1401,7 +1397,8 @@ void Renderer::retrieveMaterialRenderState(const std::shared_ptr<omp::Material>&
     allocate_info.pSetLayouts = layouts.data();
 
     ds.resize(m_PresentKHRImagesNum);
-    if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, ds.data()) != VK_SUCCESS)
+    auto err = vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, ds.data());
+    if (err != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to allocate descriptor sets!");
     }
@@ -2092,24 +2089,21 @@ void Renderer::destroyAllCommandBuffers()
     }
 }
 
-void Renderer::InitializeScene()
+void Renderer::initializeScene()
 {
+    // TODO: model split
     loadModel("First", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
     loadModel("Second", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
     loadModel("third", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
     loadModel("fourth", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
 
-    #if 0
-    loadLightObject("I see the light", "../models/sphere.obj");
-    auto model = loadModel(name, textureName);
+    auto model = loadModel("I see the light", "../models/sphere.obj");
     auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default_no_light");
     mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
     mat->setShaderName("Simple");
     model->setMaterial(mat);
 
-    // TODO make a lot of light objects
-    m_LightObject->setModel(model);
-    #endif
+    m_LightSystem->setModelForEach(model);
 }
 
 void Renderer::tick(float deltaTime)

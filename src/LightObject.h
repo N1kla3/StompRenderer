@@ -76,5 +76,5 @@ inline void omp::LightObject<omp::SpotLight>::updateLightObject()
 template<LightClassReq LightType>
 void omp::LightObject<LightType>::setModel(const std::shared_ptr<Model>& inModel)
 {
-    m_Model = std::move(inModel);
+    m_Model = (inModel);
 }
