@@ -1194,12 +1194,12 @@ void Renderer::createDescriptorSetLayout()
         spot_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
         spot_light_layout_binding.pImmutableSamplers = nullptr;
 
-        std::array<VkDescriptorSetLayoutBinding, 2> ubo_bindings =
+        std::array<VkDescriptorSetLayoutBinding, 4> ubo_bindings =
             {
                 ubo_layout_binding,
                 global_light_layout_binding,
-                //point_light_layout_binding,
-                //spot_light_layout_binding
+                point_light_layout_binding,
+                spot_light_layout_binding
             };
 
         VkDescriptorSetLayoutCreateInfo ubo_layout_info{};
@@ -1335,7 +1335,7 @@ void Renderer::createDescriptorSets()
         spot_light_info.offset = 0;
         spot_light_info.range = m_LightSystem->getSpotLightBufferSize();
 
-        std::array<VkWriteDescriptorSet, 2> descriptor_writes{};
+        std::array<VkWriteDescriptorSet, 4> descriptor_writes{};
         descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptor_writes[0].dstSet = m_UboDescriptorSets[i];
         descriptor_writes[0].dstBinding = 0;
@@ -1352,7 +1352,6 @@ void Renderer::createDescriptorSets()
         descriptor_writes[1].descriptorCount = 1;
         descriptor_writes[1].pBufferInfo = &global_light_info;
 
-        #if 0
         descriptor_writes[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptor_writes[2].dstSet = m_UboDescriptorSets[i];
         descriptor_writes[2].dstBinding = 2;
@@ -1368,7 +1367,6 @@ void Renderer::createDescriptorSets()
         descriptor_writes[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptor_writes[3].descriptorCount = 1;
         descriptor_writes[3].pBufferInfo = &spot_light_info;
-        #endif
 
         vkUpdateDescriptorSets(m_LogicalDevice,
                                static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);

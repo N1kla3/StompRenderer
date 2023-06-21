@@ -19,24 +19,33 @@ namespace omp
     {
         glm::vec4 position;
 
-        float constant;
-        float linear;
-        float quadratic;
-
         glm::vec4 ambient = {1.0f, 1.0f, 1.0f, 0.2};
         glm::vec4 diffuse = {1.0f, 1.0f, 1.0f, 0.4};
         glm::vec4 specular = {1.0f, 1.0f, 1.0f, 0.5};
+
+        float constant;
+        float linear;
+        float quadratic;
+        float unused;
     };
 
     struct SpotLight
     {
         glm::vec4 position;
-        glm::vec4 direction;
-        float cut_off;
-        float outer_cutoff;
 
         glm::vec4 ambient = {1.0f, 1.0f, 1.0f, 0.2};
         glm::vec4 diffuse = {1.0f, 1.0f, 1.0f, 0.4};
         glm::vec4 specular = {1.0f, 1.0f, 1.0f, 0.5};
+
+        glm::vec4 direction;
+
+        float cut_off;
+        float outer_cutoff;
+
+        float constant;
+        float linear;
+
+        glm::vec3 unu;
+        float quadratic;
     };
 }
