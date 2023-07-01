@@ -24,6 +24,7 @@
 #include <tiny_obj_loader.h>
 
 #include "Logs.h"
+#include "Rendering/ModelStatics.h"
 
 #ifdef NDEBUG
 const bool g_EnableValidationLayers = false;
@@ -284,6 +285,7 @@ void Renderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoE
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity =
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
@@ -342,7 +344,7 @@ bool Renderer::isDeviceSuitable(VkPhysicalDevice device)
     VkPhysicalDeviceFeatures supported_features;
     vkGetPhysicalDeviceFeatures(device, &supported_features);
 
-    return properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+    return properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
            && features.geometryShader && indices.IsComplete() && extensions_supported && swap_chain_adequate &&
            supported_features.samplerAnisotropy;
 }
@@ -605,7 +607,7 @@ void Renderer::createImageViews()
     m_SwapChainImageViews.resize(m_PresentKHRImagesNum);
     for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
-        m_SwapChainImageViews[i] = createImageView(m_SwapChainImages[i], m_SwapChainImageFormat,
+        m_SwapChainImageViews[i] = m_VulkanContext->createImageView(m_SwapChainImages[i], m_SwapChainImageFormat,
                                                    VK_IMAGE_ASPECT_COLOR_BIT, 1);
     }
 }
@@ -1458,50 +1460,6 @@ void Renderer::createTextureImage()
     m_DefaultMaterial->setShaderName("Light");
 }
 
-void Renderer::createImage(
-        uint32_t width, uint32_t height, uint32_t mipLevels,
-        VkFormat format, VkImageTiling tiling,
-        VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-        VkImage& image, VkDeviceMemory& imageMemory,
-        VkSampleCountFlagBits numSamples)
-{
-    VkImageCreateInfo image_info{};
-    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_info.imageType = VK_IMAGE_TYPE_2D;
-    image_info.extent.width = static_cast<uint32_t>(width);
-    image_info.extent.height = static_cast<uint32_t>(height);
-    image_info.extent.depth = 1;
-    image_info.mipLevels = mipLevels;
-    image_info.arrayLayers = 1;
-    image_info.format = format;
-    image_info.tiling = tiling;
-    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    image_info.usage = usage;
-    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    image_info.samples = numSamples;
-    image_info.flags = 0;
-
-    if (vkCreateImage(m_LogicalDevice, &image_info, nullptr, &image) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create image!");
-    }
-
-    VkMemoryRequirements mem_req;
-    vkGetImageMemoryRequirements(m_LogicalDevice, image, &mem_req);
-
-    VkMemoryAllocateInfo allocate_info{};
-    allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocate_info.allocationSize = mem_req.size;
-    allocate_info.memoryTypeIndex = findMemoryType(mem_req.memoryTypeBits, properties);
-
-    if (vkAllocateMemory(m_LogicalDevice, &allocate_info, nullptr, &imageMemory) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to allocate image memory!");
-    }
-
-    vkBindImageMemory(m_LogicalDevice, image, imageMemory, 0);
-}
-
 VkCommandBuffer Renderer::beginSingleTimeCommands()
 {
     VkCommandBufferAllocateInfo alloc_info{};
@@ -1535,107 +1493,15 @@ void Renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer)
     vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, 1, &commandBuffer);
 }
 
-void Renderer::transitionImageLayout(
-        VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
-{
-    VkCommandBuffer command_buffer = beginSingleTimeCommands();
-
-    VkImageMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-    barrier.oldLayout = oldLayout;
-    barrier.newLayout = newLayout;
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.image = image;
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = mipLevels;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-    barrier.srcAccessMask = 0;
-    barrier.dstAccessMask = 0;
-
-    VkPipelineStageFlags source_stage;
-    VkPipelineStageFlags destination_stage;
-
-    if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-    {
-        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-        if (hasStencilComponent(format))
-        {
-            barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-        }
-    }
-
-    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-    {
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    }
-    else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-    {
-        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-        source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    }
-    else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
-    {
-        barrier.srcAccessMask = 0;
-        barrier.dstAccessMask =
-                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-        source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        destination_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    }
-    else
-    {
-        throw std::invalid_argument("Unsupported layout transition!");
-    }
-
-    vkCmdPipelineBarrier(command_buffer,
-                         source_stage, destination_stage,
-                         0, 0, nullptr, 0, nullptr, 1,
-                         &barrier);
-
-    endSingleTimeCommands(command_buffer);
-}
-
-VkImageView
-Renderer::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
-{
-    VkImageViewCreateInfo view_info{};
-    view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    view_info.image = image;
-    view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    view_info.format = format;
-    view_info.subresourceRange.aspectMask = aspectFlags;
-    view_info.subresourceRange.baseMipLevel = 0;
-    view_info.subresourceRange.levelCount = mipLevels;
-    view_info.subresourceRange.baseArrayLayer = 0;
-    view_info.subresourceRange.layerCount = 1;
-
-    VkImageView image_view;
-    if (vkCreateImageView(m_LogicalDevice, &view_info, nullptr, &image_view) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create texture image view!");
-    }
-
-    return image_view;
-}
-
 void Renderer::createDepthResources()
 {
     VkFormat depth_format = findDepthFormat();
-    createImage(m_SwapChainExtent.width, m_SwapChainExtent.height, 1, depth_format, VK_IMAGE_TILING_OPTIMAL,
+    m_VulkanContext->createImage(m_SwapChainExtent.width, m_SwapChainExtent.height, 1, depth_format, VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 m_DepthImage, m_DepthImageMemory, m_MSAASamples);
-    m_DepthImageView = createImageView(m_DepthImage, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+    m_DepthImageView = m_VulkanContext->createImageView(m_DepthImage, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
-    transitionImageLayout(m_DepthImage, depth_format, VK_IMAGE_LAYOUT_UNDEFINED,
+    m_VulkanContext->transitionImageLayout(m_DepthImage, depth_format, VK_IMAGE_LAYOUT_UNDEFINED,
                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
 
 }
@@ -1669,69 +1535,6 @@ VkFormat Renderer::findDepthFormat()
 bool Renderer::hasStencilComponent(VkFormat format)
 {
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-}
-
-std::shared_ptr<omp::Model> Renderer::loadModel(const std::string& name, const std::string& modelName)
-{
-    tinyobj::attrib_t attrib;
-    std::vector<tinyobj::shape_t> shapes;
-    std::vector<tinyobj::material_t> materials;
-    std::string warn, err;
-
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelName.c_str()))
-    {
-        throw std::runtime_error(warn + err);
-    }
-
-    m_UniqueVertices.clear();
-
-    omp::Model loaded_model;
-
-    for (const auto& shape: shapes)
-    {
-        for (const auto& index: shape.mesh.indices)
-        {
-            omp::Vertex vertex{};
-
-            vertex.pos = {
-                    attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2]
-            };
-            vertex.tex_coord = {
-                    attrib.texcoords[2 * index.texcoord_index + 0],
-                    1 - attrib.texcoords[2 * index.texcoord_index + 1]
-            };
-            vertex.color = {
-                    attrib.colors[3 * index.vertex_index + 0],
-                    attrib.colors[3 * index.vertex_index + 1],
-                    attrib.colors[3 * index.vertex_index + 2]
-            };
-
-            vertex.normal = {
-                    attrib.normals[3 * index.normal_index + 0],
-                    attrib.normals[3 * index.normal_index + 1],
-                    attrib.normals[3 * index.normal_index + 2]
-            };
-            // TODO incorrect amount
-
-            if (m_UniqueVertices.count(vertex) == 0)
-            {
-                m_UniqueVertices[vertex] = static_cast<uint32_t>(loaded_model.getVertices().size());
-                loaded_model.addVertex(vertex);
-            }
-
-            loaded_model.addIndex(m_UniqueVertices[vertex]);
-        }
-    }
-
-    loaded_model.setName(name);
-    // TODO should be choosable
-    loaded_model.setMaterial(m_DefaultMaterial);
-    loadModelToBuffer(loaded_model);
-    auto model_ptr = std::make_shared<omp::Model>(loaded_model);
-    m_CurrentScene->addModelToScene(model_ptr);
-    return model_ptr;
 }
 
 void Renderer::createImguiContext()
@@ -1896,12 +1699,12 @@ void Renderer::createColorResources()
 {
     VkFormat color_format = m_SwapChainImageFormat;
 
-    createImage(m_SwapChainExtent.width, m_SwapChainExtent.height, 1,
+    m_VulkanContext->createImage(m_SwapChainExtent.width, m_SwapChainExtent.height, 1,
                 color_format, VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ColorImage, m_ColorImageMemory,
                 m_MSAASamples);
-    m_ColorImageView = createImageView(m_ColorImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    m_ColorImageView = m_VulkanContext->createImageView(m_ColorImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
 }
 
@@ -2090,12 +1893,12 @@ void Renderer::destroyAllCommandBuffers()
 void Renderer::initializeScene()
 {
     // TODO: model split
-    loadModel("First", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
-    loadModel("Second", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
-    loadModel("third", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
-    loadModel("fourth", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
+    addModelToScene("First", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
+    addModelToScene("Second", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
+    addModelToScene("third", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
+    addModelToScene("fourth", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
 
-    auto model = loadModel("I see the light", "../models/sphere.obj");
+    auto model = addModelToScene("I see the light", "../models/sphere.obj");
     auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default_no_light");
     mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
     mat->setShaderName("Simple");
@@ -2108,5 +1911,22 @@ void Renderer::tick(float deltaTime)
 {
     m_CurrentScene->getModel("fourth")->getRotation().x += 1*deltaTime;
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
+}
+
+void Renderer::addModelToScene(const std::shared_ptr<omp::Model>& inModel)
+{
+    inModel->setMaterial(m_DefaultMaterial);
+    loadModelToBuffer(*inModel);
+    m_CurrentScene->addModelToScene(inModel);
+}
+
+std::shared_ptr<omp::Model> Renderer::addModelToScene(const std::string& inName, const std::string& inPath)
+{
+    auto model = omp::ModelStatics::LoadModel(inName, inPath);
+    // TODO should be choosable
+    model->setMaterial(m_DefaultMaterial);
+    loadModelToBuffer(*model);
+    m_CurrentScene->addModelToScene(model);
+    return model;
 }
 

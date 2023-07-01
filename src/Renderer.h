@@ -11,7 +11,6 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 
-#include <glm/gtx/hash.hpp>
 
 #include <iostream>
 #include "fstream"
@@ -202,8 +201,6 @@ private:
             VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
             VkDeviceMemory& bufferMemory);
 
-    std::shared_ptr<omp::Model> loadModel(const std::string& name, const std::string& modelName);
-
     void loadModelToBuffer(const omp::Model& model);
 
     void createUniformBuffers();
@@ -216,16 +213,9 @@ private:
 
     void createDepthResources();
 
-    void createImage(
-            uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling,
-            VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory,
-            VkSampleCountFlagBits numSamples);
-
     void createTextureImage();
 
     void createColorResources();
-
-    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
     void createSyncObjects();
 
@@ -233,6 +223,9 @@ private:
     void createDescriptorPool();
 
     void createDescriptorSets();
+
+    void addModelToScene(const std::shared_ptr<omp::Model>& inModel);
+    std::shared_ptr<omp::Model> addModelToScene(const std::string& inName, const std::string& inPath);
 
     void retrieveMaterialRenderState(const std::shared_ptr<omp::Material>& material);
 
@@ -280,13 +273,6 @@ private:
     bool hasStencilComponent(VkFormat format);
 
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
-    void transitionImageLayout(
-            VkImage image,
-            VkFormat format,
-            VkImageLayout oldLayout,
-            VkImageLayout newLayout,
-            uint32_t mipLevels);
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
