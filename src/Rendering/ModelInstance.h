@@ -19,7 +19,7 @@ namespace omp
         glm::vec3 m_Scale;
 
         std::shared_ptr<MaterialInstance> m_MaterialInstance = nullptr;
-        std::shared_ptr<Model> m_Model = nullptr;
+        std::weak_ptr<Model> m_Model;
     public:
         ModelInstance();
         ModelInstance(const std::shared_ptr<omp::Model>& inModel);
@@ -32,7 +32,7 @@ namespace omp
         void setMaterialInstance(const std::shared_ptr<MaterialInstance>& inInstance);
         std::shared_ptr<MaterialInstance>& getMaterialInstance() { return m_MaterialInstance; }
 
-        std::shared_ptr<omp::Model> getModel() const { return m_Model; }
+        std::weak_ptr<omp::Model> getModel() const { return m_Model; }
         void setModel(const std::shared_ptr<omp::Model>& inModel);
 
         glm::mat4 getTransform() const;

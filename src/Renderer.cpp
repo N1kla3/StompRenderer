@@ -794,8 +794,8 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                 0, 1, &m_UboDescriptorSets[KHRImageIndex],
                                 0, nullptr);
 
-        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel()->getVertexBuffer(), offsets);
-        vkCmdBindIndexBuffer(main_buffer, current_model->getModel()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer, current_model->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
         omp::ModelPushConstant constant{ current_model->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
         vkCmdPushConstants(main_buffer,
@@ -822,7 +822,7 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                     0, nullptr);
         }
         vkCmdDrawIndexed(main_buffer,
-                         static_cast<uint32_t>(current_model->getModel()->getIndices().size()), 1, 0, 0, 0);
+                         static_cast<uint32_t>(current_model->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
     }
 
     endRenderPass(m_RenderPass.get(), main_buffer);
