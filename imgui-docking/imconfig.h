@@ -125,6 +125,8 @@ namespace ImGui
 */
 #ifdef _MSC_VER
     #define ImTextureID unsigned long long
+#elif __gnu_linux__
+    #define ImTextureId unsigned long*;
 #else
     #define ImTextureID uintptr_t*
 #endif
