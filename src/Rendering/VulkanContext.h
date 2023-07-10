@@ -45,9 +45,11 @@ namespace omp
         VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
         VkShaderModule createShaderModule(const std::vector<char>& code);
-        void destroyShaderModule(VkShaderModule module);
+        void destroyShaderModule(VkShaderModule inModule);
 
         void setCommandPool(VkCommandPool pool) { command_pools = pool; }
+
+        void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
         friend class MaterialManager;
     };

@@ -1,21 +1,9 @@
 #include "Model.h"
 
-#define GLM_ENABLE_EXPERIMENTAL
-
-#include <glm/gtx/quaternion.hpp>
-
 omp::Model::Model()
         : m_Name("NONE")
-        , m_Translation(glm::vec3{1.f})
-        , m_Rotation(glm::vec3{0.f})
-        , m_Scale(glm::vec3{1.f})
 {
 
-}
-
-void omp::Model::setMaterial(const std::shared_ptr<Material>& inMaterial)
-{
-    m_MaterialInstance = std::make_shared<MaterialInstance>(inMaterial);
 }
 
 void omp::Model::addVertex(const omp::Vertex& inVertex)
@@ -38,47 +26,79 @@ void omp::Model::addIndices(const std::vector<uint32_t>& inIndices)
     m_Indices = inIndices;
 }
 
-/*
-void omp::Model::RotateModel(float angle, const glm::vec3& rotationAxis)
+void omp::Model::loadVertexToMemory(const std::shared_ptr<omp::VulkanContext>& inContext)
 {
-    m_Transform = glm::rotate(m_Transform, angle, rotationAxis);
+    VkDeviceSize buffer_size = sizeof(getVertices()[0]) * getVertices().size();
+
+    m_Context = inContext;
+
+    // Vertex buffer
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_memory;
+
+    m_Context->createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            staging_buffer, staging_memory);
+
+    void* data;
+    vkMapMemory(m_Context->logical_device, staging_memory, 0, buffer_size, 0, &data);
+    memcpy(data, getVertices().data(), (size_t) buffer_size);
+    vkUnmapMemory(m_Context->logical_device, staging_memory);
+
+    m_Context->createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            m_VertexBuffer, m_VertexMemory);
+
+    m_Context->copyBuffer(staging_buffer, m_VertexBuffer, buffer_size);
+
+    vkDestroyBuffer(m_Context->logical_device, staging_buffer, nullptr);
+    vkFreeMemory(m_Context->logical_device, staging_memory, nullptr);
 }
 
-void omp::Model::MoveModel(const glm::vec3& translation)
+void omp::Model::loadIndexToMemory(const std::shared_ptr<omp::VulkanContext>& inContext)
 {
-    m_Transform = glm::translate(m_Transform, translation);
+    // Index buffer
+    VkDeviceSize buffer_size = sizeof(getIndices()[0]) * getIndices().size();
+
+    m_Context = inContext;
+
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_memory;
+
+    m_Context->createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            staging_buffer, staging_memory);
+
+    void* data;
+    vkMapMemory(m_Context->logical_device, staging_memory, 0, buffer_size, 0, &data);
+    memcpy(data, getIndices().data(), (size_t) buffer_size);
+    vkUnmapMemory(m_Context->logical_device, staging_memory);
+
+    m_Context->createBuffer(
+            buffer_size,
+            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+            m_IndexBuffer, m_IndexMemory);
+
+    m_Context->copyBuffer(staging_buffer, m_IndexBuffer, buffer_size);
+
+    vkDestroyBuffer(m_Context->logical_device, staging_buffer, nullptr);
+    vkFreeMemory(m_Context->logical_device, staging_memory, nullptr);
 }
 
-void omp::Model::ScaleModel(const glm::vec3& scale)
+omp::Model::~Model()
 {
-    m_Transform = glm::scale(m_Transform, scale);
-}
-
-void omp::Model::SetTransform()
-{
-
-}
- */
-
-glm::vec3& omp::Model::getPosition()
-{
-    return m_Translation;
-}
-
-glm::vec3& omp::Model::getRotation()
-{
-    return m_Rotation;
-}
-
-glm::vec3& omp::Model::getScale()
-{
-    return m_Scale;
-}
-
-glm::mat4 omp::Model::getTransform() const
-{
-    glm::mat4 rotation = glm::toMat4(glm::quat(m_Rotation));
-    return glm::translate(glm::mat4(1.0f), m_Translation)
-           * rotation
-           * glm::scale(glm::mat4(1.0f), m_Scale);
+    if (m_Context)
+    {
+        vkDestroyBuffer(m_Context->logical_device, m_IndexBuffer, nullptr);
+        vkDestroyBuffer(m_Context->logical_device, m_VertexBuffer, nullptr);
+        vkFreeMemory(m_Context->logical_device, m_IndexMemory, nullptr);
+        vkFreeMemory(m_Context->logical_device, m_VertexMemory, nullptr);
+    }
 }

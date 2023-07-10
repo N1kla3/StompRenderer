@@ -107,34 +107,35 @@ public:
     // Lifecycle //
     // ========= //
     Model();
-    ~Model() = default;
+    Model(const Model& inModel) = delete;
+    Model(Model&& inModel) = delete;
+    ~Model();
 
 private:
     // State //
     // ===== //
     std::string m_Name;
 
-    glm::vec3 m_Translation;
-    glm::vec3 m_Rotation;
-    glm::vec3 m_Scale;
-
     std::vector<Vertex> m_Vertices;
 
     std::vector<uint32_t> m_Indices;
 
-    std::shared_ptr<MaterialInstance> m_MaterialInstance;
+    VkBuffer m_IndexBuffer;
+    VkDeviceMemory m_IndexMemory;
+
+    VkBuffer m_VertexBuffer;
+    VkDeviceMemory m_VertexMemory;
+
+    std::shared_ptr<omp::VulkanContext> m_Context = nullptr;
 
 public:
     // Methods //
     // ======= //
-    //void RotateModel(float angle, const glm::vec3& rotationAxis);
-    //void MoveModel(const glm::vec3& translation);
-    //void ScaleModel(const glm::vec3& scale);
-    //void SetTransform();
-
     void setName(const std::string& inName) { m_Name = inName; }
 
-    void setMaterial(const std::shared_ptr<Material>& inMaterial);
+    void loadVertexToMemory(const std::shared_ptr<omp::VulkanContext>& inContext);
+    void loadIndexToMemory(const std::shared_ptr<omp::VulkanContext>& inContext);
+
     void addVertex(const omp::Vertex& inVertex);
     void addVertices(const std::vector<Vertex>& inVertices);
     void addIndex(uint32_t inIndex);
@@ -142,17 +143,12 @@ public:
 
     const std::string& getName() const { return m_Name; }
 
-    std::shared_ptr<MaterialInstance>& getMaterialInstance() { return m_MaterialInstance; }
-
-    glm::mat4 getTransform() const;
-
     const std::vector<Vertex>& getVertices() const { return m_Vertices; }
 
     const std::vector<uint32_t>& getIndices() const { return m_Indices; }
 
-    glm::vec3& getPosition();
-    glm::vec3& getRotation();
-    glm::vec3& getScale();
+    VkBuffer& getVertexBuffer() { return m_VertexBuffer; }
+    VkBuffer& getIndexBuffer() { return m_IndexBuffer; }
 };
 
 

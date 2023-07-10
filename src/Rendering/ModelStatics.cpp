@@ -1,14 +1,14 @@
 #include "ModelStatics.h"
 #include "tiny_obj_loader.h"
 
-std::shared_ptr<omp::Model> omp::ModelStatics::LoadModel(const std::string& name, const std::string& modelName)
+void omp::ModelManager::loadModel(const std::string& inPath)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelName.c_str()))
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, inPath.c_str()))
     {
         throw std::runtime_error(warn + err);
     }
@@ -17,7 +17,7 @@ std::shared_ptr<omp::Model> omp::ModelStatics::LoadModel(const std::string& name
 
     unique_vertices.clear();
 
-    omp::Model loaded_model;
+    std::shared_ptr<omp::Model> loaded_model = std::make_shared<omp::Model>();
 
     for (const auto& shape: shapes)
     {
@@ -49,15 +49,33 @@ std::shared_ptr<omp::Model> omp::ModelStatics::LoadModel(const std::string& name
 
             if (unique_vertices.count(vertex) == 0)
             {
-                unique_vertices[vertex] = static_cast<uint32_t>(loaded_model.getVertices().size());
-                loaded_model.addVertex(vertex);
+                unique_vertices[vertex] = static_cast<uint32_t>(loaded_model->getVertices().size());
+                loaded_model->addVertex(vertex);
             }
 
-            loaded_model.addIndex(unique_vertices[vertex]);
+            loaded_model->addIndex(unique_vertices[vertex]);
         }
     }
+    loaded_model->setName(inPath);
+    m_Models.insert({inPath, loaded_model});
+}
 
-    loaded_model.setName(name);
-    auto model_ptr = std::make_shared<omp::Model>(loaded_model);
-    return model_ptr;
+std::shared_ptr<omp::Model> omp::ModelManager::getModel(const std::string& inPath) const
+{
+    if (m_Models.find(inPath) != m_Models.end())
+    {
+        return m_Models.at(inPath);
+    }
+    return nullptr;
+}
+
+std::shared_ptr<omp::ModelInstance> omp::ModelManager::createInstanceFrom(const std::string& inPath)
+{
+    auto ptr = getModel(inPath);
+    if (ptr.get())
+    {
+        auto instance = std::make_shared<omp::ModelInstance>(ptr);
+        return instance;
+    }
+    return nullptr;
 }

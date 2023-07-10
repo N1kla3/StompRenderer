@@ -41,6 +41,7 @@ namespace
 
 Renderer::Renderer()
         : m_CurrentScene(std::make_shared<omp::Scene>())
+        , m_ModelManager(std::make_unique<omp::ModelManager>())
 {
 }
 
@@ -113,23 +114,7 @@ void Renderer::cleanup()
         DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
     }
 
-    for (VkBuffer buffer: m_IndexBuffers)
-    {
-        vkDestroyBuffer(m_LogicalDevice, buffer, nullptr);
-    }
-    for (VkDeviceMemory memory: m_IndexBufferMemories)
-    {
-        vkFreeMemory(m_LogicalDevice, memory, nullptr);
-    }
-
-    for (VkBuffer buffer: m_VertexBuffers)
-    {
-        vkDestroyBuffer(m_LogicalDevice, buffer, nullptr);
-    }
-    for (VkDeviceMemory memory: m_VertexBufferMemories)
-    {
-        vkFreeMemory(m_LogicalDevice, memory, nullptr);
-    }
+    m_ModelManager.reset(nullptr);
 
     m_UboBuffer.reset();
     m_LightSystem.reset();
@@ -344,7 +329,7 @@ bool Renderer::isDeviceSuitable(VkPhysicalDevice device)
     VkPhysicalDeviceFeatures supported_features;
     vkGetPhysicalDeviceFeatures(device, &supported_features);
 
-    return properties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+    return properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
            && features.geometryShader && indices.IsComplete() && extensions_supported && swap_chain_adequate &&
            supported_features.samplerAnisotropy;
 }
@@ -809,8 +794,8 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                 0, 1, &m_UboDescriptorSets[KHRImageIndex],
                                 0, nullptr);
 
-        vkCmdBindVertexBuffers(main_buffer, 0, 1, &m_VertexBuffers[index], offsets);
-        vkCmdBindIndexBuffer(main_buffer, m_IndexBuffers[index], 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer, current_model->getModel()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
         omp::ModelPushConstant constant{ current_model->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
         vkCmdPushConstants(main_buffer,
@@ -837,7 +822,7 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                     0, nullptr);
         }
         vkCmdDrawIndexed(main_buffer,
-                         static_cast<uint32_t>(m_CurrentScene->getModels()[index]->getIndices().size()), 1, 0, 0, 0);
+                         static_cast<uint32_t>(current_model->getModel()->getIndices().size()), 1, 0, 0, 0);
     }
 
     endRenderPass(m_RenderPass.get(), main_buffer);
@@ -1043,123 +1028,6 @@ void Renderer::framebufferResizeCallback(GLFWwindow* window, int width, int heig
 {
     auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
     app->m_FramebufferResized = true;
-}
-
-void Renderer::createBuffer(
-        VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
-        VkDeviceMemory& bufferMemory)
-{
-    VkBufferCreateInfo buffer_info{};
-    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    buffer_info.size = size;
-    buffer_info.usage = usage;
-    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    if (vkCreateBuffer(m_LogicalDevice, &buffer_info, nullptr, &buffer) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create vertex buffer");
-    }
-
-    VkMemoryRequirements memory_requirements;
-    vkGetBufferMemoryRequirements(m_LogicalDevice, buffer, &memory_requirements);
-
-    VkMemoryAllocateInfo allocate_info{};
-    allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocate_info.allocationSize = memory_requirements.size;
-    allocate_info.memoryTypeIndex = findMemoryType(memory_requirements.memoryTypeBits, properties);
-
-    if (vkAllocateMemory(m_LogicalDevice, &allocate_info, nullptr, &bufferMemory) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate vertex buffer memory");
-    }
-
-    vkBindBufferMemory(m_LogicalDevice, buffer, bufferMemory, 0);
-}
-
-void Renderer::loadModelToBuffer(const omp::Model& model)
-{
-    VkDeviceSize buffer_size = sizeof(model.getVertices()[0]) * model.getVertices().size();
-
-    // Vertex buffer
-    size_t index = m_VertexBuffers.size();
-    VkBuffer staging_buffer;
-    VkDeviceMemory staging_buffer_memory;
-    createBuffer(
-            buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            staging_buffer, staging_buffer_memory);
-
-    void* data;
-    vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-    memcpy(data, model.getVertices().data(), (size_t) buffer_size);
-    vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
-
-    createVertexBufferAndMemoryAtIndex(index);
-
-    createBuffer(
-            buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            m_VertexBuffers[index], m_VertexBufferMemories[index]);
-
-    copyBuffer(staging_buffer, m_VertexBuffers[index], buffer_size);
-
-    vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
-    vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
-
-    // Index buffer
-    index = m_IndexBuffers.size();
-    buffer_size = sizeof(model.getIndices()[0]) * model.getIndices().size();
-
-    createBuffer(
-            buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            staging_buffer, staging_buffer_memory);
-
-    vkMapMemory(m_LogicalDevice, staging_buffer_memory, 0, buffer_size, 0, &data);
-    memcpy(data, model.getIndices().data(), (size_t) buffer_size);
-    vkUnmapMemory(m_LogicalDevice, staging_buffer_memory);
-
-    createIndexBufferAndMemoryAtIndex(index);
-
-    createBuffer(
-            buffer_size,
-            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            m_IndexBuffers[index], m_IndexBufferMemories[index]);
-
-    copyBuffer(staging_buffer, m_IndexBuffers[index], buffer_size);
-
-    vkDestroyBuffer(m_LogicalDevice, staging_buffer, nullptr);
-    vkFreeMemory(m_LogicalDevice, staging_buffer_memory, nullptr);
-}
-
-uint32_t Renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
-{
-    VkPhysicalDeviceMemoryProperties memory_properties;
-    vkGetPhysicalDeviceMemoryProperties(m_PhysDevice, &memory_properties);
-    for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
-    {
-        if ((typeFilter & (1 << i))
-            && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties)
-        {
-            return i;
-        }
-    }
-    throw std::runtime_error("failed to find suitable memory type");
-}
-
-void Renderer::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
-{
-    VkCommandBuffer command_buffer = beginSingleTimeCommands();
-
-    VkBufferCopy copy_region{};
-    copy_region.size = size;
-    vkCmdCopyBuffer(command_buffer, srcBuffer, dstBuffer, 1, &copy_region);
-
-    endSingleTimeCommands(command_buffer);
 }
 
 void Renderer::createDescriptorSetLayout()
@@ -1532,11 +1400,6 @@ VkFormat Renderer::findDepthFormat()
                                VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-bool Renderer::hasStencilComponent(VkFormat format)
-{
-    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-}
-
 void Renderer::createImguiContext()
 {
     IMGUI_CHECKVERSION();
@@ -1705,45 +1568,6 @@ void Renderer::createColorResources()
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ColorImage, m_ColorImageMemory,
                 m_MSAASamples);
     m_ColorImageView = m_VulkanContext->createImageView(m_ColorImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
-
-}
-
-void Renderer::createVertexBufferAndMemoryAtIndex(size_t index)
-{
-    if (m_VertexBuffers.size() >= index)
-    {
-        while (m_VertexBuffers.size() != index + 1)
-        {
-            m_VertexBuffers.push_back({});
-        }
-    }
-
-    if (m_VertexBufferMemories.size() >= index)
-    {
-        while (m_VertexBufferMemories.size() != index + 1)
-        {
-            m_VertexBufferMemories.push_back({});
-        }
-    }
-}
-
-void Renderer::createIndexBufferAndMemoryAtIndex(size_t index)
-{
-    if (m_IndexBuffers.size() >= index)
-    {
-        while (m_IndexBuffers.size() != index + 1)
-        {
-            m_IndexBuffers.push_back({});
-        }
-    }
-
-    if (m_IndexBufferMemories.size() >= index)
-    {
-        while (m_IndexBufferMemories.size() != index + 1)
-        {
-            m_IndexBufferMemories.push_back({});
-        }
-    }
 }
 
 void Renderer::renderAllUi()
@@ -1902,7 +1726,7 @@ void Renderer::initializeScene()
     auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default_no_light");
     mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
     mat->setShaderName("Simple");
-    model->setMaterial(mat);
+    model->setMaterialInstance(std::make_shared<omp::MaterialInstance>(mat));
 
     m_LightSystem->setModelForEach(model);
 }
@@ -1913,20 +1737,32 @@ void Renderer::tick(float deltaTime)
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
 
-void Renderer::addModelToScene(const std::shared_ptr<omp::Model>& inModel)
+void Renderer::addModelToScene(const std::shared_ptr<omp::ModelInstance>& inModel)
 {
-    inModel->setMaterial(m_DefaultMaterial);
-    loadModelToBuffer(*inModel);
+    if (!inModel->getMaterialInstance())
+    {
+        inModel->setMaterialInstance(std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
+    }
     m_CurrentScene->addModelToScene(inModel);
 }
 
-std::shared_ptr<omp::Model> Renderer::addModelToScene(const std::string& inName, const std::string& inPath)
+std::shared_ptr<omp::ModelInstance> Renderer::addModelToScene(const std::string& inName, const std::string& inPath)
 {
-    auto model = omp::ModelStatics::LoadModel(inName, inPath);
-    // TODO should be choosable
-    model->setMaterial(m_DefaultMaterial);
-    loadModelToBuffer(*model);
-    m_CurrentScene->addModelToScene(model);
-    return model;
+    if (!m_ModelManager->getModel(inPath))
+    {
+        m_ModelManager->loadModel(inPath);
+        loadModelInMemory(m_ModelManager->getModel(inPath));
+    }
+    auto model_inst = m_ModelManager->createInstanceFrom(inPath);
+    model_inst->setMaterialInstance(std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
+    model_inst->setName(inName);
+    m_CurrentScene->addModelToScene(model_inst);
+    return model_inst;
+}
+
+void Renderer::loadModelInMemory(const std::shared_ptr<omp::Model>& inModel)
+{
+    inModel->loadIndexToMemory(m_VulkanContext);
+    inModel->loadVertexToMemory(m_VulkanContext);
 }
 

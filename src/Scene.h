@@ -3,6 +3,7 @@
 #include <vector>
 #include "Rendering/Model.h"
 #include "Camera.h"
+#include "Rendering/ModelInstance.h"
 
 namespace omp
 {
@@ -16,7 +17,7 @@ namespace omp
         // ===== //
         bool m_StateDirty = false;
 
-        std::vector<std::shared_ptr<omp::Model>> m_Models;
+        std::vector<std::shared_ptr<omp::ModelInstance>> m_Models;
         std::shared_ptr<omp::Camera> m_CurrentCamera;
 
         std::vector<std::shared_ptr<omp::Camera>> m_Cameras;
@@ -24,12 +25,12 @@ namespace omp
     public:
         // Methods //
         // ======= //
-        void addModelToScene(const omp::Model& modelToAdd);
-        void addModelToScene(const std::shared_ptr<omp::Model>& modelToAdd);
-        std::shared_ptr<omp::Model> getModel(const std::string& inName);
+        void addModelToScene(const omp::ModelInstance& modelToAdd);
+        void addModelToScene(const std::shared_ptr<omp::ModelInstance>& modelToAdd);
+        std::shared_ptr<omp::ModelInstance> getModel(const std::string& inName);
 
         // TODO map, no ref
-        std::vector<std::shared_ptr<omp::Model>>& getModels();
+        std::vector<std::shared_ptr<omp::ModelInstance>>& getModels();
 
         std::shared_ptr<omp::Camera> getCurrentCamera() const { return m_CurrentCamera; }
 

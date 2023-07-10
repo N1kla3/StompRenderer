@@ -2,6 +2,7 @@
 
 #include "Rendering/Model.h"
 #include "Light.h"
+#include "Rendering/ModelInstance.h"
 
 template<typename T>
 concept LightClassReq =
@@ -16,7 +17,7 @@ namespace omp
     {
     private:
         LightType m_Light;
-        std::shared_ptr<Model> m_Model;
+        std::shared_ptr<ModelInstance> m_Model;
 
     public:
         using LightClass = LightType;
@@ -25,7 +26,7 @@ namespace omp
         LightClass& getLight();
 
         inline void updateLightObject(){};
-        void setModel(const std::shared_ptr<Model>& inModel);
+        void setModel(const std::shared_ptr<ModelInstance>& inModel);
     };
 }
 
@@ -74,7 +75,7 @@ inline void omp::LightObject<omp::SpotLight>::updateLightObject()
 }
 
 template<LightClassReq LightType>
-void omp::LightObject<LightType>::setModel(const std::shared_ptr<Model>& inModel)
+void omp::LightObject<LightType>::setModel(const std::shared_ptr<ModelInstance>& inModel)
 {
     m_Model = (inModel);
 }

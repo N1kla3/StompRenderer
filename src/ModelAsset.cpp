@@ -10,9 +10,9 @@ omp::ModelAsset::ModelAsset()
 
 void omp::ModelAsset::initialize()
 {
-    m_Model = omp::ModelStatics::LoadModel(m_Name, ModelPath);
-    m_Material = omp::MaterialManager::getMaterialManager().createOrGetMaterial(MaterialPath);
-    m_Model->setMaterial(m_Material);
+    //m_Model = omp::ModelStatics::LoadModel(m_Name, ModelPath);
+    //m_Material = omp::MaterialManager::getMaterialManager().createOrGetMaterial(MaterialPath);
+    //m_Model->setMaterial(m_Material);
 }
 
 void omp::ModelAsset::serializeData(nlohmann::json& data)

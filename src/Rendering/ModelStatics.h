@@ -1,11 +1,17 @@
 #pragma once
 #include <memory>
 #include "Model.h"
+#include "ModelInstance.h"
 
 namespace omp{
 
-    struct ModelStatics
+    class ModelManager
     {
-        static std::shared_ptr<omp::Model> LoadModel(const std::string& name, const std::string& modelName);
+    private:
+        std::unordered_map<std::string, std::shared_ptr<omp::Model>> m_Models;
+    public:
+        void loadModel(const std::string& inPath);
+        std::shared_ptr<omp::Model> getModel(const std::string& inPath) const;
+        std::shared_ptr<omp::ModelInstance> createInstanceFrom(const std::string& inPath);
     };
 }

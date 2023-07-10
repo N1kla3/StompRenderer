@@ -33,6 +33,7 @@
 #include "Rendering/FrameBuffer.h"
 #include "Logs.h"
 #include "LightSystem.h"
+#include "Rendering/ModelStatics.h"
 
 namespace
 {
@@ -197,12 +198,6 @@ private:
             VkRect2D rect = VkRect2D());
     void endRenderPass(omp::RenderPass* inRenderPass, VkCommandBuffer inCommandBuffer);
 
-    void createBuffer(
-            VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
-            VkDeviceMemory& bufferMemory);
-
-    void loadModelToBuffer(const omp::Model& model);
-
     void createUniformBuffers();
 
     void updateUniformBuffer(uint32_t currentImage);
@@ -224,8 +219,9 @@ private:
 
     void createDescriptorSets();
 
-    void addModelToScene(const std::shared_ptr<omp::Model>& inModel);
-    std::shared_ptr<omp::Model> addModelToScene(const std::string& inName, const std::string& inPath);
+    void addModelToScene(const std::shared_ptr<omp::ModelInstance>& inModel);
+    std::shared_ptr<omp::ModelInstance> addModelToScene(const std::string& inName, const std::string& inPath);
+    void loadModelInMemory(const std::shared_ptr<omp::Model>& inModel);
 
     void retrieveMaterialRenderState(const std::shared_ptr<omp::Material>& material);
 
@@ -263,16 +259,11 @@ private:
 
     bool isDeviceSuitable(VkPhysicalDevice device);
 
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
     VkFormat findSupportedFormat(
             const std::vector<VkFormat>& candidates,
             VkImageTiling tiling,
             VkFormatFeatureFlags features);
     VkFormat findDepthFormat();
-    bool hasStencilComponent(VkFormat format);
-
-    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
 
@@ -283,9 +274,6 @@ private:
     VkSampleCountFlagBits getMaxUsableSampleCount();
 
     omp::GraphicsPipeline* findGraphicsPipeline(const std::string& name);
-
-    void createVertexBufferAndMemoryAtIndex(size_t index);
-    void createIndexBufferAndMemoryAtIndex(size_t index);
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
             VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -351,14 +339,6 @@ private:
     std::vector<VkDescriptorSet> m_UboDescriptorSets;
     std::vector<VkDescriptorSet> m_MaterialSets;
 
-    std::unordered_map<omp::Vertex, uint32_t> m_UniqueVertices;
-
-    std::vector<VkBuffer> m_VertexBuffers;
-    std::vector<VkDeviceMemory> m_VertexBufferMemories;
-
-    std::vector<VkBuffer> m_IndexBuffers;
-    std::vector<VkDeviceMemory> m_IndexBufferMemories;
-
     std::shared_ptr<omp::Material> m_DefaultMaterial;
 
     VkImage m_ColorImage;
@@ -390,6 +370,7 @@ private:
     std::shared_ptr<omp::ScenePanel> m_ScenePanel;
 
     std::unique_ptr<omp::LightSystem> m_LightSystem;
+    std::unique_ptr<omp::ModelManager> m_ModelManager;
 
     std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 

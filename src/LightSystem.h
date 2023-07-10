@@ -39,7 +39,7 @@ namespace omp
         VkBuffer getSpotLightBuffer(uint32_t khr);
 
         // TODO: temp
-        void setModelForEach(const std::shared_ptr<omp::Model>& inModel);
+        void setModelForEach(const std::shared_ptr<omp::ModelInstance>& inModel);
 
         void recreate();
         void update();

@@ -98,6 +98,8 @@ set(SOURCE
         Rendering/RenderPass.cpp
         Rendering/UniformBuffer.h
         Rendering/UniformBuffer.cpp
+        Rendering/ModelInstance.h
+        Rendering/ModelInstance.cpp
         )
 
 set(TESTS

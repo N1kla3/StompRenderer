@@ -34,7 +34,7 @@ void omp::EntityPanel::renderUi(float deltaTime)
     ImGui::End();
 }
 
-void omp::EntityPanel::setModel(const std::shared_ptr<omp::Model>& model)
+void omp::EntityPanel::setModel(const std::shared_ptr<omp::ModelInstance>& model)
 {
     m_Model = model;
     auto mat_panel = m_MaterialPanelRef.lock();

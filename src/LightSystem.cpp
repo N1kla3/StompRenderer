@@ -73,7 +73,7 @@ VkBuffer omp::LightSystem::getSpotLightBuffer(uint32_t khr)
     return 0;
 }
 
-void omp::LightSystem::setModelForEach(const std::shared_ptr<omp::Model>& inModel)
+void omp::LightSystem::setModelForEach(const std::shared_ptr<omp::ModelInstance>& inModel)
 {
     m_GlobalLight.setModel(inModel);
 

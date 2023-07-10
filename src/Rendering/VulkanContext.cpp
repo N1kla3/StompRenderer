@@ -318,6 +318,7 @@ void omp::VulkanContext::endSingleTimeCommands(VkCommandBuffer commandBuffer)
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers = &commandBuffer;
 
+    // TODO: transit to fences
     vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
     vkQueueWaitIdle(graphics_queue);
     vkFreeCommandBuffers(logical_device, command_pools, 1, &commandBuffer);
@@ -369,7 +370,18 @@ VkShaderModule omp::VulkanContext::createShaderModule(const std::vector<char>& c
     return shader_module;
 }
 
-void omp::VulkanContext::destroyShaderModule(VkShaderModule module)
+void omp::VulkanContext::destroyShaderModule(VkShaderModule inModule)
 {
-    vkDestroyShaderModule(logical_device, module, nullptr);
+    vkDestroyShaderModule(logical_device, inModule, nullptr);
+}
+
+void omp::VulkanContext::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+    VkCommandBuffer command_buffer = beginSingleTimeCommands();
+
+    VkBufferCopy copy_region{};
+    copy_region.size = size;
+    vkCmdCopyBuffer(command_buffer, srcBuffer, dstBuffer, 1, &copy_region);
+
+    endSingleTimeCommands(command_buffer);
 }
