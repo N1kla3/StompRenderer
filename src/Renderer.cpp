@@ -356,6 +356,10 @@ Renderer::QueueFamilyIndices Renderer::findQueueFamilies(VkPhysicalDevice device
         {
             indices.present_family = i;
         }
+        if (indices.IsComplete())
+        {
+            break;
+        }
         i++;
     }
 
