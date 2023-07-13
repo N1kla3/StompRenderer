@@ -1721,18 +1721,55 @@ void Renderer::destroyAllCommandBuffers()
 void Renderer::initializeScene()
 {
     // TODO: model split
-    addModelToScene("First", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
-    addModelToScene("Second", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
-    addModelToScene("third", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
-    addModelToScene("fourth", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
+    addModelToScene("1-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
+    addModelToScene("1-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
+    addModelToScene("1-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
+    addModelToScene("1-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
+    addModelToScene("2-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 14.f};
+    addModelToScene("2-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 14.f};
+    addModelToScene("2-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 14.f};
+    addModelToScene("2-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 14.f};
+    addModelToScene("3-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 24.f};
+    addModelToScene("3-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 24.f};
+    addModelToScene("3-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 24.f};
+    addModelToScene("3-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 24.f};
 
-    auto model = addModelToScene("I see the light", "../models/sphere.obj");
+    const std::string model_path = "../models/sphere.obj";
+
+    auto light_model = m_ModelManager->forceGetModel(model_path);
     auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default_no_light");
     mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
     mat->setShaderName("Simple");
-    model->setMaterialInstance(std::make_shared<omp::MaterialInstance>(mat));
+    // need other way to load, and async
+    loadModelInMemory(light_model);
 
-    m_LightSystem->setModelForEach(model);
+    glm::vec3 light_pos = {10.f, 13.f, 4.f};
+    auto func = [&light_pos, this](const std::string& inName, const std::shared_ptr<omp::Model>& inModel, const std::shared_ptr<omp::Material>& inMat)
+    -> std::shared_ptr<omp::ModelInstance>
+    {
+        auto my_model = std::make_shared<omp::ModelInstance>(inModel);
+        my_model->setMaterialInstance(std::make_shared<omp::MaterialInstance>(inMat));
+        my_model->setName(inName);
+        my_model->getPosition() = light_pos;
+        addModelToScene(my_model);
+        return my_model;
+    };
+
+    m_LightSystem->getGlobalLight().setModel(func("global_light", light_model, mat));
+
+    const std::string point_name = "point_light";
+    for (size_t index = 0; index < m_LightSystem->getPointLight().size(); index++)
+    {
+        light_pos.x += 10.f;
+        m_LightSystem->getPointLight()[index].setModel(func(point_name+"1", light_model, mat));
+    }
+
+    const std::string spot_name = "spot_light";
+    for (size_t index = 0; index < m_LightSystem->getSpotLight().size(); index++)
+    {
+        light_pos.x += 10.f;
+        m_LightSystem->getSpotLight()[index].setModel(func(spot_name+"1", light_model, mat));
+    }
 }
 
 void Renderer::tick(float deltaTime)

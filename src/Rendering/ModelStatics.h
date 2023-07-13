@@ -12,6 +12,7 @@ namespace omp{
     public:
         void loadModel(const std::string& inPath);
         std::shared_ptr<omp::Model> getModel(const std::string& inPath) const;
+        std::shared_ptr<omp::Model> forceGetModel(const std::string& inPath);
         std::shared_ptr<omp::ModelInstance> createInstanceFrom(const std::string& inPath);
     };
 }

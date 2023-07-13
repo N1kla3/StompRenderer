@@ -69,6 +69,15 @@ std::shared_ptr<omp::Model> omp::ModelManager::getModel(const std::string& inPat
     return nullptr;
 }
 
+std::shared_ptr<omp::Model> omp::ModelManager::forceGetModel(const std::string& inPath)
+{
+    if (m_Models.find(inPath) == m_Models.end())
+    {
+        loadModel(inPath);
+    }
+    return m_Models.at(inPath);
+}
+
 std::shared_ptr<omp::ModelInstance> omp::ModelManager::createInstanceFrom(const std::string& inPath)
 {
     auto ptr = getModel(inPath);

@@ -38,6 +38,10 @@ namespace omp
         VkBuffer getPointLightBuffer(uint32_t khr);
         VkBuffer getSpotLightBuffer(uint32_t khr);
 
+        LightObject<GlobalLight>& getGlobalLight() { return m_GlobalLight; }
+        std::array<LightObject<PointLight>, LIGHT_COUNT>& getPointLight() { return m_PointLights; }
+        std::array<LightObject<SpotLight>, LIGHT_COUNT>& getSpotLight() { return m_SpotLights; }
+
         // TODO: temp
         void setModelForEach(const std::shared_ptr<omp::ModelInstance>& inModel);
 
