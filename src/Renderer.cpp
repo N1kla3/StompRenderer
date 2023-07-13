@@ -769,12 +769,12 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     clear_values[0].color = g_ClearColor;
     clear_values[1].depthStencil = {1.0f, 0};
 
-    //rect.offset.x = m_RenderViewport->getOffset().x;
-    //rect.offset.y = m_RenderViewport->getOffset().y;
-    //rect.extent.height = m_RenderViewport->getSize().y;
-    //rect.extent.width = m_RenderViewport->getSize().x;
+    rect.offset.x = m_RenderViewport->getOffset().x;
+    rect.offset.y = m_RenderViewport->getOffset().y;
+    rect.extent.height = m_RenderViewport->getSize().y;
+    rect.extent.width = m_RenderViewport->getSize().x;
     beginRenderPass(m_RenderPass.get(), main_buffer, m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
-    //setViewport(main_buffer);
+    setViewport(main_buffer);
 
     VkDeviceSize offsets[] = {0};
     for (size_t index = 0; index < m_CurrentScene->getModels().size(); index++)

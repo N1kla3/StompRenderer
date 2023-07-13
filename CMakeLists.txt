@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(Vulkan REQUIRED)
 
-add_subdirectory(glfw-3.3.4)
+add_subdirectory(glfw-3.3.8)
 add_subdirectory(glm)
 add_subdirectory(tinyobjloader-master)
 add_subdirectory(spdlog)

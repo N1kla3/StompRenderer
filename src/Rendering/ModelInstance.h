@@ -14,9 +14,9 @@ namespace omp
     private:
         std::string m_Name;
 
-        glm::vec3 m_Translation;
-        glm::vec3 m_Rotation;
-        glm::vec3 m_Scale;
+        glm::vec3 m_Translation = glm::vec3(1.f);
+        glm::vec3 m_Rotation = glm::vec3(0.f);
+        glm::vec3 m_Scale = glm::vec3(1.f);
 
         std::shared_ptr<MaterialInstance> m_MaterialInstance = nullptr;
         std::weak_ptr<Model> m_Model;
