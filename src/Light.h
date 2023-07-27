@@ -23,9 +23,9 @@ namespace omp
         glm::vec4 diffuse = {1.0f, 1.0f, 1.0f, 0.4};
         glm::vec4 specular = {1.0f, 1.0f, 1.0f, 0.5};
 
-        float constant;
-        float linear;
-        float quadratic;
+        float constant = 1.f;
+        float linear = 0.07f;
+        float quadratic = 0.017f;
         float unused;
     };
 
@@ -39,13 +39,13 @@ namespace omp
 
         glm::vec4 direction;
 
-        float cut_off;
-        float outer_cutoff;
+        float cut_off = 0.91f;
+        float outer_cutoff = 0.82f;
 
-        float constant;
-        float linear;
+        float constant = 1.f;
+        float linear = 0.07f;
 
         glm::vec3 unu;
-        float quadratic;
+        float quadratic = 0.017f;
     };
 }

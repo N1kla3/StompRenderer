@@ -21,7 +21,7 @@ std::shared_ptr<omp::ModelInstance> omp::Scene::getModel(const std::string& inNa
 {
     auto model = std::find_if(m_Models.begin(), m_Models.end(), [&inName](const std::shared_ptr<omp::ModelInstance>& inModel)
     {
-        if (inName.compare(inModel->getName()))
+        if (inName.compare(inModel->getName()) == 0)
         {
             return true;
         }

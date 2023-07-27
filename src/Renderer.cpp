@@ -1734,6 +1734,15 @@ void Renderer::initializeScene()
     addModelToScene("3-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 24.f};
     addModelToScene("3-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 24.f};
 
+    auto viking = addModelToScene("dfasdf", "../models/vikingroom.obj");
+    auto viking_mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("viking");
+    auto vik_texture = omp::MaterialManager::getMaterialManager().loadTextureInstantly("../textures/viking.png");
+    viking_mat->addTexture(omp::ETextureType::Texture, vik_texture);
+    viking_mat->addTexture(omp::ETextureType::DiffusiveMap, vik_texture);
+    viking_mat->addTexture(omp::ETextureType::SpecularMap, vik_texture);
+    viking_mat->setShaderName("Light");
+    viking->setMaterialInstance(std::make_shared<omp::MaterialInstance>(viking_mat));
+
     const std::string model_path = "../models/sphere.obj";
 
     auto light_model = m_ModelManager->forceGetModel(model_path);
@@ -1774,7 +1783,9 @@ void Renderer::initializeScene()
 
 void Renderer::tick(float deltaTime)
 {
-    m_CurrentScene->getModel("fourth")->getRotation().x += 1*deltaTime;
+    m_CurrentScene->getModel("1-1")->getRotation().x += 1*deltaTime;
+    m_CurrentScene->getModel("2-1")->getRotation().x += 1*deltaTime;
+    //m_CurrentScene->getModel("dfasdf")->getRotation().x += 1*deltaTime;
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
 
