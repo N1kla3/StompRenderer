@@ -25,6 +25,8 @@ namespace omp
         void definePushConstant(VkShaderStageFlags stageFlags);
         void addPipelineSetLayout(VkDescriptorSetLayout descriptorSetLayout);
         void createShaders(const std::shared_ptr<class Shader>& shader);
+        void setDepthStencil();
+        void setDepthStencil(VkPipelineDepthStencilStateCreateInfo info);
         void confirmCreation(const std::shared_ptr<omp::RenderPass>& renderPass);
 
         VkPipeline getGraphicsPipeline() { return m_GraphicsPipeline; }
@@ -49,6 +51,7 @@ namespace omp
         VkPushConstantRange m_ConstantRange{};
         VkPipelineDepthStencilStateCreateInfo m_DepthStencil{};
         std::shared_ptr<omp::Shader> m_Shader;
+        VkPipelineCache m_PipelineCache{};
 
         VkPipelineLayoutCreateInfo m_PipelineLayoutInfo{};
         std::vector<VkDescriptorSetLayout> m_SetLayoutsHandles;

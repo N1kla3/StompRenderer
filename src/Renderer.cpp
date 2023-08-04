@@ -117,9 +117,11 @@ void Renderer::cleanup()
     m_ModelManager.reset(nullptr);
 
     m_UboBuffer.reset();
+    m_OutlineBuffer.reset();
     m_LightSystem.reset();
 
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_UboDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_OutlineSetLayout, nullptr);
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_TexturesDescriptorSetLayout, nullptr);
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
 
@@ -603,6 +605,27 @@ void Renderer::createImageViews()
 
 void Renderer::createGraphicsPipeline()
 {
+    VkStencilOpState stencil_state{};
+    stencil_state.compareOp = VK_COMPARE_OP_ALWAYS;
+    stencil_state.failOp = VK_STENCIL_OP_REPLACE;
+    stencil_state.depthFailOp = VK_STENCIL_OP_REPLACE;
+    stencil_state.passOp = VK_STENCIL_OP_REPLACE;
+    stencil_state.compareMask = 0xff;
+    stencil_state.writeMask = 0xff;
+    stencil_state.reference = 1;
+
+    VkPipelineDepthStencilStateCreateInfo depth_stencil{};
+    depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil.depthTestEnable = VK_TRUE;
+    depth_stencil.depthWriteEnable = VK_TRUE;
+    depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depth_stencil.depthBoundsTestEnable = VK_FALSE;
+    depth_stencil.minDepthBounds = 0.0f;
+    depth_stencil.maxDepthBounds = 1.0f;
+    depth_stencil.stencilTestEnable = VK_FALSE;
+    depth_stencil.front = stencil_state;
+    depth_stencil.back = stencil_state;
+
     // Light pipeline
     std::shared_ptr<omp::Shader> light_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vertLight.spv",
                                                                               "../SPRV/fragLight.spv");
@@ -615,6 +638,7 @@ void Renderer::createGraphicsPipeline()
     light_pipe->addPipelineSetLayout(m_UboDescriptorSetLayout);
     light_pipe->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
     light_pipe->createShaders(light_shader);
+    light_pipe->setDepthStencil(depth_stencil);
     light_pipe->confirmCreation(m_RenderPass);
 
     // Simple pipeline
@@ -628,11 +652,47 @@ void Renderer::createGraphicsPipeline()
     pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
     pipe->addPipelineSetLayout(m_UboDescriptorSetLayout);
     pipe->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
+    pipe->setDepthStencil(depth_stencil);
     pipe->createShaders(shader);
     pipe->confirmCreation(m_RenderPass);
 
+    // LIGHT STENCIL
+    std::unique_ptr<omp::GraphicsPipeline> light_stencil = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    light_stencil->startDefaultCreation();
+    light_stencil->createMultisamplingInfo(m_MSAASamples);
+    light_stencil->createViewport(m_SwapChainExtent);
+    light_stencil->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    light_stencil->addPipelineSetLayout(m_UboDescriptorSetLayout);
+    light_stencil->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
+    light_stencil->createShaders(light_shader);
+    depth_stencil.stencilTestEnable = VK_TRUE;
+    light_stencil->setDepthStencil(depth_stencil);
+    light_stencil->confirmCreation(m_RenderPass);
+
+    // Outline pipeline
+    std::shared_ptr<omp::Shader> outline_shader = std::make_unique<omp::Shader>(m_VulkanContext, "../SPRV/vertOutline.spv",
+                                                                                "../SPRV/fragOutline.spv");
+    std::unique_ptr<omp::GraphicsPipeline> outline_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    outline_pipe->startDefaultCreation();
+    outline_pipe->createMultisamplingInfo(m_MSAASamples);
+    outline_pipe->createViewport(m_SwapChainExtent);
+    outline_pipe->addPipelineSetLayout(m_OutlineSetLayout);
+    outline_pipe->createShaders(outline_shader);
+    stencil_state.compareOp = VK_COMPARE_OP_NOT_EQUAL;
+    stencil_state.failOp = VK_STENCIL_OP_KEEP;
+    stencil_state.depthFailOp = VK_STENCIL_OP_KEEP;
+    stencil_state.passOp = VK_STENCIL_OP_REPLACE;
+    depth_stencil.back = stencil_state;
+    depth_stencil.front = stencil_state;
+    depth_stencil.depthTestEnable = VK_FALSE;
+    depth_stencil.stencilTestEnable = VK_TRUE;
+    outline_pipe->setDepthStencil(depth_stencil);
+    outline_pipe->confirmCreation(m_RenderPass);
+
     m_Pipelines.insert({"Light", std::move(light_pipe)});
     m_Pipelines.insert({"Simple", std::move(pipe)});
+    m_Pipelines.insert({"Outline", std::move(outline_pipe)});
+    m_Pipelines.insert({"LightStencil", std::move(light_stencil)});
 }
 
 void Renderer::createRenderPass()
@@ -656,7 +716,7 @@ void Renderer::createRenderPass()
     depth_attachment.samples = m_MSAASamples;
     depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -780,13 +840,16 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     for (size_t index = 0; index < m_CurrentScene->getModels().size(); index++)
     {
         auto& current_model = m_CurrentScene->getModels()[index];
+        if (current_model->getName() == "2-2")
+        {
+            continue;
+        }
         auto& material_instance = current_model->getMaterialInstance();
         auto material = material_instance->getStaticMaterial().lock();
         if (!material)
         {
             WARN(Rendering, "Material is invalid in material instance");
         }
-
         VkPipeline model_pipeline = findGraphicsPipeline(material->getShaderName())->getGraphicsPipeline();
         VkPipelineLayout model_pipeline_layout = findGraphicsPipeline(material->getShaderName())->getPipelineLayout();
 
@@ -825,6 +888,71 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                     1, 1, &m_DefaultMaterial->getDescriptorSet()[KHRImageIndex],
                                     0, nullptr);
         }
+        vkCmdDrawIndexed(main_buffer,
+                         static_cast<uint32_t>(current_model->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
+    }
+
+    auto current_model = m_CurrentScene->getModel("2-2");
+    if (current_model && current_model->getName() == "2-2")
+    {
+        // TODO DEMO COPYPAST DELETE
+        ///////////////////////////////////
+        auto& material_instance = current_model->getMaterialInstance();
+        auto material = material_instance->getStaticMaterial().lock();
+        if (!material)
+        {
+            WARN(Rendering, "Material is invalid in material instance");
+        }
+        VkPipeline model_pipeline = findGraphicsPipeline("LightStencil")->getGraphicsPipeline();
+        VkPipelineLayout model_pipeline_layout = findGraphicsPipeline("LightStencil")->getPipelineLayout();
+
+        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
+
+
+        vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                model_pipeline_layout,
+                                0, 1, &m_UboDescriptorSets[KHRImageIndex],
+                                0, nullptr);
+
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer, current_model->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+        omp::ModelPushConstant constant{ current_model->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
+        vkCmdPushConstants(main_buffer,
+                           model_pipeline_layout,
+                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                           0, sizeof(omp::ModelPushConstant), &constant);
+
+
+        if (material)
+        {
+            retrieveMaterialRenderState(material);
+            vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    model_pipeline_layout,
+                                    1, 1, &material->getDescriptorSet()[KHRImageIndex],
+                                    0, nullptr);
+        }
+        else
+        {
+            // default material
+            vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    model_pipeline_layout,
+                                    1, 1, &m_DefaultMaterial->getDescriptorSet()[KHRImageIndex],
+                                    0, nullptr);
+        }
+        vkCmdDrawIndexed(main_buffer,
+                         static_cast<uint32_t>(current_model->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
+        ///////////////////////////////////////////////
+        ///////////////////////////////////////////////
+
+        auto outline_pipeline = findGraphicsPipeline("Outline");
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer, current_model->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, outline_pipeline->getGraphicsPipeline());
+        vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                outline_pipeline->getPipelineLayout(),
+                                0, 1, &m_OutlineDescriptorSets[KHRImageIndex],
+                                0, nullptr);
         vkCmdDrawIndexed(main_buffer,
                          static_cast<uint32_t>(current_model->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
     }
@@ -1024,6 +1152,7 @@ void Renderer::cleanupSwapChain()
     }
 
     vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_UboDescriptorSets.size(), m_UboDescriptorSets.data());
+    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_OutlineDescriptorSets.size(), m_OutlineDescriptorSets.data());
 
     m_ImguiRenderPass->destroyInnerState();
 }
@@ -1037,6 +1166,31 @@ void Renderer::framebufferResizeCallback(GLFWwindow* window, int width, int heig
 void Renderer::createDescriptorSetLayout()
 {
     // TODO: need abstraction
+    // OUTLINE LAYOUT
+    {
+        VkDescriptorSetLayoutBinding ubo_layout_binding{};
+        ubo_layout_binding.binding = 0;
+        ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        ubo_layout_binding.descriptorCount = 1;
+        ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        ubo_layout_binding.pImmutableSamplers = nullptr;
+
+        std::array<VkDescriptorSetLayoutBinding, 1> ubo_bindings =
+                {
+                        ubo_layout_binding,
+                };
+
+        VkDescriptorSetLayoutCreateInfo ubo_layout_info{};
+        ubo_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        ubo_layout_info.bindingCount = static_cast<uint32_t>(ubo_bindings.size());
+        ubo_layout_info.pBindings = ubo_bindings.data();
+
+        if (vkCreateDescriptorSetLayout(m_LogicalDevice, &ubo_layout_info, nullptr, &m_OutlineSetLayout) !=
+            VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to create outline descriptor set layout!");
+        }
+    }
 
     // UBO LAYOUT
     {
@@ -1128,6 +1282,8 @@ void Renderer::createUniformBuffers()
     VkDeviceSize buffer_size = sizeof(UniformBufferObject);
     m_UboBuffer = std::make_unique<omp::UniformBuffer>(m_VulkanContext, m_PresentKHRImagesNum, buffer_size);
 
+    m_OutlineBuffer = std::make_unique<omp::UniformBuffer>(m_VulkanContext, m_PresentKHRImagesNum, sizeof(OutlineUniformBuffer));
+
     m_LightSystem->recreate();
 }
 
@@ -1141,8 +1297,13 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
             m_CurrentScene->getCurrentCamera()->getNearClipping(), m_CurrentScene->getCurrentCamera()->getFarClipping());
     ubo.proj[1][1] *= -1;
     ubo.view_position = m_CurrentScene->getCurrentCamera()->getPosition();
-
     m_UboBuffer->mapMemory(ubo, currentImage);
+
+    OutlineUniformBuffer outline_buffer{};
+    outline_buffer.projection = ubo.proj;
+    outline_buffer.model = glm::scale(m_CurrentScene->getModel("2-2")->getTransform(), glm::vec3{1.2});
+    outline_buffer.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
+    m_OutlineBuffer->mapMemory(outline_buffer, currentImage);
 
     m_LightSystem->update();
     m_LightSystem->mapMemory(currentImage);
@@ -1173,6 +1334,41 @@ void Renderer::createDescriptorPool()
 
 void Renderer::createDescriptorSets()
 {
+    // OUTLINE
+    {
+        std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_OutlineSetLayout);
+
+        VkDescriptorSetAllocateInfo allocate_info{};
+        allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocate_info.descriptorPool = m_DescriptorPool;
+        allocate_info.descriptorSetCount = m_PresentKHRImagesNum;
+        allocate_info.pSetLayouts = layouts.data();
+
+        m_OutlineDescriptorSets.resize(m_PresentKHRImagesNum);
+        if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, m_OutlineDescriptorSets.data()) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to allocate descriptor sets!");
+        }
+        for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
+        {
+            VkDescriptorBufferInfo buffer_info{};
+            buffer_info.buffer = m_OutlineBuffer->getBuffer(i);
+            buffer_info.offset = 0;
+            buffer_info.range = sizeof(OutlineUniformBuffer);
+
+            std::array<VkWriteDescriptorSet, 1> descriptor_writes{};
+            descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptor_writes[0].dstSet = m_OutlineDescriptorSets[i];
+            descriptor_writes[0].dstBinding = 0;
+            descriptor_writes[0].dstArrayElement = 0;
+            descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptor_writes[0].descriptorCount = 1;
+            descriptor_writes[0].pBufferInfo = &buffer_info;
+            vkUpdateDescriptorSets(m_LogicalDevice,
+                                   static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
+        }
+    }
+    // UBO
     std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_UboDescriptorSetLayout);
 
     VkDescriptorSetAllocateInfo allocate_info{};
@@ -1371,7 +1567,7 @@ void Renderer::createDepthResources()
     m_VulkanContext->createImage(m_SwapChainExtent.width, m_SwapChainExtent.height, 1, depth_format, VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 m_DepthImage, m_DepthImageMemory, m_MSAASamples);
-    m_DepthImageView = m_VulkanContext->createImageView(m_DepthImage, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+    m_DepthImageView = m_VulkanContext->createImageView(m_DepthImage, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, 1);
 
     m_VulkanContext->transitionImageLayout(m_DepthImage, depth_format, VK_IMAGE_LAYOUT_UNDEFINED,
                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
@@ -1399,7 +1595,7 @@ VkFormat Renderer::findSupportedFormat(
 
 VkFormat Renderer::findDepthFormat()
 {
-    return findSupportedFormat({VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+    return findSupportedFormat({ VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT },
                                VK_IMAGE_TILING_OPTIMAL,
                                VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
@@ -1783,7 +1979,7 @@ void Renderer::initializeScene()
 
 void Renderer::tick(float deltaTime)
 {
-    m_CurrentScene->getModel("1-1")->getRotation().x += 1*deltaTime;
+    //m_CurrentScene->getModel("1-1")->getRotation().x += 1*deltaTime;
     m_CurrentScene->getModel("2-1")->getRotation().x += 1*deltaTime;
     //m_CurrentScene->getModel("dfasdf")->getRotation().x += 1*deltaTime;
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);

@@ -163,18 +163,10 @@ void omp::GraphicsPipeline::createShaders(const std::shared_ptr<struct Shader>& 
 
 void omp::GraphicsPipeline::confirmCreation(const std::shared_ptr<omp::RenderPass>& renderPass)
 {
-    VkPipelineDepthStencilStateCreateInfo depth_stencil{};
-    depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depth_stencil.depthTestEnable = VK_TRUE;
-    depth_stencil.depthWriteEnable = VK_TRUE;
-    depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
-    depth_stencil.depthBoundsTestEnable = VK_FALSE;
-    depth_stencil.minDepthBounds = 0.0f;
-    depth_stencil.maxDepthBounds = 1.0f;
-    depth_stencil.stencilTestEnable = VK_FALSE;
-    depth_stencil.front = {};
-    depth_stencil.back = {};
-
+    if (m_PipelineLayoutInfo.setLayoutCount == 0)
+    {
+        m_PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    }
     if (vkCreatePipelineLayout(m_LogicalDevice, &m_PipelineLayoutInfo, nullptr, &m_PipelineLayout)
         != VK_SUCCESS)
     {
@@ -183,7 +175,7 @@ void omp::GraphicsPipeline::confirmCreation(const std::shared_ptr<omp::RenderPas
 
     VkDynamicState dynamic_states[] = {
             VK_DYNAMIC_STATE_LINE_WIDTH,
-                VK_DYNAMIC_STATE_VIEWPORT
+            VK_DYNAMIC_STATE_VIEWPORT
     };
     VkPipelineDynamicStateCreateInfo dynamic_state{};
     dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -200,7 +192,7 @@ void omp::GraphicsPipeline::confirmCreation(const std::shared_ptr<omp::RenderPas
     pipeline_info.pViewportState = &m_ViewportState;
     pipeline_info.pRasterizationState = &m_Rasterizer;
     pipeline_info.pMultisampleState = &m_Multisampling;
-    pipeline_info.pDepthStencilState = &depth_stencil;
+    pipeline_info.pDepthStencilState = &m_DepthStencil;
     pipeline_info.pColorBlendState = &m_ColorBlending;
     pipeline_info.pDynamicState = &dynamic_state;
 
@@ -227,4 +219,26 @@ void omp::GraphicsPipeline::tryDestroyVulkanObjects()
         vkDestroyPipelineLayout(m_LogicalDevice, m_PipelineLayout, nullptr);
         vkDestroyPipeline(m_LogicalDevice, m_GraphicsPipeline, nullptr);
     }
+}
+
+void omp::GraphicsPipeline::setDepthStencil()
+{
+    VkPipelineDepthStencilStateCreateInfo depth_stencil{};
+    depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil.depthTestEnable = VK_TRUE;
+    depth_stencil.depthWriteEnable = VK_TRUE;
+    depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depth_stencil.depthBoundsTestEnable = VK_FALSE;
+    depth_stencil.minDepthBounds = 0.0f;
+    depth_stencil.maxDepthBounds = 1.0f;
+    depth_stencil.stencilTestEnable = VK_FALSE;
+    depth_stencil.front = {};
+    depth_stencil.back = {};
+
+    m_DepthStencil = depth_stencil;
+}
+
+void omp::GraphicsPipeline::setDepthStencil(VkPipelineDepthStencilStateCreateInfo info)
+{
+    m_DepthStencil = info;
 }

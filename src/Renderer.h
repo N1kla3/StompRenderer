@@ -83,6 +83,13 @@ struct UniformBufferObject
     glm::vec3 view_position;
 };
 
+struct OutlineUniformBuffer
+{
+    glm::mat4 model;
+    glm::mat4 projection;
+    glm::mat4 view;
+};
+
 struct CommandBufferScope
 {
     VkCommandBuffer buffer;
@@ -329,6 +336,7 @@ private:
 
     VkDescriptorSetLayout m_UboDescriptorSetLayout;
     VkDescriptorSetLayout m_TexturesDescriptorSetLayout;
+    VkDescriptorSetLayout m_OutlineSetLayout;
 
     std::shared_ptr<omp::RenderPass> m_RenderPass;
 
@@ -338,6 +346,7 @@ private:
     VkDescriptorPool m_DescriptorPool;
     std::vector<VkDescriptorSet> m_UboDescriptorSets;
     std::vector<VkDescriptorSet> m_MaterialSets;
+    std::vector<VkDescriptorSet> m_OutlineDescriptorSets;
 
     std::shared_ptr<omp::Material> m_DefaultMaterial;
 
@@ -346,6 +355,7 @@ private:
     VkImageView m_ColorImageView;
 
     std::unique_ptr<omp::UniformBuffer> m_UboBuffer;
+    std::unique_ptr<omp::UniformBuffer> m_OutlineBuffer;
 
     std::vector<VkImage> m_SwapChainImages;
 
