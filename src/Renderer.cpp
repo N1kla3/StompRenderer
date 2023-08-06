@@ -62,6 +62,7 @@ void Renderer::initVulkan()
     createCommandPool();
     createMaterialManager();
     createColorResources();
+    createViewportResources();
     createDepthResources();
     createFramebuffers();
     createTextureImage();
@@ -732,12 +733,13 @@ void Renderer::createRenderPass()
     color_attachment_resolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment_resolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment_resolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    color_attachment_resolve.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    // TODO What layout should be, what is this attachment for, how is work
+    color_attachment_resolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkAttachmentReference color_attachment_resolve_ref{};
     color_attachment_resolve_ref.attachment = 2;
-    color_attachment_resolve_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    color_attachment_resolve_ref.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -779,7 +781,7 @@ void Renderer::createFramebuffers()
 
 void Renderer::createFramebufferAtImage(size_t index)
 {
-    std::vector<VkImageView> attachments{m_ColorImageView, m_DepthImageView, m_SwapChainImageViews[index]};
+    std::vector<VkImageView> attachments{m_ColorImageView, m_DepthImageView, m_ViewportImageView};
     omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, m_SwapChainExtent.width, m_SwapChainExtent.height);
     m_SwapChainFramebuffers[index] = frame_buffer;
 }
@@ -807,20 +809,6 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     clear_value[0].color = g_ClearColor;
 
     VkRect2D rect{};
-    rect.extent.height = m_SwapChainExtent.height;
-    rect.extent.width = m_SwapChainExtent.width;
-    beginRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[KHRImageIndex].buffer, m_ImguiFramebuffers[KHRImageIndex], clear_value, rect);
-
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    renderAllUi();
-    ImGui::Render();
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[KHRImageIndex].buffer);
-
-    endRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[KHRImageIndex].buffer);
-
-
     // Main Render pass
     VkCommandBuffer& main_buffer = m_CommandBuffers[KHRImageIndex].buffer;
     prepareCommandBuffer(m_CommandBuffers[KHRImageIndex], m_CommandPool);
@@ -958,6 +946,30 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     }
 
     endRenderPass(m_RenderPass.get(), main_buffer);
+
+    // UI RENDERPASS
+    rect.extent.height = m_SwapChainExtent.height;
+    rect.extent.width = m_SwapChainExtent.width;
+    rect.offset.x = 0;
+    rect.offset.y = 0;
+    beginRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[KHRImageIndex].buffer, m_ImguiFramebuffers[KHRImageIndex], clear_value, rect);
+
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    renderAllUi();
+
+    ImGui::Begin("view");
+    auto id = ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    ImGui::Image(id, {200, 200});
+    ImGui::End();
+
+    ImGui::Render();
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[KHRImageIndex].buffer);
+
+    endRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[KHRImageIndex].buffer);
+
+
 }
 
 void Renderer::drawFrame()
@@ -1004,7 +1016,7 @@ void Renderer::drawFrame()
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
 
-    std::array<VkCommandBuffer, 2> command_buffers{m_ImguiCommandBuffers[image_index].buffer, m_CommandBuffers[image_index].buffer};
+    std::array<VkCommandBuffer, 2> command_buffers{m_CommandBuffers[image_index].buffer, m_ImguiCommandBuffers[image_index].buffer };
     submit_info.commandBufferCount = static_cast<uint32_t>(command_buffers.size());
     submit_info.pCommandBuffers = command_buffers.data();
 
@@ -1090,6 +1102,7 @@ void Renderer::recreateSwapChain()
     createRenderPass();
     createGraphicsPipeline();
     createColorResources();
+    createViewportResources();
     createDepthResources();
     createFramebuffers();
     createUniformBuffers();
@@ -1110,6 +1123,11 @@ void Renderer::cleanupSwapChain()
     vkDestroyImageView(m_LogicalDevice, m_ColorImageView, nullptr);
     vkDestroyImage(m_LogicalDevice, m_ColorImage, nullptr);
     vkFreeMemory(m_LogicalDevice, m_ColorImageMemory, nullptr);
+
+    vkDestroySampler(m_LogicalDevice, m_ViewportSampler, nullptr);
+    vkDestroyImageView(m_LogicalDevice, m_ViewportImageView, nullptr);
+    vkDestroyImage(m_LogicalDevice, m_ViewportImage, nullptr);
+    vkFreeMemory(m_LogicalDevice, m_ViewportImageMemory, nullptr);
 
     for (auto& frame_buffer : m_SwapChainFramebuffers)
     {
@@ -1674,7 +1692,7 @@ void Renderer::createImguiRenderPass()
     attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentReference color_attachment{};
     color_attachment.attachment = 0;
@@ -1768,6 +1786,18 @@ void Renderer::createColorResources()
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ColorImage, m_ColorImageMemory,
                 m_MSAASamples);
     m_ColorImageView = m_VulkanContext->createImageView(m_ColorImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+}
+
+void Renderer::createViewportResources()
+{
+    VkFormat color_format = m_SwapChainImageFormat;
+
+    m_VulkanContext->createImage(m_SwapChainExtent.width, m_SwapChainExtent.height, 1,
+                                 color_format, VK_IMAGE_TILING_OPTIMAL,
+                                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ViewportImage, m_ViewportImageMemory,
+                                 VK_SAMPLE_COUNT_1_BIT);
+    m_ViewportImageView = m_VulkanContext->createImageView(m_ViewportImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
 
 void Renderer::renderAllUi()

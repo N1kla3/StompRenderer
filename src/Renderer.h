@@ -218,6 +218,7 @@ private:
     void createTextureImage();
 
     void createColorResources();
+    void createViewportResources();
 
     void createSyncObjects();
 
@@ -353,6 +354,11 @@ private:
     VkImage m_ColorImage;
     VkDeviceMemory m_ColorImageMemory;
     VkImageView m_ColorImageView;
+
+    VkImage m_ViewportImage;
+    VkImageView m_ViewportImageView;
+    VkSampler m_ViewportSampler;
+    VkDeviceMemory m_ViewportImageMemory;
 
     std::unique_ptr<omp::UniformBuffer> m_UboBuffer;
     std::unique_ptr<omp::UniformBuffer> m_OutlineBuffer;
