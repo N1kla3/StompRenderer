@@ -52,10 +52,10 @@ void Renderer::initVulkan()
     createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
+    createImguiWidgets();
     createSwapChain();
     postSwapChainInitialize();
     createImageViews();
-    createImguiWidgets();
     createRenderPass();
     createDescriptorSetLayout();
     createGraphicsPipeline();
@@ -310,6 +310,9 @@ void Renderer::pickPhysicalDevice()
     {
         throw std::runtime_error("Failed to find suitable gpu");
     }
+    VkPhysicalDeviceProperties physical_device_properties;
+    vkGetPhysicalDeviceProperties(m_PhysDevice, &physical_device_properties);
+    m_DeviceLimits = physical_device_properties.limits;
 }
 
 bool Renderer::isDeviceSuitable(VkPhysicalDevice device)
@@ -748,13 +751,23 @@ void Renderer::createRenderPass()
     subpass.pDepthStencilAttachment = &depth_attach_ref;
     subpass.pResolveAttachments = &color_attachment_resolve_ref;
 
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    // Use subpass dependencies for layout transitions
+    VkSubpassDependency dependencies[2]{};
+    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[0].dstSubpass = 0;
+    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[0].srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+    dependencies[1].srcSubpass = 0;
+    dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
     m_RenderPass->startConfiguration();
 
@@ -764,7 +777,8 @@ void Renderer::createRenderPass()
 
     // reference leak if render pass not created in this method
     m_RenderPass->addSubpass(std::move(subpass));
-    m_RenderPass->addDependency(std::move(dependency));
+    m_RenderPass->addDependency(std::move(dependencies[0]));
+    m_RenderPass->addDependency(std::move(dependencies[1]));
 
     m_RenderPass->endConfiguration();
 }
@@ -782,7 +796,7 @@ void Renderer::createFramebuffers()
 void Renderer::createFramebufferAtImage(size_t index)
 {
     std::vector<VkImageView> attachments{m_ColorImageView, m_DepthImageView, m_ViewportImageView};
-    omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, m_SwapChainExtent.width, m_SwapChainExtent.height);
+    omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, m_RenderViewport->getSize().x, m_RenderViewport->getSize().y);
     m_SwapChainFramebuffers[index] = frame_buffer;
 }
 
@@ -817,8 +831,8 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     clear_values[0].color = g_ClearColor;
     clear_values[1].depthStencil = {1.0f, 0};
 
-    rect.offset.x = m_RenderViewport->getOffset().x;
-    rect.offset.y = m_RenderViewport->getOffset().y;
+    rect.offset.x = 0;
+    rect.offset.y = 0;
     rect.extent.height = m_RenderViewport->getSize().y;
     rect.extent.width = m_RenderViewport->getSize().x;
     beginRenderPass(m_RenderPass.get(), main_buffer, m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
@@ -957,12 +971,8 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    renderAllUi();
 
-    ImGui::Begin("view");
-    auto id = ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    ImGui::Image(id, {200, 200});
-    ImGui::End();
+    renderAllUi();
 
     ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[KHRImageIndex].buffer);
@@ -993,11 +1003,6 @@ void Renderer::drawFrame()
     {
         throw std::runtime_error("Failed to acquire swap chain image!");
     }
-    else
-    {
-        prepareFrameForImage(image_index);
-    }
-    //onViewportResize(image_index);
 
     if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
     {
@@ -1005,7 +1010,9 @@ void Renderer::drawFrame()
     }
     m_ImagesInFlight[image_index] = m_InFlightFences[m_CurrentFrame];
 
+    onViewportResize(image_index);
     updateUniformBuffer(image_index);
+    prepareFrameForImage(image_index);
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1582,7 +1589,7 @@ void Renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 void Renderer::createDepthResources()
 {
     VkFormat depth_format = findDepthFormat();
-    m_VulkanContext->createImage(m_SwapChainExtent.width, m_SwapChainExtent.height, 1, depth_format, VK_IMAGE_TILING_OPTIMAL,
+    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1, depth_format, VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 m_DepthImage, m_DepthImageMemory, m_MSAASamples);
     m_DepthImageView = m_VulkanContext->createImageView(m_DepthImage, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, 1);
@@ -1780,7 +1787,7 @@ void Renderer::createColorResources()
 {
     VkFormat color_format = m_SwapChainImageFormat;
 
-    m_VulkanContext->createImage(m_SwapChainExtent.width, m_SwapChainExtent.height, 1,
+    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1,
                 color_format, VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ColorImage, m_ColorImageMemory,
@@ -1792,12 +1799,31 @@ void Renderer::createViewportResources()
 {
     VkFormat color_format = m_SwapChainImageFormat;
 
-    m_VulkanContext->createImage(m_SwapChainExtent.width, m_SwapChainExtent.height, 1,
+    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1,
                                  color_format, VK_IMAGE_TILING_OPTIMAL,
                                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ViewportImage, m_ViewportImageMemory,
                                  VK_SAMPLE_COUNT_1_BIT);
     m_ViewportImageView = m_VulkanContext->createImageView(m_ViewportImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+
+    VkSamplerCreateInfo sampler_info{};
+    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_info.maxAnisotropy = 1.0f;
+    sampler_info.magFilter = VK_FILTER_LINEAR;
+    sampler_info.minFilter = VK_FILTER_LINEAR;
+    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    sampler_info.addressModeV = sampler_info.addressModeU;
+    sampler_info.addressModeW = sampler_info.addressModeU;
+    sampler_info.mipLodBias = 0.0f;
+    sampler_info.maxAnisotropy = 1.0f;
+    sampler_info.minLod = 0.0f;
+    sampler_info.maxLod = 1.0f;
+    sampler_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    if (vkCreateSampler(m_LogicalDevice, &sampler_info, nullptr, &m_ViewportSampler) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create viewport sampler");
+    }
 }
 
 void Renderer::renderAllUi()
@@ -1849,11 +1875,53 @@ void Renderer::createImguiWidgets()
     //m_Widgets.push_back(std::move(light_panel));
 }
 
+void Renderer::destroyViewportResources()
+{
+    vkDestroyImageView(m_LogicalDevice, m_DepthImageView, nullptr);
+    vkDestroyImage(m_LogicalDevice, m_DepthImage, nullptr);
+    vkFreeMemory(m_LogicalDevice, m_DepthImageMemory, nullptr);
+
+    vkDestroyImageView(m_LogicalDevice, m_ColorImageView, nullptr);
+    vkDestroyImage(m_LogicalDevice, m_ColorImage, nullptr);
+    vkFreeMemory(m_LogicalDevice, m_ColorImageMemory, nullptr);
+
+    vkDestroySampler(m_LogicalDevice, m_ViewportSampler, nullptr);
+    vkDestroyImageView(m_LogicalDevice, m_ViewportImageView, nullptr);
+    vkDestroyImage(m_LogicalDevice, m_ViewportImage, nullptr);
+    vkFreeMemory(m_LogicalDevice, m_ViewportImageMemory, nullptr);
+
+    for (auto& frame_buffer : m_SwapChainFramebuffers)
+    {
+        frame_buffer.destroyInnerState();
+    }
+}
+
 void Renderer::onViewportResize(size_t imageIndex)
 {
-    m_SwapChainFramebuffers[imageIndex].destroyInnerState();
-    createFramebufferAtImage(imageIndex);
-    prepareFrameForImage(imageIndex);
+    if (m_RenderViewport->isResized())
+    {
+        auto x = m_RenderViewport->getSize().x;
+        auto y = m_RenderViewport->getSize().y;
+        if (x <=0 || x >= m_DeviceLimits.maxFramebufferWidth) return;
+        if (y <=0 || y >= m_DeviceLimits.maxFramebufferHeight) return;
+
+        destroyViewportResources();
+
+        createColorResources();
+        createDepthResources();
+        createViewportResources();
+
+        for (size_t index = 0; index < m_SwapChainFramebuffers.size(); index++)
+        {
+            createFramebufferAtImage(index);
+        }
+        if (m_ViewportDescriptor != VK_NULL_HANDLE)
+        {
+            ImGui_ImplVulkan_RemoveTexture(m_ViewportDescriptor);
+        }
+        m_ViewportDescriptor = ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        m_RenderViewport->setImageId((ImTextureID)m_ViewportDescriptor);
+    }
 }
 
 void Renderer::createMaterialManager()
@@ -1922,8 +1990,8 @@ void Renderer::prepareCommandBuffer(CommandBufferScope& bufferScope, VkCommandPo
 void Renderer::setViewport(VkCommandBuffer inCommandBuffer)
 {
     VkViewport viewport;
-    viewport.x = m_RenderViewport->getOffset().x;
-    viewport.y = m_RenderViewport->getOffset().y;
+    viewport.x = 0;
+    viewport.y = 0;
     viewport.height = m_RenderViewport->getSize().y;
     viewport.width = m_RenderViewport->getSize().x;
     viewport.minDepth = 0.0f;

@@ -17,45 +17,21 @@ void omp::ViewPort::renderUi(float deltaTime)
     ImGui::Begin("Viewport", NULL, 0);
 
 
-    // RENDER RESIZING
-    ImVec2 new_size = ImGui::GetWindowSize();
-    float monitor_x = ImGui::GetWindowPos().x + ImGui::GetWindowSize().x;
-    if (monitor_x > viewport_size.x)
-    {
-        new_size.x -= monitor_x - viewport_size.x;
-    }
-    float monitor_y = ImGui::GetWindowPos().y + ImGui::GetWindowSize().y;
-    if (monitor_y > viewport_size.y)
-    {
-        new_size.y -= monitor_y - viewport_size.y;
-    }
+    auto new_size = ImGui::GetContentRegionAvail();
 
-    ImVec2 new_pos = ImGui::GetWindowPos();
-    if (ImGui::GetWindowPos().x < 0)
-    {
-        new_size.x += ImGui::GetWindowPos().x;
-        new_pos.x = 0;
-    }
-    if (ImGui::GetWindowPos().y < 0)
-    {
-        new_size.y += ImGui::GetWindowPos().y;
-        new_pos.y = 0;
-    }
-
-    new_size.y -= 19;
-    m_Size = new_size;
-    new_pos.y += 19;
-    m_Offset = new_pos;
-
-    if (m_Size.x != ImGui::GetWindowSize().x || m_Offset.x != ImGui::GetWindowPos().x
-        || m_Size.y != ImGui::GetWindowSize().y || m_Offset.y != ImGui::GetWindowPos().y)
+    if (new_size.x != m_Size.x
+        || new_size.y != m_Size.y)
     {
         m_Resized = true;
+        m_Size = new_size;
     }
     else
     {
         m_Resized = false;
     }
+
+    ImGui::Image(m_ImageId, m_Size);
+
 
     if (!m_Camera || !ImGui::IsWindowFocused())
     {

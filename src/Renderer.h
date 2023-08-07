@@ -248,6 +248,7 @@ private:
 
     void createMaterialManager();
 
+    void destroyViewportResources();
     void onViewportResize(size_t imageIndex);
 
     bool checkValidationLayerSupport();
@@ -324,6 +325,7 @@ private:
     VkInstance m_Instance;
 
     VkPhysicalDevice m_PhysDevice;
+    VkPhysicalDeviceLimits m_DeviceLimits;
 
     VkDevice m_LogicalDevice;
 
@@ -357,8 +359,9 @@ private:
 
     VkImage m_ViewportImage;
     VkImageView m_ViewportImageView;
-    VkSampler m_ViewportSampler;
+    VkSampler m_ViewportSampler = VK_NULL_HANDLE;
     VkDeviceMemory m_ViewportImageMemory;
+    VkDescriptorSet m_ViewportDescriptor = VK_NULL_HANDLE;
 
     std::unique_ptr<omp::UniformBuffer> m_UboBuffer;
     std::unique_ptr<omp::UniformBuffer> m_OutlineBuffer;

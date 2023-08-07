@@ -11,9 +11,9 @@ namespace omp
 
     class ViewPort : public ImguiUnit
     {
-        ImVec2 m_Size;
-        ImVec2 m_Offset;
+        ImVec2 m_Size = { 100, 100};
         bool m_Resized = false;
+        ImTextureID m_ImageId;
 
         std::shared_ptr<omp::Camera> m_Camera;
 
@@ -22,11 +22,10 @@ namespace omp
 
         ImVec2 getSize() const { return m_Size; };
 
-        ImVec2 getOffset() const { return m_Offset; }
-
         bool isResized() const { return m_Resized; }
 
         void setCamera(const std::shared_ptr<omp::Camera>& camera) { m_Camera = camera; };
+        void setImageId(ImTextureID id) { m_ImageId = id; };
     };
 } // omp
 
