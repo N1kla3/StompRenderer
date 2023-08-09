@@ -84,6 +84,7 @@ layout( push_constant ) uniform constants
 } pushModel;
 
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out int outId;
 
 vec3 calcDirLight(LightBufferObject light, vec3 normal, vec3 viewDir);
 vec3 calcPointLight(PointLightBuffer light, vec3 normal, vec3 fragPos, vec3 viewDir);
@@ -100,6 +101,7 @@ void main()
 
     //result *= fragColor;
     outColor = vec4(result, 1.0f);
+    outId = 1;
 }
 
 vec3 calcDirLight(LightBufferObject light, vec3 normal, vec3 viewDir)

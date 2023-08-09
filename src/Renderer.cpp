@@ -63,6 +63,7 @@ void Renderer::initVulkan()
     createMaterialManager();
     createColorResources();
     createViewportResources();
+    createPickingResources();
     createDepthResources();
     createFramebuffers();
     createTextureImage();
@@ -89,6 +90,44 @@ void Renderer::mainLoop()
 
         glfwPollEvents();
         drawFrame();
+
+        // read mouse coordinate pixel from image
+        VkImageSubresourceLayers subres{};
+        subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subres.mipLevel = 0;
+        subres.baseArrayLayer = 0;
+        subres.layerCount = 1;
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 1;
+        region.bufferImageHeight = 1;
+        region.imageSubresource = subres;
+        VkOffset3D offset{};
+        offset.x = m_RenderViewport->getLocalCursorPos().x;
+        offset.y = m_RenderViewport->getLocalCursorPos().y;
+        offset.z = 0;
+        region.imageOffset = offset;
+        VkExtent3D extent{};
+        extent.height = 1;
+        extent.width = 1;
+        extent.depth = 1;
+        region.imageExtent = extent;
+
+        m_VulkanContext->transitionImageLayout(m_PickingResolve, VK_FORMAT_R32_SINT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1);
+
+        VkCommandBuffer buffer = beginSingleTimeCommands();
+        vkCmdCopyImageToBuffer(buffer, m_PickingResolve, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                               m_PixelReadBuffer, 1, &region);
+        endSingleTimeCommands(buffer);
+
+        int32_t pixel_value = -3;
+        void* data;
+        vkMapMemory(m_VulkanContext->logical_device, m_PixelReadMemory, 0, sizeof(int32_t), 0, &data);
+        memcpy(&pixel_value, data, sizeof(int32_t));
+        vkUnmapMemory(m_VulkanContext->logical_device, m_PixelReadMemory);
+
+        INFO(Rendering, "value {}", pixel_value);
+
         tick(time);
     }
 
@@ -595,6 +634,9 @@ void Renderer::createSwapChain()
 void Renderer::postSwapChainInitialize()
 {
     m_LightSystem = std::make_unique<omp::LightSystem>(m_VulkanContext, m_PresentKHRImagesNum);
+
+    m_VulkanContext->createBuffer(sizeof(int32_t), VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                  m_PixelReadBuffer, m_PixelReadMemory);
 }
 
 void Renderer::createImageViews()
@@ -609,6 +651,17 @@ void Renderer::createImageViews()
 
 void Renderer::createGraphicsPipeline()
 {
+    VkPipelineColorBlendAttachmentState color_blend_attachment{};
+    color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
+                                            | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    color_blend_attachment.blendEnable = VK_FALSE;
+    color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+    color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
     VkStencilOpState stencil_state{};
     stencil_state.compareOp = VK_COMPARE_OP_ALWAYS;
     stencil_state.failOp = VK_STENCIL_OP_REPLACE;
@@ -636,6 +689,8 @@ void Renderer::createGraphicsPipeline()
 
     std::unique_ptr<omp::GraphicsPipeline> light_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     light_pipe->startDefaultCreation();
+    light_pipe->addColorBlendingAttachment(color_blend_attachment);
+    light_pipe->addColorBlendingAttachment(color_blend_attachment);
     light_pipe->createMultisamplingInfo(m_MSAASamples);
     light_pipe->createViewport(m_SwapChainExtent);
     light_pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -651,6 +706,8 @@ void Renderer::createGraphicsPipeline()
 
     std::unique_ptr<omp::GraphicsPipeline> pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     pipe->startDefaultCreation();
+    pipe->addColorBlendingAttachment(color_blend_attachment);
+    pipe->addColorBlendingAttachment(color_blend_attachment);
     pipe->createMultisamplingInfo(m_MSAASamples);
     pipe->createViewport(m_SwapChainExtent);
     pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -663,6 +720,8 @@ void Renderer::createGraphicsPipeline()
     // LIGHT STENCIL
     std::unique_ptr<omp::GraphicsPipeline> light_stencil = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     light_stencil->startDefaultCreation();
+    light_stencil->addColorBlendingAttachment(color_blend_attachment);
+    light_stencil->addColorBlendingAttachment(color_blend_attachment);
     light_stencil->createMultisamplingInfo(m_MSAASamples);
     light_stencil->createViewport(m_SwapChainExtent);
     light_stencil->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -678,6 +737,8 @@ void Renderer::createGraphicsPipeline()
                                                                                 "../SPRV/fragOutline.spv");
     std::unique_ptr<omp::GraphicsPipeline> outline_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     outline_pipe->startDefaultCreation();
+    outline_pipe->addColorBlendingAttachment(color_blend_attachment);
+    outline_pipe->addColorBlendingAttachment(color_blend_attachment);
     outline_pipe->createMultisamplingInfo(m_MSAASamples);
     outline_pipe->createViewport(m_SwapChainExtent);
     outline_pipe->addPipelineSetLayout(m_OutlineSetLayout);
@@ -715,6 +776,20 @@ void Renderer::createRenderPass()
     color_attachment_ref.attachment = 0;
     color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+    VkAttachmentDescription picking_attachment{};
+    picking_attachment.format = VK_FORMAT_R32_SINT;
+    picking_attachment.samples = m_MSAASamples;
+    picking_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    picking_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    picking_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    picking_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    picking_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    picking_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference picking_attach_ref{};
+    picking_attach_ref.attachment = 1;
+    picking_attach_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
     VkAttachmentDescription depth_attachment{};
     depth_attachment.format = findDepthFormat();
     depth_attachment.samples = m_MSAASamples;
@@ -726,7 +801,7 @@ void Renderer::createRenderPass()
     depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference depth_attach_ref{};
-    depth_attach_ref.attachment = 1;
+    depth_attach_ref.attachment = 2;
     depth_attach_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription color_attachment_resolve{};
@@ -741,15 +816,32 @@ void Renderer::createRenderPass()
     color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkAttachmentReference color_attachment_resolve_ref{};
-    color_attachment_resolve_ref.attachment = 2;
+    color_attachment_resolve_ref.attachment = 3;
     color_attachment_resolve_ref.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkAttachmentDescription pick_resolve{};
+    pick_resolve.format = VK_FORMAT_R32_SINT;
+    pick_resolve.samples = VK_SAMPLE_COUNT_1_BIT;
+    pick_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    pick_resolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    pick_resolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    pick_resolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    pick_resolve.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    pick_resolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference pick_resolve_ref{};
+    pick_resolve_ref.attachment = 4;
+    pick_resolve_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    std::array<VkAttachmentReference, 2> refs{ color_attachment_ref, picking_attach_ref};
+    std::array<VkAttachmentReference, 2> resolve_refs{color_attachment_resolve_ref, pick_resolve_ref };
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &color_attachment_ref;
+    subpass.colorAttachmentCount = refs.size();
+    subpass.pColorAttachments = refs.data();
     subpass.pDepthStencilAttachment = &depth_attach_ref;
-    subpass.pResolveAttachments = &color_attachment_resolve_ref;
+    subpass.pResolveAttachments = resolve_refs.data();
 
     // Use subpass dependencies for layout transitions
     VkSubpassDependency dependencies[2]{};
@@ -772,8 +864,10 @@ void Renderer::createRenderPass()
     m_RenderPass->startConfiguration();
 
     m_RenderPass->addAttachment(std::move(color_attachment));
+    m_RenderPass->addAttachment(std::move(picking_attachment));
     m_RenderPass->addAttachment(std::move(depth_attachment));
     m_RenderPass->addAttachment(std::move(color_attachment_resolve));
+    m_RenderPass->addAttachment(std::move(pick_resolve));
 
     // reference leak if render pass not created in this method
     m_RenderPass->addSubpass(std::move(subpass));
@@ -795,7 +889,7 @@ void Renderer::createFramebuffers()
 
 void Renderer::createFramebufferAtImage(size_t index)
 {
-    std::vector<VkImageView> attachments{m_ColorImageView, m_DepthImageView, m_ViewportImageView};
+    std::vector<VkImageView> attachments{m_ColorImageView, m_PickingImageView, m_DepthImageView, m_ViewportImageView, m_PickingResolveView};
     omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, m_RenderViewport->getSize().x, m_RenderViewport->getSize().y);
     m_SwapChainFramebuffers[index] = frame_buffer;
 }
@@ -827,9 +921,10 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     VkCommandBuffer& main_buffer = m_CommandBuffers[KHRImageIndex].buffer;
     prepareCommandBuffer(m_CommandBuffers[KHRImageIndex], m_CommandPool);
 
-    std::vector<VkClearValue> clear_values{2};
+    std::vector<VkClearValue> clear_values{3};
     clear_values[0].color = g_ClearColor;
-    clear_values[1].depthStencil = {1.0f, 0};
+    clear_values[1].color = g_ClearColor;
+    clear_values[2].depthStencil = {1.0f, 0};
 
     rect.offset.x = 0;
     rect.offset.y = 0;
@@ -1110,6 +1205,7 @@ void Renderer::recreateSwapChain()
     createGraphicsPipeline();
     createColorResources();
     createViewportResources();
+    createPickingResources();
     createDepthResources();
     createFramebuffers();
     createUniformBuffers();
@@ -1123,23 +1219,8 @@ void Renderer::recreateSwapChain()
 
 void Renderer::cleanupSwapChain()
 {
-    vkDestroyImageView(m_LogicalDevice, m_DepthImageView, nullptr);
-    vkDestroyImage(m_LogicalDevice, m_DepthImage, nullptr);
-    vkFreeMemory(m_LogicalDevice, m_DepthImageMemory, nullptr);
+    destroyMainRenderPassResources();
 
-    vkDestroyImageView(m_LogicalDevice, m_ColorImageView, nullptr);
-    vkDestroyImage(m_LogicalDevice, m_ColorImage, nullptr);
-    vkFreeMemory(m_LogicalDevice, m_ColorImageMemory, nullptr);
-
-    vkDestroySampler(m_LogicalDevice, m_ViewportSampler, nullptr);
-    vkDestroyImageView(m_LogicalDevice, m_ViewportImageView, nullptr);
-    vkDestroyImage(m_LogicalDevice, m_ViewportImage, nullptr);
-    vkFreeMemory(m_LogicalDevice, m_ViewportImageMemory, nullptr);
-
-    for (auto& frame_buffer : m_SwapChainFramebuffers)
-    {
-        frame_buffer.destroyInnerState();
-    }
     m_Pipelines.clear();
     m_RenderPass->destroyInnerState();
 
@@ -1826,6 +1907,25 @@ void Renderer::createViewportResources()
     }
 }
 
+void Renderer::createPickingResources()
+{
+    VkFormat image_format = VK_FORMAT_R32_SINT;
+
+    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1,
+                                 image_format, VK_IMAGE_TILING_OPTIMAL,
+                                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_PickingImage, m_PickingMemory,
+                                 m_MSAASamples);
+    m_PickingImageView = m_VulkanContext->createImageView(m_PickingImage, image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+
+    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1,
+                                 image_format, VK_IMAGE_TILING_LINEAR,
+                                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_PickingResolve, m_PickingResolveMemory,
+                                 VK_SAMPLE_COUNT_1_BIT);
+    m_PickingResolveView = m_VulkanContext->createImageView(m_PickingResolve, image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+}
+
 void Renderer::renderAllUi()
 {
     static auto prev_time = std::chrono::high_resolution_clock::now();
@@ -1875,7 +1975,7 @@ void Renderer::createImguiWidgets()
     //m_Widgets.push_back(std::move(light_panel));
 }
 
-void Renderer::destroyViewportResources()
+void Renderer::destroyMainRenderPassResources()
 {
     vkDestroyImageView(m_LogicalDevice, m_DepthImageView, nullptr);
     vkDestroyImage(m_LogicalDevice, m_DepthImage, nullptr);
@@ -1889,6 +1989,13 @@ void Renderer::destroyViewportResources()
     vkDestroyImageView(m_LogicalDevice, m_ViewportImageView, nullptr);
     vkDestroyImage(m_LogicalDevice, m_ViewportImage, nullptr);
     vkFreeMemory(m_LogicalDevice, m_ViewportImageMemory, nullptr);
+
+    vkDestroyImageView(m_LogicalDevice, m_PickingImageView, nullptr);
+    vkDestroyImage(m_LogicalDevice, m_PickingImage, nullptr);
+    vkFreeMemory(m_LogicalDevice, m_PickingMemory, nullptr);
+    vkDestroyImageView(m_LogicalDevice, m_PickingResolveView, nullptr);
+    vkDestroyImage(m_LogicalDevice, m_PickingResolve, nullptr);
+    vkFreeMemory(m_LogicalDevice, m_PickingResolveMemory, nullptr);
 
     for (auto& frame_buffer : m_SwapChainFramebuffers)
     {
@@ -1905,11 +2012,12 @@ void Renderer::onViewportResize(size_t imageIndex)
         if (x <=0 || x >= m_DeviceLimits.maxFramebufferWidth) return;
         if (y <=0 || y >= m_DeviceLimits.maxFramebufferHeight) return;
 
-        destroyViewportResources();
+        destroyMainRenderPassResources();
 
         createColorResources();
         createDepthResources();
         createViewportResources();
+        createPickingResources();
 
         for (size_t index = 0; index < m_SwapChainFramebuffers.size(); index++)
         {
@@ -2077,6 +2185,8 @@ void Renderer::initializeScene()
 
 void Renderer::tick(float deltaTime)
 {
+
+
     //m_CurrentScene->getModel("1-1")->getRotation().x += 1*deltaTime;
     m_CurrentScene->getModel("2-1")->getRotation().x += 1*deltaTime;
     //m_CurrentScene->getModel("dfasdf")->getRotation().x += 1*deltaTime;

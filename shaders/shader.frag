@@ -20,8 +20,10 @@ layout(set = 1, binding = 1) uniform sampler2D diffMap;
 layout(set = 1, binding = 2) uniform sampler2D specMap;
 
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out int outId;
 
 void main()
 {
     outColor = texture(texSampler, fragTexCoord) * vec4(fragColor, 1.0f);
+    outId = 1;
 }

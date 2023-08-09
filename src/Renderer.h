@@ -219,6 +219,7 @@ private:
 
     void createColorResources();
     void createViewportResources();
+    void createPickingResources();
 
     void createSyncObjects();
 
@@ -248,7 +249,7 @@ private:
 
     void createMaterialManager();
 
-    void destroyViewportResources();
+    void destroyMainRenderPassResources();
     void onViewportResize(size_t imageIndex);
 
     bool checkValidationLayerSupport();
@@ -362,6 +363,16 @@ private:
     VkSampler m_ViewportSampler = VK_NULL_HANDLE;
     VkDeviceMemory m_ViewportImageMemory;
     VkDescriptorSet m_ViewportDescriptor = VK_NULL_HANDLE;
+
+    VkImage m_PickingImage;
+    VkImageView m_PickingImageView;
+    VkDeviceMemory m_PickingMemory;
+    VkImage m_PickingResolve;
+    VkImageView m_PickingResolveView;
+    VkDeviceMemory m_PickingResolveMemory;
+
+    VkBuffer m_PixelReadBuffer;
+    VkDeviceMemory m_PixelReadMemory;
 
     std::unique_ptr<omp::UniformBuffer> m_UboBuffer;
     std::unique_ptr<omp::UniformBuffer> m_OutlineBuffer;

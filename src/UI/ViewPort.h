@@ -12,6 +12,7 @@ namespace omp
     class ViewPort : public ImguiUnit
     {
         ImVec2 m_Size = { 100, 100};
+        ImVec2 m_CursorPos = { 1, 1};
         bool m_Resized = false;
         ImTextureID m_ImageId;
 
@@ -21,6 +22,7 @@ namespace omp
         virtual void renderUi(float deltaTime) override;
 
         ImVec2 getSize() const { return m_Size; };
+        ImVec2 getLocalCursorPos() { return m_CursorPos; }
 
         bool isResized() const { return m_Resized; }
 

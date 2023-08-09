@@ -21,6 +21,7 @@ namespace omp
         void createRasterizer();
         void createMultisamplingInfo(VkSampleCountFlagBits rasterizationSamples);
         void createColorBlending();
+        void addColorBlendingAttachment(VkPipelineColorBlendAttachmentState state);
         template<typename T>
         void definePushConstant(VkShaderStageFlags stageFlags);
         void addPipelineSetLayout(VkDescriptorSetLayout descriptorSetLayout);
@@ -46,7 +47,7 @@ namespace omp
         VkPipelineViewportStateCreateInfo m_ViewportState{};
         VkPipelineRasterizationStateCreateInfo m_Rasterizer{};
         VkPipelineMultisampleStateCreateInfo m_Multisampling{};
-        VkPipelineColorBlendAttachmentState m_ColorBlendAttachment{};
+        std::vector<VkPipelineColorBlendAttachmentState> m_ColorBlendAttachments{};
         VkPipelineColorBlendStateCreateInfo m_ColorBlending{};
         VkPushConstantRange m_ConstantRange{};
         VkPipelineDepthStencilStateCreateInfo m_DepthStencil{};

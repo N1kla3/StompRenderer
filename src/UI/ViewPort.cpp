@@ -1,12 +1,10 @@
 #include "ViewPort.h"
 #include "Camera.h"
 #include "imgui.h"
+#include "Logs.h"
 
 void omp::ViewPort::renderUi(float deltaTime)
 {
-    auto viewport = ImGui::GetMainViewport();
-    auto viewport_size = viewport->WorkSize;
-
     ImGuiWindowClass window_class;
     window_class.ClassId = ImGui::GetID("Window");
     window_class.DockNodeFlagsOverrideSet = ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_NoSplit |
@@ -14,7 +12,11 @@ void omp::ViewPort::renderUi(float deltaTime)
     window_class.DockingAllowUnclassed = true;
 
     ImGui::SetNextWindowClass(&window_class);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::Begin("Viewport", NULL, 0);
+    ImGui::PopStyleVar(3);
 
 
     auto new_size = ImGui::GetContentRegionAvail();
@@ -29,6 +31,13 @@ void omp::ViewPort::renderUi(float deltaTime)
     {
         m_Resized = false;
     }
+    ImVec2 viewport_cursor = ImGui::GetMousePos();
+    auto window_pos = ImGui::GetWindowPos();
+    auto content_min= ImGui::GetWindowContentRegionMin();
+    auto content_max = ImGui::GetWindowContentRegionMax();
+
+    viewport_cursor.x = viewport_cursor.x - window_pos.x - content_min.x;
+    viewport_cursor.y = viewport_cursor.y - window_pos.y - content_min.y;
 
     ImGui::Image(m_ImageId, m_Size);
 
@@ -85,6 +94,13 @@ void omp::ViewPort::renderUi(float deltaTime)
     else
     {
         should_reset_mouse = true;
+    }
+
+    if (viewport_cursor.x > 0 && viewport_cursor.x < content_max.x
+        && viewport_cursor.y > 0 && viewport_cursor.y < content_max.y
+        && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    {
+        m_CursorPos = viewport_cursor;
     }
 
     ImGui::End();

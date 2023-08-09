@@ -30,7 +30,6 @@ void omp::GraphicsPipeline::startDefaultCreation()
     createInputAssembly();
     createViewport(VkExtent2D());
     createRasterizer();
-    createColorBlending();
 }
 
 void omp::GraphicsPipeline::createVertexInfo()
@@ -131,14 +130,32 @@ void omp::GraphicsPipeline::createColorBlending()
     color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
-    m_ColorBlendAttachment = color_blend_attachment;
+    m_ColorBlendAttachments.push_back(color_blend_attachment);
 
     VkPipelineColorBlendStateCreateInfo color_blending{};
     color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     color_blending.logicOpEnable = VK_FALSE;
     color_blending.logicOp = VK_LOGIC_OP_COPY;
-    color_blending.attachmentCount = 1;
-    color_blending.pAttachments = &m_ColorBlendAttachment;
+    color_blending.attachmentCount = m_ColorBlendAttachments.size();
+    color_blending.pAttachments = m_ColorBlendAttachments.data();
+    color_blending.blendConstants[0] = 0.0f;
+    color_blending.blendConstants[1] = 0.0f;
+    color_blending.blendConstants[2] = 0.0f;
+    color_blending.blendConstants[3] = 0.0f;
+
+    m_ColorBlending = color_blending;
+}
+
+void omp::GraphicsPipeline::addColorBlendingAttachment(VkPipelineColorBlendAttachmentState state)
+{
+    m_ColorBlendAttachments.push_back(state);
+
+    VkPipelineColorBlendStateCreateInfo color_blending{};
+    color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blending.logicOpEnable = VK_FALSE;
+    color_blending.logicOp = VK_LOGIC_OP_COPY;
+    color_blending.attachmentCount = m_ColorBlendAttachments.size();
+    color_blending.pAttachments = m_ColorBlendAttachments.data();
     color_blending.blendConstants[0] = 0.0f;
     color_blending.blendConstants[1] = 0.0f;
     color_blending.blendConstants[2] = 0.0f;
