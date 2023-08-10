@@ -21,6 +21,7 @@
 #include <optional>
 #include "array"
 #include <glm/glm.hpp>
+#include <queue>
 #include "imgui.h"
 #include "backends/imgui_impl_vulkan.h"
 
@@ -169,6 +170,7 @@ private:
 
     void drawFrame();
     void initializeScene();
+    void postFrame();
     void tick(float deltaTime);
 
     void cleanup();
@@ -228,7 +230,7 @@ private:
 
     void createDescriptorSets();
 
-    void addModelToScene(const std::shared_ptr<omp::ModelInstance>& inModel);
+    void addModelToScene(const std::shared_ptr<omp::SceneEntity>& inModel);
     std::shared_ptr<omp::ModelInstance> addModelToScene(const std::string& inName, const std::string& inPath);
     void loadModelInMemory(const std::shared_ptr<omp::Model>& inModel);
 
@@ -421,6 +423,8 @@ private:
     VkDescriptorPool m_ImguiDescriptorPool;
 
     std::shared_ptr<omp::VulkanContext> m_VulkanContext;
+
+    std::queue<ImVec2> m_MousePickingData{};
 
     VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 

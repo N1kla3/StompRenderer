@@ -101,7 +101,14 @@ void omp::ViewPort::renderUi(float deltaTime)
         && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
     {
         m_CursorPos = viewport_cursor;
+        m_Func(m_CursorPos);
     }
 
     ImGui::End();
+}
+
+
+void omp::ViewPort::setMouseClickCallback(const std::function<void(ImVec2)> inFunc)
+{
+    m_Func = inFunc;
 }

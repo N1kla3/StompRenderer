@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <functional>
 #include "ImguiUnit.h"
 #include "imgui.h"
 
@@ -16,6 +17,8 @@ namespace omp
         bool m_Resized = false;
         ImTextureID m_ImageId;
 
+        std::function<void(ImVec2)> m_Func;
+
         std::shared_ptr<omp::Camera> m_Camera;
 
     public:
@@ -28,6 +31,7 @@ namespace omp
 
         void setCamera(const std::shared_ptr<omp::Camera>& camera) { m_Camera = camera; };
         void setImageId(ImTextureID id) { m_ImageId = id; };
+        void setMouseClickCallback(const std::function<void(ImVec2)> inFunc);
     };
 } // omp
 

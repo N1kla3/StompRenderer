@@ -90,44 +90,7 @@ void Renderer::mainLoop()
 
         glfwPollEvents();
         drawFrame();
-
-        // read mouse coordinate pixel from image
-        VkImageSubresourceLayers subres{};
-        subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        subres.mipLevel = 0;
-        subres.baseArrayLayer = 0;
-        subres.layerCount = 1;
-        VkBufferImageCopy region{};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 1;
-        region.bufferImageHeight = 1;
-        region.imageSubresource = subres;
-        VkOffset3D offset{};
-        offset.x = m_RenderViewport->getLocalCursorPos().x;
-        offset.y = m_RenderViewport->getLocalCursorPos().y;
-        offset.z = 0;
-        region.imageOffset = offset;
-        VkExtent3D extent{};
-        extent.height = 1;
-        extent.width = 1;
-        extent.depth = 1;
-        region.imageExtent = extent;
-
-        m_VulkanContext->transitionImageLayout(m_PickingResolve, VK_FORMAT_R32_SINT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1);
-
-        VkCommandBuffer buffer = beginSingleTimeCommands();
-        vkCmdCopyImageToBuffer(buffer, m_PickingResolve, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                               m_PixelReadBuffer, 1, &region);
-        endSingleTimeCommands(buffer);
-
-        int32_t pixel_value = -3;
-        void* data;
-        vkMapMemory(m_VulkanContext->logical_device, m_PixelReadMemory, 0, sizeof(int32_t), 0, &data);
-        memcpy(&pixel_value, data, sizeof(int32_t));
-        vkUnmapMemory(m_VulkanContext->logical_device, m_PixelReadMemory);
-
-        INFO(Rendering, "value {}", pixel_value);
-
+        postFrame();
         tick(time);
     }
 
@@ -136,6 +99,9 @@ void Renderer::mainLoop()
 
 void Renderer::cleanup()
 {
+    vkFreeMemory(m_LogicalDevice, m_PixelReadMemory, nullptr);
+    vkDestroyBuffer(m_LogicalDevice, m_PixelReadBuffer, nullptr);
+
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         vkDestroySemaphore(m_LogicalDevice, m_RenderFinishedSemaphores[i], nullptr);
@@ -934,14 +900,14 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     setViewport(main_buffer);
 
     VkDeviceSize offsets[] = {0};
-    for (size_t index = 0; index < m_CurrentScene->getModels().size(); index++)
+    for (size_t index = 0; index < m_CurrentScene->getEntities().size(); index++)
     {
-        auto& current_model = m_CurrentScene->getModels()[index];
+        auto& current_model = m_CurrentScene->getEntities()[index];
         if (current_model->getName() == "2-2")
         {
             continue;
         }
-        auto& material_instance = current_model->getMaterialInstance();
+        auto& material_instance = current_model->getModel()->getMaterialInstance();
         auto material = material_instance->getStaticMaterial().lock();
         if (!material)
         {
@@ -958,10 +924,10 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                 0, 1, &m_UboDescriptorSets[KHRImageIndex],
                                 0, nullptr);
 
-        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel().lock()->getVertexBuffer(), offsets);
-        vkCmdBindIndexBuffer(main_buffer, current_model->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel()->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer, current_model->getModel()->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-        omp::ModelPushConstant constant{ current_model->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
+        omp::ModelPushConstant constant{ current_model->getModel()->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
         vkCmdPushConstants(main_buffer,
                            model_pipeline_layout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -986,15 +952,15 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                     0, nullptr);
         }
         vkCmdDrawIndexed(main_buffer,
-                         static_cast<uint32_t>(current_model->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
+                         static_cast<uint32_t>(current_model->getModel()->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
     }
 
-    auto current_model = m_CurrentScene->getModel("2-2");
+    auto current_model = m_CurrentScene->getEntity("2-2");
     if (current_model && current_model->getName() == "2-2")
     {
         // TODO DEMO COPYPAST DELETE
         ///////////////////////////////////
-        auto& material_instance = current_model->getMaterialInstance();
+        auto& material_instance = current_model->getModel()->getMaterialInstance();
         auto material = material_instance->getStaticMaterial().lock();
         if (!material)
         {
@@ -1011,10 +977,10 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                 0, 1, &m_UboDescriptorSets[KHRImageIndex],
                                 0, nullptr);
 
-        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel().lock()->getVertexBuffer(), offsets);
-        vkCmdBindIndexBuffer(main_buffer, current_model->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel()->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer, current_model->getModel()->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-        omp::ModelPushConstant constant{ current_model->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
+        omp::ModelPushConstant constant{ current_model->getModel()->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
         vkCmdPushConstants(main_buffer,
                            model_pipeline_layout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -1038,20 +1004,20 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                     0, nullptr);
         }
         vkCmdDrawIndexed(main_buffer,
-                         static_cast<uint32_t>(current_model->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
+                         static_cast<uint32_t>(current_model->getModel()->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
         ///////////////////////////////////////////////
         ///////////////////////////////////////////////
 
         auto outline_pipeline = findGraphicsPipeline("Outline");
-        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel().lock()->getVertexBuffer(), offsets);
-        vkCmdBindIndexBuffer(main_buffer, current_model->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel()->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer, current_model->getModel()->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
         vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, outline_pipeline->getGraphicsPipeline());
         vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 outline_pipeline->getPipelineLayout(),
                                 0, 1, &m_OutlineDescriptorSets[KHRImageIndex],
                                 0, nullptr);
         vkCmdDrawIndexed(main_buffer,
-                         static_cast<uint32_t>(current_model->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
+                         static_cast<uint32_t>(current_model->getModel()->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
     }
 
     endRenderPass(m_RenderPass.get(), main_buffer);
@@ -1407,7 +1373,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
 
     OutlineUniformBuffer outline_buffer{};
     outline_buffer.projection = ubo.proj;
-    outline_buffer.model = glm::scale(m_CurrentScene->getModel("2-2")->getTransform(), glm::vec3{1.2});
+    outline_buffer.model = glm::scale(m_CurrentScene->getEntity("2-2")->getModel()->getTransform(), glm::vec3{1.2});
     outline_buffer.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
     m_OutlineBuffer->mapMemory(outline_buffer, currentImage);
 
@@ -1959,8 +1925,8 @@ void Renderer::createImguiWidgets()
     m_RenderViewport = std::make_shared<omp::ViewPort>();
     m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
     auto material_panel = std::make_shared<omp::MaterialPanel>();
-    auto entity = std::make_shared<omp::EntityPanel>(material_panel);
-    m_ScenePanel = std::make_shared<omp::ScenePanel>(entity);
+    auto entity = std::make_shared<omp::EntityPanel>();
+    m_ScenePanel = std::make_shared<omp::ScenePanel>(entity, material_panel);
     m_ScenePanel->setScene(m_CurrentScene);
     auto camera_panel = std::make_shared<omp::CameraPanel>(m_CurrentScene->getCurrentCamera());
     // auto light_panel = std::make_shared<omp::GlobalLightPanel>(m_GlobalLight);
@@ -2122,6 +2088,12 @@ void Renderer::destroyAllCommandBuffers()
 
 void Renderer::initializeScene()
 {
+    auto lambda = [this](ImVec2 pos)
+    {
+        m_MousePickingData.push(pos);
+    };
+    m_RenderViewport->setMouseClickCallback(lambda);
+
     // TODO: model split
     addModelToScene("1-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
     addModelToScene("1-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
@@ -2162,7 +2134,7 @@ void Renderer::initializeScene()
         my_model->setMaterialInstance(std::make_shared<omp::MaterialInstance>(inMat));
         my_model->setName(inName);
         my_model->getPosition() = light_pos;
-        addModelToScene(my_model);
+        addModelToScene(std::make_shared<omp::SceneEntity>(inName, my_model));
         return my_model;
     };
 
@@ -2183,23 +2155,71 @@ void Renderer::initializeScene()
     }
 }
 
+void Renderer::postFrame()
+{
+    while (!m_MousePickingData.empty())
+    {
+        ImVec2 mouse_data = m_MousePickingData.back();
+
+        // read mouse coordinate pixel from image
+        VkImageSubresourceLayers subres{};
+        subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subres.mipLevel = 0;
+        subres.baseArrayLayer = 0;
+        subres.layerCount = 1;
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 1;
+        region.bufferImageHeight = 1;
+        region.imageSubresource = subres;
+        VkOffset3D offset{};
+        offset.x = m_RenderViewport->getLocalCursorPos().x;
+        offset.y = m_RenderViewport->getLocalCursorPos().y;
+        offset.z = 0;
+        region.imageOffset = offset;
+        VkExtent3D extent{};
+        extent.height = 1;
+        extent.width = 1;
+        extent.depth = 1;
+        region.imageExtent = extent;
+
+        m_VulkanContext->transitionImageLayout(m_PickingResolve, VK_FORMAT_R32_SINT, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1);
+
+        VkCommandBuffer buffer = beginSingleTimeCommands();
+        vkCmdCopyImageToBuffer(buffer, m_PickingResolve, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                               m_PixelReadBuffer, 1, &region);
+        endSingleTimeCommands(buffer);
+
+        int32_t pixel_value = -1;
+        void* data;
+        vkMapMemory(m_VulkanContext->logical_device, m_PixelReadMemory, 0, sizeof(int32_t), 0, &data);
+        memcpy(&pixel_value, data, sizeof(int32_t));
+        vkUnmapMemory(m_VulkanContext->logical_device, m_PixelReadMemory);
+
+        m_CurrentScene->setCurrentId(pixel_value);
+        INFO(Rendering, "value {}", pixel_value);
+
+        m_MousePickingData.pop();
+    }
+}
+
 void Renderer::tick(float deltaTime)
 {
 
 
-    //m_CurrentScene->getModel("1-1")->getRotation().x += 1*deltaTime;
-    m_CurrentScene->getModel("2-1")->getRotation().x += 1*deltaTime;
-    //m_CurrentScene->getModel("dfasdf")->getRotation().x += 1*deltaTime;
+    //m_CurrentScene->getEntity("1-1")->getRotation().x += 1*deltaTime;
+    m_CurrentScene->getEntity("2-1")->getModel()->getRotation().x += 1 * deltaTime;
+    //m_CurrentScene->getEntity("dfasdf")->getRotation().x += 1*deltaTime;
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
 
-void Renderer::addModelToScene(const std::shared_ptr<omp::ModelInstance>& inModel)
+void Renderer::addModelToScene(const std::shared_ptr<omp::SceneEntity>& inEntity)
 {
-    if (!inModel->getMaterialInstance())
+    if (!inEntity->getModel()->getMaterialInstance())
     {
-        inModel->setMaterialInstance(std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
+        inEntity->getModel()->setMaterialInstance(std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
     }
-    m_CurrentScene->addModelToScene(inModel);
+    m_CurrentScene->addEntityToScene(inEntity);
 }
 
 std::shared_ptr<omp::ModelInstance> Renderer::addModelToScene(const std::string& inName, const std::string& inPath)
@@ -2212,7 +2232,7 @@ std::shared_ptr<omp::ModelInstance> Renderer::addModelToScene(const std::string&
     auto model_inst = m_ModelManager->createInstanceFrom(inPath);
     model_inst->setMaterialInstance(std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
     model_inst->setName(inName);
-    m_CurrentScene->addModelToScene(model_inst);
+    m_CurrentScene->addEntityToScene(std::make_shared<omp::SceneEntity>(inName, model_inst));
     return model_inst;
 }
 

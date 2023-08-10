@@ -30,6 +30,8 @@ set(SOURCE
         Rendering/ModelStatics.h
         Scene.h
         Scene.cpp
+        SceneEntity.h
+        SceneEntity.cpp
         SceneAsset.h
         SceneAsset.cpp
         Rendering/Texture.h
@@ -87,6 +89,7 @@ set(SOURCE
         UI/GlobalLightPanel.h
         UI/CameraPanel.h
         UI/CameraPanel.cpp
+        UI/IDrawable.h
         stb_image.h
         stb_image.cpp
         tinyobjloader.cpp

@@ -15,7 +15,8 @@ void omp::SceneAsset::initialize()
         auto&& model = omp::AssetManager::getAssetManager().tryGetAndLoadIfNot_casted<omp::Model>(model_data.path);
         if (model)
         {
-            m_Scene->addModelToScene(model);
+            m_Scene->addEntityToScene(std::make_shared<omp::SceneEntity>(m_Name,
+                                                                         std::make_shared<omp::ModelInstance>(model)));
         }
         else
         {
