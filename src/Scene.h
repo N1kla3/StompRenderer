@@ -30,7 +30,8 @@ namespace omp
         // ======= //
         void addEntityToScene(const omp::SceneEntity& modelToAdd);
         void addEntityToScene(const std::shared_ptr<omp::SceneEntity>& modelToAdd);
-        std::shared_ptr<omp::SceneEntity> getEntity(const std::string& inName);
+        std::shared_ptr<omp::SceneEntity> getEntity(const std::string& entity);
+        std::shared_ptr<omp::SceneEntity> getEntity(int32_t entity);
 
         // TODO map, no ref
         std::vector<std::shared_ptr<omp::SceneEntity>>& getEntities();

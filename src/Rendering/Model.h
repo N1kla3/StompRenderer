@@ -25,15 +25,19 @@ struct omp::ModelPushConstant
 {
     glm::mat4 model;
 
-    glm::vec4 ambient;
-    glm::vec4 diffusive;
-    glm::vec4 specular;
+    // TODO: why we need this
+    glm::vec4 ambient{1};
+    glm::vec4 diffusive{2};
+    glm::vec4 specular{3};
 
-    ModelPushConstant(const glm::mat4& inModel, const glm::vec4& inAmbient, const glm::vec4& inDiffusive, const glm::vec4& inSpecular)
+    int32_t id = 4;
+
+    ModelPushConstant(const glm::mat4& inModel, const glm::vec4& inAmbient, const glm::vec4& inDiffusive, const glm::vec4& inSpecular, int32_t inId)
         : model(inModel)
         , ambient(inAmbient)
         , diffusive(inDiffusive)
         , specular(inSpecular)
+        , id(inId)
     {
 
     }

@@ -30,6 +30,11 @@ void omp::ScenePanel::renderUi(float deltaTime)
                     m_EntityUi->setEntity(entity_ref);
                     m_MaterialPanel->setMaterial(entity_ref->getModel()->getMaterialInstance());
                 }
+                else if (highlight_current)
+                {
+                    m_EntityUi->setEntity(entity_ref);
+                    m_MaterialPanel->setMaterial(entity_ref->getModel()->getMaterialInstance());
+                }
 
             }
             ImGui::TreePop();

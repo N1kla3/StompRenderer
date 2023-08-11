@@ -19,16 +19,38 @@ void omp::Scene::addEntityToScene(const std::shared_ptr<omp::SceneEntity>& model
 
 std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(const std::string& inName)
 {
-    auto model = std::find_if(m_Entities.begin(), m_Entities.end(), [&inName](const std::shared_ptr<omp::SceneEntity>& inModel)
+    auto res_iter = std::find_if(m_Entities.begin(), m_Entities.end(), [&inName](const std::shared_ptr<omp::SceneEntity>& entity)
     {
-        if (inName.compare(inModel->getName()) == 0)
+        if (inName.compare(entity->getName()) == 0)
         {
             return true;
         }
         return false;
     });
-    return *model;
+    if (res_iter != m_Entities.end())
+    {
+        return *res_iter;
+    }
+    else return nullptr;
 }
+
+std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(int32_t inId)
+{
+    auto res_iter = std::find_if(m_Entities.begin(), m_Entities.end(), [&inId](const std::shared_ptr<omp::SceneEntity>& entity)
+    {
+        if (inId == entity->getId())
+        {
+            return true;
+        }
+        return false;
+    });
+    if (res_iter != m_Entities.end())
+    {
+        return *res_iter;
+    }
+    else return nullptr;
+}
+
 
 omp::Scene::Scene()
     : m_CurrentCamera(std::make_shared<omp::Camera>())

@@ -899,23 +899,32 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     beginRenderPass(m_RenderPass.get(), main_buffer, m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
     setViewport(main_buffer);
 
+    std::shared_ptr<omp::SceneEntity> outline_entity = nullptr;
     VkDeviceSize offsets[] = {0};
     for (size_t index = 0; index < m_CurrentScene->getEntities().size(); index++)
     {
-        auto& current_model = m_CurrentScene->getEntities()[index];
-        if (current_model->getName() == "2-2")
-        {
-            continue;
-        }
-        auto& material_instance = current_model->getModel()->getMaterialInstance();
+        auto& scene_entity = m_CurrentScene->getEntities()[index];
+        auto& material_instance = scene_entity->getModel()->getMaterialInstance();
         auto material = material_instance->getStaticMaterial().lock();
         if (!material)
         {
             WARN(Rendering, "Material is invalid in material instance");
         }
-        VkPipeline model_pipeline = findGraphicsPipeline(material->getShaderName())->getGraphicsPipeline();
-        VkPipelineLayout model_pipeline_layout = findGraphicsPipeline(material->getShaderName())->getPipelineLayout();
 
+        VkPipeline model_pipeline{};
+        VkPipelineLayout model_pipeline_layout{};
+        if (scene_entity->getId() == m_CurrentScene->getCurrentId())
+        {
+            // TODO check this for valid shader, because light have simple shader, and should not have lightstencil layouts
+            outline_entity = scene_entity;
+            model_pipeline = findGraphicsPipeline("LightStencil")->getGraphicsPipeline();
+            model_pipeline_layout = findGraphicsPipeline("LightStencil")->getPipelineLayout();
+        }
+        else
+        {
+            model_pipeline = findGraphicsPipeline(material->getShaderName())->getGraphicsPipeline();
+            model_pipeline_layout = findGraphicsPipeline(material->getShaderName())->getPipelineLayout();
+        }
         vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 
 
@@ -924,10 +933,10 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                 0, 1, &m_UboDescriptorSets[KHRImageIndex],
                                 0, nullptr);
 
-        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel()->getModel().lock()->getVertexBuffer(), offsets);
-        vkCmdBindIndexBuffer(main_buffer, current_model->getModel()->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &scene_entity->getModel()->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer, scene_entity->getModel()->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
-        omp::ModelPushConstant constant{ current_model->getModel()->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
+        omp::ModelPushConstant constant{scene_entity->getModel()->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular(), scene_entity->getId() };
         vkCmdPushConstants(main_buffer,
                            model_pipeline_layout,
                            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -952,72 +961,21 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                     0, nullptr);
         }
         vkCmdDrawIndexed(main_buffer,
-                         static_cast<uint32_t>(current_model->getModel()->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
+                         static_cast<uint32_t>(scene_entity->getModel()->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
     }
 
-    auto current_model = m_CurrentScene->getEntity("2-2");
-    if (current_model && current_model->getName() == "2-2")
+    if (outline_entity)
     {
-        // TODO DEMO COPYPAST DELETE
-        ///////////////////////////////////
-        auto& material_instance = current_model->getModel()->getMaterialInstance();
-        auto material = material_instance->getStaticMaterial().lock();
-        if (!material)
-        {
-            WARN(Rendering, "Material is invalid in material instance");
-        }
-        VkPipeline model_pipeline = findGraphicsPipeline("LightStencil")->getGraphicsPipeline();
-        VkPipelineLayout model_pipeline_layout = findGraphicsPipeline("LightStencil")->getPipelineLayout();
-
-        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
-
-
-        vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                model_pipeline_layout,
-                                0, 1, &m_UboDescriptorSets[KHRImageIndex],
-                                0, nullptr);
-
-        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel()->getModel().lock()->getVertexBuffer(), offsets);
-        vkCmdBindIndexBuffer(main_buffer, current_model->getModel()->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-
-        omp::ModelPushConstant constant{ current_model->getModel()->getTransform(), material_instance->getAmbient(), material_instance->getDiffusive(), material_instance->getSpecular() };
-        vkCmdPushConstants(main_buffer,
-                           model_pipeline_layout,
-                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                           0, sizeof(omp::ModelPushConstant), &constant);
-
-
-        if (material)
-        {
-            retrieveMaterialRenderState(material);
-            vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    model_pipeline_layout,
-                                    1, 1, &material->getDescriptorSet()[KHRImageIndex],
-                                    0, nullptr);
-        }
-        else
-        {
-            // default material
-            vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    model_pipeline_layout,
-                                    1, 1, &m_DefaultMaterial->getDescriptorSet()[KHRImageIndex],
-                                    0, nullptr);
-        }
-        vkCmdDrawIndexed(main_buffer,
-                         static_cast<uint32_t>(current_model->getModel()->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
-        ///////////////////////////////////////////////
-        ///////////////////////////////////////////////
-
         auto outline_pipeline = findGraphicsPipeline("Outline");
-        vkCmdBindVertexBuffers(main_buffer, 0, 1, &current_model->getModel()->getModel().lock()->getVertexBuffer(), offsets);
-        vkCmdBindIndexBuffer(main_buffer, current_model->getModel()->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(main_buffer, 0, 1, &outline_entity->getModel()->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer, outline_entity->getModel()->getModel().lock()->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
         vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, outline_pipeline->getGraphicsPipeline());
         vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                                 outline_pipeline->getPipelineLayout(),
                                 0, 1, &m_OutlineDescriptorSets[KHRImageIndex],
                                 0, nullptr);
         vkCmdDrawIndexed(main_buffer,
-                         static_cast<uint32_t>(current_model->getModel()->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
+                         static_cast<uint32_t>(outline_entity->getModel()->getModel().lock()->getIndices().size()), 1, 0, 0, 0);
     }
 
     endRenderPass(m_RenderPass.get(), main_buffer);
@@ -1373,7 +1331,11 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
 
     OutlineUniformBuffer outline_buffer{};
     outline_buffer.projection = ubo.proj;
-    outline_buffer.model = glm::scale(m_CurrentScene->getEntity("2-2")->getModel()->getTransform(), glm::vec3{1.2});
+    auto entity = m_CurrentScene->getEntity(m_CurrentScene->getCurrentId());
+    if (entity)
+    {
+        outline_buffer.model = glm::scale(entity->getModel()->getTransform(), glm::vec3{1.2});
+    }
     outline_buffer.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
     m_OutlineBuffer->mapMemory(outline_buffer, currentImage);
 

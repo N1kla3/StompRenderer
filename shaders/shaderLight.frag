@@ -78,9 +78,11 @@ layout( push_constant ) uniform constants
 {
     mat4 model;
 
-    vec3 pushAmbient;
-    vec3 pushDiffusive;
-    vec3 pushSpecular;
+    vec4 pushAmbient;
+    vec4 pushDiffusive;
+    vec4 pushSpecular;
+
+    int id;
 } pushModel;
 
 layout(location = 0) out vec4 outColor;
@@ -101,7 +103,7 @@ void main()
 
     //result *= fragColor;
     outColor = vec4(result, 1.0f);
-    outId = 1;
+    outId = pushModel.id;
 }
 
 vec3 calcDirLight(LightBufferObject light, vec3 normal, vec3 viewDir)
@@ -111,9 +113,9 @@ vec3 calcDirLight(LightBufferObject light, vec3 normal, vec3 viewDir)
     vec3 reflectDir = reflect(-LightDir, normal);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 64.0);
 
-    vec3 ambient = light.ambient * pushModel.pushAmbient * vec3(texture(texSampler, fragTexCoord));
-    vec3 diffuse = light.diffusive * diff * pushModel.pushDiffusive * vec3(texture(diffMap, fragTexCoord));
-    vec3 specular = light.specular * spec * pushModel.pushSpecular * vec3(texture(specMap, fragTexCoord));
+    vec3 ambient = light.ambient * pushModel.pushAmbient.xyz * vec3(texture(texSampler, fragTexCoord));
+    vec3 diffuse = light.diffusive * diff * pushModel.pushDiffusive.xyz * vec3(texture(diffMap, fragTexCoord));
+    vec3 specular = light.specular * spec * pushModel.pushSpecular.xyz * vec3(texture(specMap, fragTexCoord));
 
     return ambient + diffuse + specular;
 }
@@ -128,9 +130,9 @@ vec3 calcPointLight(PointLightBuffer light, vec3 normal, vec3 fragPos, vec3 view
     float distance = length(light.position - fragPos);
     float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-    vec3 ambient = light.ambient * pushModel.pushAmbient * vec3(texture(texSampler, fragTexCoord));
-    vec3 diffuse = light.diffusive * diff * pushModel.pushDiffusive * vec3(texture(diffMap, fragTexCoord));
-    vec3 specular = light.specular * spec * pushModel.pushSpecular * vec3(texture(specMap, fragTexCoord));
+    vec3 ambient = light.ambient * pushModel.pushAmbient.xyz * vec3(texture(texSampler, fragTexCoord));
+    vec3 diffuse = light.diffusive * diff * pushModel.pushDiffusive.xyz * vec3(texture(diffMap, fragTexCoord));
+    vec3 specular = light.specular * spec * pushModel.pushSpecular.xyz * vec3(texture(specMap, fragTexCoord));
 
     ambient *= attenuation;
     diffuse *= attenuation;
@@ -153,9 +155,9 @@ vec3 calcSpotLight(SpotLightBuffer light, vec3 normal, vec3 fragPos, vec3 viewDi
     float epsilon = light.cut_off - light.outer_cutoff;
     float intensity = clamp((theta - light.outer_cutoff) / epsilon, 0.0, 1.0);
 
-    vec3 ambient = light.ambient * pushModel.pushAmbient * vec3(texture(texSampler, fragTexCoord));
-    vec3 diffuse = light.diffusive * diff * pushModel.pushDiffusive * vec3(texture(diffMap, fragTexCoord));
-    vec3 specular = light.specular * spec * pushModel.pushSpecular * vec3(texture(specMap, fragTexCoord));
+    vec3 ambient = light.ambient * pushModel.pushAmbient.xyz * vec3(texture(texSampler, fragTexCoord));
+    vec3 diffuse = light.diffusive * diff * pushModel.pushDiffusive.xyz * vec3(texture(diffMap, fragTexCoord));
+    vec3 specular = light.specular * spec * pushModel.pushSpecular.xyz * vec3(texture(specMap, fragTexCoord));
 
     ambient *= attenuation * intensity;
     diffuse *= attenuation * intensity;

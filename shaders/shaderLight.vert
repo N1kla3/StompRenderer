@@ -12,9 +12,11 @@ layout( push_constant ) uniform constants
 {
     mat4 model;
 
-    vec3 pushAmbient;
-    vec3 pushDiffusive;
-    vec3 pushSpecular;
+    vec4 pushAmbient;
+    vec4 pushDiffusive;
+    vec4 pushSpecular;
+
+    int id;
 } pushModel;
 
 layout(location = 0) in vec3 inPosition;
