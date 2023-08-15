@@ -1,6 +1,6 @@
 #include "UniformBuffer.h"
 
-omp::UniformBuffer::UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrImageCount, VkDeviceSize bufferSize)
+omp::UniformBuffer::UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrImageCount, VkDeviceSize bufferSize, VkBufferUsageFlagBits flags)
     : m_VulkanContext(inVulkanContext)
     , m_KHRNum(khrImageCount)
 {
@@ -8,7 +8,7 @@ omp::UniformBuffer::UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inV
     m_Memory.resize(khrImageCount);
     for (size_t i = 0; i < khrImageCount; i++)
     {
-        m_VulkanContext->createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        m_VulkanContext->createBuffer(bufferSize, flags,
                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                      m_Buffer[i], m_Memory[i]);
     }

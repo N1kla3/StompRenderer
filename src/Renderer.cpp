@@ -55,11 +55,11 @@ void Renderer::initVulkan()
     createImguiWidgets();
     createSwapChain();
     postSwapChainInitialize();
+    createLights();
     createImageViews();
     createRenderPass();
     createDescriptorSetLayout();
     createGraphicsPipeline();
-    createCommandPool();
     createMaterialManager();
     createColorResources();
     createViewportResources();
@@ -426,6 +426,7 @@ void Renderer::createLogicalDevice()
     vkGetDeviceQueue(m_LogicalDevice, indices.graphics_family.value(), 0, &m_GraphicsQueue);
     vkGetDeviceQueue(m_LogicalDevice, indices.present_family.value(), 0, &m_PresentQueue);
 
+    createCommandPool();
     m_VulkanContext = std::make_shared<omp::VulkanContext>(m_LogicalDevice, m_PhysDevice, m_CommandPool,
                                                            m_GraphicsQueue);
     omp::MaterialManager::getMaterialManager().specifyVulkanContext(m_VulkanContext);
@@ -1228,7 +1229,7 @@ void Renderer::createDescriptorSetLayout()
         ubo_layout_binding.binding = 0;
         ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         ubo_layout_binding.descriptorCount = 1;
-        ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         ubo_layout_binding.pImmutableSamplers = nullptr;
 
         VkDescriptorSetLayoutBinding global_light_layout_binding{};
@@ -1240,15 +1241,15 @@ void Renderer::createDescriptorSetLayout()
 
         VkDescriptorSetLayoutBinding point_light_layout_binding{};
         point_light_layout_binding.binding = 2;
-        point_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        point_light_layout_binding.descriptorCount = m_LightSystem->getPointLightSize();
+        point_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        point_light_layout_binding.descriptorCount = 1;
         point_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
         point_light_layout_binding.pImmutableSamplers = nullptr;
 
         VkDescriptorSetLayoutBinding spot_light_layout_binding{};
         spot_light_layout_binding.binding = 3;
-        spot_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        spot_light_layout_binding.descriptorCount = m_LightSystem->getSpotLightSize();
+        spot_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        spot_light_layout_binding.descriptorCount = 1;
         spot_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
         spot_light_layout_binding.pImmutableSamplers = nullptr;
 
@@ -1310,9 +1311,9 @@ void Renderer::createDescriptorSetLayout()
 void Renderer::createUniformBuffers()
 {
     VkDeviceSize buffer_size = sizeof(UniformBufferObject);
-    m_UboBuffer = std::make_unique<omp::UniformBuffer>(m_VulkanContext, m_PresentKHRImagesNum, buffer_size);
+    m_UboBuffer = std::make_unique<omp::UniformBuffer>(m_VulkanContext, m_PresentKHRImagesNum, buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
-    m_OutlineBuffer = std::make_unique<omp::UniformBuffer>(m_VulkanContext, m_PresentKHRImagesNum, sizeof(OutlineUniformBuffer));
+    m_OutlineBuffer = std::make_unique<omp::UniformBuffer>(m_VulkanContext, m_PresentKHRImagesNum, sizeof(OutlineUniformBuffer), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
     m_LightSystem->recreate();
 }
@@ -1327,6 +1328,9 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
             m_CurrentScene->getCurrentCamera()->getNearClipping(), m_CurrentScene->getCurrentCamera()->getFarClipping());
     ubo.proj[1][1] *= -1;
     ubo.view_position = m_CurrentScene->getCurrentCamera()->getPosition();
+    ubo.global_light_enabled = m_LightSystem->getGlobalLight() ? 1 : 0;
+    ubo.point_light_size = m_LightSystem->getPointLightSize();
+    ubo.spot_light_size = m_LightSystem->getSpotLightSize();
     m_UboBuffer->mapMemory(ubo, currentImage);
 
     OutlineUniformBuffer outline_buffer{};
@@ -1460,7 +1464,7 @@ void Renderer::createDescriptorSets()
         descriptor_writes[2].dstSet = m_UboDescriptorSets[i];
         descriptor_writes[2].dstBinding = 2;
         descriptor_writes[2].dstArrayElement = 0;
-        descriptor_writes[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptor_writes[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         descriptor_writes[2].descriptorCount = 1;
         descriptor_writes[2].pBufferInfo = &point_light_info;
 
@@ -1468,7 +1472,7 @@ void Renderer::createDescriptorSets()
         descriptor_writes[3].dstSet = m_UboDescriptorSets[i];
         descriptor_writes[3].dstBinding = 3;
         descriptor_writes[3].dstArrayElement = 0;
-        descriptor_writes[3].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptor_writes[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         descriptor_writes[3].descriptorCount = 1;
         descriptor_writes[3].pBufferInfo = &spot_light_info;
 
@@ -2079,42 +2083,6 @@ void Renderer::initializeScene()
     viking_mat->setShaderName("Light");
     viking->setMaterialInstance(std::make_shared<omp::MaterialInstance>(viking_mat));
 
-    const std::string model_path = "../models/sphere.obj";
-
-    auto light_model = m_ModelManager->forceGetModel(model_path);
-    auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default_no_light");
-    mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
-    mat->setShaderName("Simple");
-    // need other way to load, and async
-    loadModelInMemory(light_model);
-
-    glm::vec3 light_pos = {10.f, 13.f, 4.f};
-    auto func = [&light_pos, this](const std::string& inName, const std::shared_ptr<omp::Model>& inModel, const std::shared_ptr<omp::Material>& inMat)
-    -> std::shared_ptr<omp::ModelInstance>
-    {
-        auto my_model = std::make_shared<omp::ModelInstance>(inModel);
-        my_model->setMaterialInstance(std::make_shared<omp::MaterialInstance>(inMat));
-        my_model->setName(inName);
-        my_model->getPosition() = light_pos;
-        addModelToScene(std::make_shared<omp::SceneEntity>(inName, my_model));
-        return my_model;
-    };
-
-    m_LightSystem->getGlobalLight().setModel(func("global_light", light_model, mat));
-
-    const std::string point_name = "point_light";
-    for (size_t index = 0; index < m_LightSystem->getPointLight().size(); index++)
-    {
-        light_pos.x += 10.f;
-        m_LightSystem->getPointLight()[index].setModel(func(point_name+"1", light_model, mat));
-    }
-
-    const std::string spot_name = "spot_light";
-    for (size_t index = 0; index < m_LightSystem->getSpotLight().size(); index++)
-    {
-        light_pos.x += 10.f;
-        m_LightSystem->getSpotLight()[index].setModel(func(spot_name+"1", light_model, mat));
-    }
 }
 
 void Renderer::postFrame()
@@ -2202,5 +2170,61 @@ void Renderer::loadModelInMemory(const std::shared_ptr<omp::Model>& inModel)
 {
     inModel->loadIndexToMemory(m_VulkanContext);
     inModel->loadVertexToMemory(m_VulkanContext);
+}
+
+void Renderer::createLights()
+{
+    // LIGHTS
+    const std::string model_path = "../models/sphere.obj";
+
+    auto light_model = m_ModelManager->forceGetModel(model_path);
+    auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("default_no_light");
+    mat->addTexture(omp::ETextureType::Texture, omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
+    mat->setShaderName("Simple");
+    // need other way to load, and async
+    loadModelInMemory(light_model);
+
+    m_CurrentScene->addEntityToScene(m_LightSystem->enableGlobalLight(std::make_shared<omp::ModelInstance>(light_model, mat)));
+
+    auto&& point_one = std::make_shared<omp::LightObject<omp::PointLight>>("point 1",
+                                                        std::make_shared<omp::ModelInstance>(light_model, mat));
+    m_LightSystem->addPointLight(point_one);
+    m_CurrentScene->addEntityToScene(point_one);
+
+    auto&& point_two = std::make_shared<omp::LightObject<omp::PointLight>>("point 2",
+                                                        std::make_shared<omp::ModelInstance>(light_model, mat));
+    m_LightSystem->addPointLight(point_two);
+    m_CurrentScene->addEntityToScene(point_two);
+
+    auto&& spot_one = std::make_shared<omp::LightObject<omp::SpotLight>>("spot 1",
+                                                       std::make_shared<omp::ModelInstance>(light_model, mat));
+    m_LightSystem->addSpotLight(spot_one);
+    m_CurrentScene->addEntityToScene(spot_one);
+
+    auto&& spot_two = std::make_shared<omp::LightObject<omp::SpotLight>>("spot 2",
+                                                       std::make_shared<omp::ModelInstance>(light_model, mat));
+    m_LightSystem->addSpotLight(spot_two);
+    m_CurrentScene->addEntityToScene(spot_two);
+
+    auto&& spot_three = std::make_shared<omp::LightObject<omp::SpotLight>>("spot 3",
+                                                       std::make_shared<omp::ModelInstance>(light_model, mat));
+    m_LightSystem->addSpotLight(spot_three);
+    m_CurrentScene->addEntityToScene(spot_three);
+
+    glm::vec3 light_pos = {10.f, 13.f, 4.f};
+
+    const std::string point_name = "point_light";
+    for (size_t index = 0; index < m_LightSystem->getPointLight().size(); index++)
+    {
+        light_pos.x += 10.f;
+        m_LightSystem->getPointLight()[index]->getModel()->getPosition() = light_pos;
+    }
+
+    const std::string spot_name = "spot_light";
+    for (size_t index = 0; index < m_LightSystem->getSpotLight().size(); index++)
+    {
+        light_pos.x += 10.f;
+        m_LightSystem->getSpotLight()[index]->getModel()->getPosition() = light_pos;
+    }
 }
 

@@ -15,7 +15,7 @@ namespace omp
         uint32_t m_KHRNum;
 
     public:
-        UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrImageCount, VkDeviceSize bufferSize);
+        UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrImageCount, VkDeviceSize bufferSize, VkBufferUsageFlagBits flags);
 
         VkBuffer getBuffer(uint32_t khr) const { return m_Buffer.at(khr); }
 

@@ -25,6 +25,7 @@ namespace omp
         ModelInstance(const std::shared_ptr<omp::Model>& inModel);
         ModelInstance(const std::shared_ptr<omp::MaterialInstance>& inInstance);
         ModelInstance(const std::shared_ptr<omp::Model>& inModel, const std::shared_ptr<omp::MaterialInstance>& inInstance);
+        ModelInstance(const std::shared_ptr<omp::Model>& inModel, const std::shared_ptr<omp::Material>& inMat);
 
         std::string getName() const { return m_Name; }
         void setName(const std::string& inName) { m_Name = inName; }

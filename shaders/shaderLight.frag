@@ -56,17 +56,28 @@ struct SpotLightBuffer
     float quadratic;
 };
 
+layout(set = 0, binding = 0) uniform UniformBufferObject
+{
+    mat4 view;
+    mat4 proj;
+    vec3 viewPosition;
+
+    int global_size;
+    int point_size;
+    int spot_size;
+} ubo;
+
 layout(set = 0, binding = 1) uniform GlobalLightProxy
 {
     LightBufferObject object;
 } light_global;
-layout(set = 0, binding = 2) uniform  PointLightProxy
+layout(set = 0, binding = 2) readonly buffer PointLightProxy
 {
-    PointLightBuffer object;
+    PointLightBuffer[] object;
 } point_light;
-layout(set = 0, binding = 3) uniform  SpotLightProxy
+layout(set = 0, binding = 3) readonly buffer SpotLightProxy
 {
-    SpotLightBuffer object;
+    SpotLightBuffer[] object;
 } spot_light;
 
 layout(set = 1, binding = 0) uniform sampler2D texSampler;
@@ -97,9 +108,20 @@ void main()
     vec3 norm = normalize(outNormal);
     vec3 viewDir = normalize(outViewPosition - outPosition);
 
-    vec3 result = calcDirLight(light_global.object, norm, viewDir);
-    result += calcPointLight(point_light.object, norm, outPosition, viewDir);
-    result += calcSpotLight(spot_light.object, norm, outPosition, viewDir);
+    vec3 result = vec3(texture(texSampler, fragTexCoord));
+
+    if (bool(ubo.global_size))
+    {
+        result = calcDirLight(light_global.object, norm, viewDir);
+    }
+    for (int i = 0; i < ubo.point_size; i++)
+    {
+        result += calcPointLight(point_light.object[i], norm, outPosition, viewDir);
+    }
+    for (int i = 0; i < ubo.spot_size; i++)
+    {
+        result += calcSpotLight(spot_light.object[i], norm, outPosition, viewDir);
+    }
 
     //result *= fragColor;
     outColor = vec4(result, 1.0f);

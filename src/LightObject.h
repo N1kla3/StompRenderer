@@ -3,6 +3,8 @@
 #include "Rendering/Model.h"
 #include "Light.h"
 #include "Rendering/ModelInstance.h"
+#include "imgui.h"
+#include "SceneEntity.h"
 
 template<typename T>
 concept LightClassReq =
@@ -13,27 +15,41 @@ std::is_base_of_v<omp::SpotLight, T>;
 namespace omp
 {
     template<LightClassReq LightType>
-    class LightObject
+class LightObject : public omp::SceneEntity
     {
     private:
         LightType m_Light;
-        std::shared_ptr<ModelInstance> m_Model;
 
     public:
         using LightClass = LightType;
 
         LightObject();
+        LightObject(const std::string& inName);
+        LightObject(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel);
         LightClass& getLight();
 
         inline void updateLightObject(){};
+        inline virtual void draw() override { SceneEntity::draw(); };
         void setModel(const std::shared_ptr<ModelInstance>& inModel);
     };
 }
 
 template<LightClassReq LightType>
 omp::LightObject<LightType>::LightObject()
+        : omp::SceneEntity()
 {
-    m_Light = LightType{};
+}
+
+template<LightClassReq LightType>
+omp::LightObject<LightType>::LightObject(const std::string& inName)
+    : omp::SceneEntity(inName, nullptr)
+{
+}
+
+template<LightClassReq LightType>
+omp::LightObject<LightType>::LightObject(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel)
+        : omp::SceneEntity(inName, inModel)
+{
 }
 
 template<LightClassReq LightType>
@@ -52,12 +68,39 @@ inline void omp::LightObject<omp::GlobalLight>::updateLightObject()
 }
 
 template<>
+inline void omp::LightObject<omp::GlobalLight>::draw()
+{
+    SceneEntity::draw();
+
+    ImGui::Text("Light properties");
+    ImGui::DragFloat4("Ambient", &m_Light.ambient.x, 0.1f);
+    ImGui::DragFloat4("Diffuse", &m_Light.diffuse.x, 0.1f);
+    ImGui::DragFloat4("Specular", &m_Light.specular.x, 0.1f);
+}
+
+template<>
 inline void omp::LightObject<omp::PointLight>::updateLightObject()
 {
     auto& v = m_Model->getPosition();
     m_Light.position.x = v.x;
     m_Light.position.y = v.y;
     m_Light.position.z = v.z;
+}
+
+template<>
+inline void omp::LightObject<omp::PointLight>::draw()
+{
+    SceneEntity::draw();
+
+    ImGui::Text("Light Properties");
+
+    ImGui::DragFloat4("Ambient", &m_Light.ambient.x, 0.1f);
+    ImGui::DragFloat4("Diffuse", &m_Light.diffuse.x, 0.1f);
+    ImGui::DragFloat4("Specular", &m_Light.specular.x, 0.1f);
+
+    ImGui::DragFloat("Constant", &m_Light.constant, 0.1f);
+    ImGui::DragFloat("Linear", &m_Light.linear, 0.1f);
+    ImGui::DragFloat("Quadratic", &m_Light.quadratic, 0.1f);
 }
 
 template<>
@@ -72,6 +115,23 @@ inline void omp::LightObject<omp::SpotLight>::updateLightObject()
     m_Light.direction.x = rot.x;
     m_Light.direction.y = rot.y;
     m_Light.direction.z = rot.z;
+}
+
+template<>
+inline void omp::LightObject<omp::SpotLight>::draw()
+{
+    SceneEntity::draw();
+
+    ImGui::Text("Light properties");
+    ImGui::DragFloat4("Ambient", &m_Light.ambient.x, 0.1f);
+    ImGui::DragFloat4("Diffuse", &m_Light.diffuse.x, 0.1f);
+    ImGui::DragFloat4("Specular", &m_Light.specular.x, 0.1f);
+
+    ImGui::DragFloat("Cut off", &m_Light.cut_off, 0.1f);
+    ImGui::DragFloat("Outer cut off", &m_Light.outer_cutoff, 0.1f);
+    ImGui::DragFloat("Constant", &m_Light.constant, 0.1f);
+    ImGui::DragFloat("Linear", &m_Light.linear, 0.1f);
+    ImGui::DragFloat("Quadratic", &m_Light.quadratic, 0.1f);
 }
 
 template<LightClassReq LightType>

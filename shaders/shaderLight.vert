@@ -5,6 +5,10 @@ layout(set = 0, binding = 0) uniform UniformBufferObject
     mat4 view;
     mat4 proj;
     vec3 viewPosition;
+
+    int global_size;
+    int point_size;
+    int spot_size;
 } ubo;
 
 //push constants block

@@ -1,6 +1,12 @@
 #include "SceneEntity.h"
 #include "imgui.h"
 
+omp::SceneEntity::SceneEntity()
+    : SceneEntity("None", nullptr)
+{
+
+}
+
 omp::SceneEntity::SceneEntity(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel)
     : m_Name(inName)
     , m_Model(inModel)

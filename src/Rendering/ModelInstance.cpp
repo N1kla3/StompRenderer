@@ -49,6 +49,14 @@ omp::ModelInstance::ModelInstance(
 {
 
 }
+omp::ModelInstance::ModelInstance(
+        const std::shared_ptr<omp::Model>& inModel,
+        const std::shared_ptr<omp::Material>& inMat)
+        : m_Model(inModel)
+        , m_MaterialInstance(std::make_shared<omp::MaterialInstance>(inMat))
+{
+
+}
 
 void omp::ModelInstance::setMaterialInstance(const std::shared_ptr<MaterialInstance>& inInstance)
 {

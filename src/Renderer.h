@@ -82,6 +82,10 @@ struct UniformBufferObject
     glm::mat4 view;
     glm::mat4 proj;
     glm::vec3 view_position;
+
+    int global_light_enabled;
+    int point_light_size;
+    int spot_light_size;
 };
 
 struct OutlineUniformBuffer
@@ -250,6 +254,7 @@ private:
     void createImguiFramebuffers();
 
     void createMaterialManager();
+    void createLights();
 
     void destroyMainRenderPassResources();
     void onViewportResize(size_t imageIndex);

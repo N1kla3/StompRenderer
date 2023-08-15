@@ -7,22 +7,20 @@ namespace omp
     class LightSystem
     {
     public:
-        static constexpr int LIGHT_COUNT = 1;
         LightSystem(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrNum);
 
     private:
-        LightObject<GlobalLight> m_GlobalLight;
+        std::shared_ptr<LightObject<GlobalLight>> m_GlobalLight{nullptr};
         std::unique_ptr<omp::UniformBuffer> m_GlobalBuffer;
 
-        std::array<LightObject<PointLight>, LIGHT_COUNT> m_PointLights;
+        std::vector<std::shared_ptr<LightObject<PointLight>>> m_PointLights;
         std::unique_ptr<omp::UniformBuffer> m_PointBuffer;
 
-        std::array<LightObject<SpotLight>, LIGHT_COUNT> m_SpotLights;
+        std::vector<std::shared_ptr<LightObject<SpotLight>>> m_SpotLights;
         std::unique_ptr<omp::UniformBuffer> m_SpotBuffer;
 
         std::shared_ptr<omp::VulkanContext> m_VulkanContext;
         uint32_t m_KHRnum = 0;
-
 
         // METHODS //
         // ======= //
@@ -38,12 +36,13 @@ namespace omp
         VkBuffer getPointLightBuffer(uint32_t khr);
         VkBuffer getSpotLightBuffer(uint32_t khr);
 
-        LightObject<GlobalLight>& getGlobalLight() { return m_GlobalLight; }
-        std::array<LightObject<PointLight>, LIGHT_COUNT>& getPointLight() { return m_PointLights; }
-        std::array<LightObject<SpotLight>, LIGHT_COUNT>& getSpotLight() { return m_SpotLights; }
+        std::shared_ptr<LightObject<GlobalLight>>& getGlobalLight() { return m_GlobalLight; }
+        std::vector<std::shared_ptr<LightObject<PointLight>>>& getPointLight() { return m_PointLights; }
+        std::vector<std::shared_ptr<LightObject<SpotLight>>>& getSpotLight() { return m_SpotLights; }
 
-        // TODO: temp
-        void setModelForEach(const std::shared_ptr<omp::ModelInstance>& inModel);
+        std::shared_ptr<omp::LightObject<omp::GlobalLight>> enableGlobalLight(const std::shared_ptr<omp::ModelInstance>& inModel);
+        void addPointLight(const std::shared_ptr<LightObject<PointLight>>& inLight);
+        void addSpotLight(const std::shared_ptr<LightObject<SpotLight>>& inLight);
 
         void recreate();
         void update();
