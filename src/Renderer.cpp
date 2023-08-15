@@ -774,11 +774,10 @@ void Renderer::createRenderPass()
     VkAttachmentDescription color_attachment_resolve{};
     color_attachment_resolve.format = m_SwapChainImageFormat;
     color_attachment_resolve.samples = VK_SAMPLE_COUNT_1_BIT;
-    color_attachment_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    color_attachment_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment_resolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment_resolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment_resolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    // TODO What layout should be, what is this attachment for, how is work
     color_attachment_resolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
@@ -789,11 +788,11 @@ void Renderer::createRenderPass()
     VkAttachmentDescription pick_resolve{};
     pick_resolve.format = VK_FORMAT_R32_SINT;
     pick_resolve.samples = VK_SAMPLE_COUNT_1_BIT;
-    pick_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    pick_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     pick_resolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     pick_resolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     pick_resolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    pick_resolve.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    pick_resolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     pick_resolve.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference pick_resolve_ref{};
@@ -1014,9 +1013,10 @@ void Renderer::drawFrame()
             m_ImageAvailableSemaphores[m_CurrentFrame],
             VK_NULL_HANDLE, &image_index);
 
-    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || m_FramebufferResized)
     {
         recreateSwapChain();
+        m_FramebufferResized = false;
         return;
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -1070,12 +1070,7 @@ void Renderer::drawFrame()
     present_info.pResults = nullptr;
 
     result = vkQueuePresentKHR(m_PresentQueue, &present_info);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_FramebufferResized)
-    {
-        m_FramebufferResized = false;
-        recreateSwapChain();
-    }
-    else if (result != VK_SUCCESS)
+    if (result != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to present swap chain image!");
     }
@@ -1135,6 +1130,13 @@ void Renderer::recreateSwapChain()
     createFramebuffers();
     createUniformBuffers();
     createDescriptorSets();
+
+    if (m_ViewportDescriptor != VK_NULL_HANDLE)
+    {
+        ImGui_ImplVulkan_RemoveTexture(m_ViewportDescriptor);
+    }
+    m_ViewportDescriptor = ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    m_RenderViewport->setImageId((ImTextureID)m_ViewportDescriptor);
 
     createImguiRenderPass();
     createImguiFramebuffers();
