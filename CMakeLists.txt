@@ -103,6 +103,8 @@ set(SOURCE
         Rendering/UniformBuffer.cpp
         Rendering/ModelInstance.h
         Rendering/ModelInstance.cpp
+        ImGuizmo/ImGuizmo.cpp
+        ImGuizmo/ImGuizmo.h
         )
 
 set(TESTS

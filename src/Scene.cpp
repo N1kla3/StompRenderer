@@ -17,7 +17,7 @@ void omp::Scene::addEntityToScene(const std::shared_ptr<omp::SceneEntity>& model
     m_Entities.push_back(std::move(modelToAdd));
 }
 
-std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(const std::string& inName)
+std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(const std::string& inName) const
 {
     auto res_iter = std::find_if(m_Entities.begin(), m_Entities.end(), [&inName](const std::shared_ptr<omp::SceneEntity>& entity)
     {
@@ -34,7 +34,7 @@ std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(const std::string& inNam
     else return nullptr;
 }
 
-std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(int32_t inId)
+std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(int32_t inId) const
 {
     auto res_iter = std::find_if(m_Entities.begin(), m_Entities.end(), [&inId](const std::shared_ptr<omp::SceneEntity>& entity)
     {
@@ -56,4 +56,9 @@ omp::Scene::Scene()
     : m_CurrentCamera(std::make_shared<omp::Camera>())
 {
 
+}
+
+std::shared_ptr <omp::SceneEntity> omp::Scene::getCurrentEntity() const
+{
+    return getEntity(m_CurrentEntityId);
 }

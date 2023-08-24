@@ -18,7 +18,8 @@ glm::vec3& omp::ModelInstance::getScale()
 
 glm::mat4 omp::ModelInstance::getTransform() const
 {
-    glm::mat4 rotation = glm::toMat4(glm::quat(m_Rotation));
+    glm::vec3 rad_rot = glm::radians(m_Rotation);
+    glm::mat4 rotation = glm::toMat4(glm::quat(rad_rot));
     return glm::translate(glm::mat4(1.0f), m_Translation)
            * rotation
            * glm::scale(glm::mat4(1.0f), m_Scale);

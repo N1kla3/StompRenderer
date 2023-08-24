@@ -15,6 +15,7 @@ namespace omp
         std::string m_Name;
 
         glm::vec3 m_Translation = glm::vec3(1.f);
+        // In degrees
         glm::vec3 m_Rotation = glm::vec3(0.f);
         glm::vec3 m_Scale = glm::vec3(1.f);
 

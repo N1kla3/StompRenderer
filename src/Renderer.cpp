@@ -25,6 +25,7 @@
 
 #include "Logs.h"
 #include "Rendering/ModelStatics.h"
+#include "ImGuizmo/ImGuizmo.h"
 
 #ifdef NDEBUG
 const bool g_EnableValidationLayers = false;
@@ -990,6 +991,7 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
 
     renderAllUi();
 
@@ -2062,6 +2064,27 @@ void Renderer::initializeScene()
     };
     m_RenderViewport->setMouseClickCallback(lambda);
 
+    m_RenderViewport->setTranslationChangeCallback([this](float inVec[3]){
+        if (m_CurrentScene->getCurrentEntity())
+        {
+            m_CurrentScene->getCurrentEntity()->getModel()->getPosition() = glm::vec3(inVec[0], inVec[1], inVec[2]);
+        }
+    });
+    m_RenderViewport->setRotationChangeCallback([this](float inVec[3]){
+        if (m_CurrentScene->getCurrentEntity())
+        {
+            glm::vec3 new_rotation{ inVec[0], inVec[1], inVec[2] };
+            glm::vec3 rotation = m_CurrentScene->getCurrentEntity()->getModel()->getRotation();
+            m_CurrentScene->getCurrentEntity()->getModel()->getRotation() += new_rotation - rotation;
+        }
+    });
+    m_RenderViewport->setScaleChangeCallback([this](float inVec[3]){
+        if (m_CurrentScene->getCurrentEntity())
+        {
+            m_CurrentScene->getCurrentEntity()->getModel()->getScale() = glm::vec3(inVec[0], inVec[1], inVec[2]);
+        }
+    });
+
     // TODO: model split
     addModelToScene("1-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
     addModelToScene("1-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
@@ -2137,7 +2160,19 @@ void Renderer::postFrame()
 
 void Renderer::tick(float deltaTime)
 {
-
+    glm::mat4 projection = glm::perspective(
+            glm::radians(m_CurrentScene->getCurrentCamera()->getViewAngle()),
+            (float) m_RenderViewport->getSize().x / (float) m_RenderViewport->getSize().y,
+            m_CurrentScene->getCurrentCamera()->getNearClipping(), m_CurrentScene->getCurrentCamera()->getFarClipping());
+    //projection[1][1] *= -1;
+    int32_t id = m_CurrentScene->getCurrentId();
+    auto ent = m_CurrentScene->getEntity(id);
+    glm::mat4 model{};
+    if (ent)
+    {
+        model = ent->getModel()->getTransform();
+    }
+    m_RenderViewport->sendPickingData({id, projection, model});
 
     //m_CurrentScene->getEntity("1-1")->getRotation().x += 1*deltaTime;
     m_CurrentScene->getEntity("2-1")->getModel()->getRotation().x += 1 * deltaTime;
