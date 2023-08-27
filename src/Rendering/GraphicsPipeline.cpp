@@ -103,6 +103,11 @@ void omp::GraphicsPipeline::createRasterizer()
     m_Rasterizer = rasterizer;
 }
 
+void omp::GraphicsPipeline::createRasterizer(VkPipelineRasterizationStateCreateInfo inInfo)
+{
+    m_Rasterizer = inInfo;
+}
+
 void omp::GraphicsPipeline::createMultisamplingInfo(VkSampleCountFlagBits rasterizationSamples)
 {
     VkPipelineMultisampleStateCreateInfo multisampling{};

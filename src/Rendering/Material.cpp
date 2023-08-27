@@ -66,3 +66,8 @@ omp::Material::Material(const std::string& name)
 {
 
 }
+
+void omp::Material::enableBlending(bool enable)
+{
+    m_EnableBlending = enable;
+}

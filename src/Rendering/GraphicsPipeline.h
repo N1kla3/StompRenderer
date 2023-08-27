@@ -19,6 +19,7 @@ namespace omp
         void createInputAssembly();
         void createViewport(VkExtent2D scissorExtent);
         void createRasterizer();
+        void createRasterizer(VkPipelineRasterizationStateCreateInfo inInfo);
         void createMultisamplingInfo(VkSampleCountFlagBits rasterizationSamples);
         void createColorBlending();
         void addColorBlendingAttachment(VkPipelineColorBlendAttachmentState state);

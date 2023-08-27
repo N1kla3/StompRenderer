@@ -46,6 +46,8 @@ namespace omp
 
         void addTextureInternal(TextureData&& data);
 
+        bool m_EnableBlending = false;
+
     public:
         Material();
         explicit Material(const std::string& name);
@@ -66,6 +68,9 @@ namespace omp
         void clearDescriptorSets() { m_DescriptorSets.clear(); }
 
         bool isPotentiallyReadyForRendering() { return !m_DescriptorSets.empty(); }
+
+        void enableBlending(bool enable);
+        bool isBlendingEnabled() const { return m_EnableBlending; }
 
         friend MaterialManager;
     };

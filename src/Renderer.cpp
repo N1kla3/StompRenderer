@@ -623,11 +623,11 @@ void Renderer::createGraphicsPipeline()
     color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
                                             | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     color_blend_attachment.blendEnable = VK_FALSE;
-    color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
-    color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-    color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
     color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
     VkStencilOpState stencil_state{};
@@ -685,7 +685,40 @@ void Renderer::createGraphicsPipeline()
     pipe->createShaders(shader);
     pipe->confirmCreation(m_RenderPass);
 
+
+    std::shared_ptr<omp::Shader> blend_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vertLightBlend.spv",
+                                                                              "../SPRV/fragLightBlend.spv");
+    VkPipelineRasterizationStateCreateInfo rasterization_state{};
+    rasterization_state.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterization_state.depthClampEnable = VK_FALSE;
+    rasterization_state.rasterizerDiscardEnable = VK_FALSE;
+    rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterization_state.lineWidth = 1.0f;
+    rasterization_state.cullMode = VK_CULL_MODE_NONE;
+    rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterization_state.depthBiasEnable = VK_FALSE;
+    rasterization_state.depthBiasConstantFactor = 0.0f;
+    rasterization_state.depthBiasClamp = 0.0f;
+    rasterization_state.depthBiasSlopeFactor = 0.0f;
+    std::unique_ptr<omp::GraphicsPipeline> grass_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    grass_pipe->startDefaultCreation();
+    color_blend_attachment.blendEnable = VK_TRUE;
+    grass_pipe->addColorBlendingAttachment(color_blend_attachment);
+    color_blend_attachment.blendEnable = VK_FALSE;
+    grass_pipe->addColorBlendingAttachment(color_blend_attachment);
+    grass_pipe->createMultisamplingInfo(m_MSAASamples);
+    grass_pipe->createViewport(m_SwapChainExtent);
+    grass_pipe->createRasterizer(rasterization_state);
+    grass_pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    grass_pipe->addPipelineSetLayout(m_UboDescriptorSetLayout);
+    grass_pipe->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
+    grass_pipe->setDepthStencil(depth_stencil);
+    grass_pipe->createShaders(blend_shader);
+    grass_pipe->confirmCreation(m_RenderPass);
+
+
     // LIGHT STENCIL
+    color_blend_attachment.blendEnable = VK_FALSE;
     std::unique_ptr<omp::GraphicsPipeline> light_stencil = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     light_stencil->startDefaultCreation();
     light_stencil->addColorBlendingAttachment(color_blend_attachment);
@@ -726,6 +759,7 @@ void Renderer::createGraphicsPipeline()
     m_Pipelines.insert({"Simple", std::move(pipe)});
     m_Pipelines.insert({"Outline", std::move(outline_pipe)});
     m_Pipelines.insert({"LightStencil", std::move(light_stencil)});
+    m_Pipelines.insert({"Grass", std::move(grass_pipe)});
 }
 
 void Renderer::createRenderPass()
@@ -902,9 +936,29 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
 
     std::shared_ptr<omp::SceneEntity> outline_entity = nullptr;
     VkDeviceSize offsets[] = {0};
-    for (size_t index = 0; index < m_CurrentScene->getEntities().size(); index++)
+
+    std::vector<std::shared_ptr<omp::SceneEntity>> scene_copy = m_CurrentScene->getEntities();
+    std::sort(scene_copy.begin(), scene_copy.end(),
+              [this](const std::shared_ptr<omp::SceneEntity>& inEnt,
+                      const std::shared_ptr<omp::SceneEntity>& inEnt2)-> bool {
+          if (inEnt->getModel()->getMaterialInstance()->getStaticMaterial().lock()->isBlendingEnabled() &&
+              !inEnt2->getModel()->getMaterialInstance()->getStaticMaterial().lock()->isBlendingEnabled())
+          {
+              return false;
+          }
+          if (!inEnt->getModel()->getMaterialInstance()->getStaticMaterial().lock()->isBlendingEnabled() &&
+              inEnt2->getModel()->getMaterialInstance()->getStaticMaterial().lock()->isBlendingEnabled())
+          {
+              return true;
+          }
+          // TODO remove sqrt
+          return glm::distance(m_CurrentScene->getCurrentCamera()->getPosition(), inEnt->getModel()->getPosition()) >
+              glm::distance(m_CurrentScene->getCurrentCamera()->getPosition(), inEnt2->getModel()->getPosition());
+          return true;
+    });
+    for (size_t index = 0; index < scene_copy.size(); index++)
     {
-        auto& scene_entity = m_CurrentScene->getEntities()[index];
+        auto& scene_entity = scene_copy[index];
         auto& material_instance = scene_entity->getModel()->getMaterialInstance();
         auto material = material_instance->getStaticMaterial().lock();
         if (!material)
@@ -2108,6 +2162,34 @@ void Renderer::initializeScene()
     viking_mat->setShaderName("Light");
     viking->setMaterialInstance(std::make_shared<omp::MaterialInstance>(viking_mat));
 
+    auto quad = addModelToScene("grass", "../models/quad.obj");
+    auto grass_mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("grass");
+    auto grass_texture = omp::MaterialManager::getMaterialManager().loadTextureInstantly("../textures/grass.png");
+    grass_mat->addTexture(omp::ETextureType::Texture, grass_texture);
+    grass_mat->addTexture(omp::ETextureType::DiffusiveMap, grass_texture);
+    grass_mat->addTexture(omp::ETextureType::SpecularMap, grass_texture);
+    grass_mat->setShaderName("Grass");
+    grass_mat->enableBlending(true);
+    quad->setMaterialInstance(std::make_shared<omp::MaterialInstance>(grass_mat));
+
+    auto window = addModelToScene("window", "../models/quad.obj");
+    auto window_mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("window");
+    auto window_texture = omp::MaterialManager::getMaterialManager().loadTextureInstantly("../textures/window.png");
+    window_mat->addTexture(omp::ETextureType::Texture, window_texture);
+    window_mat->addTexture(omp::ETextureType::DiffusiveMap, window_texture);
+    window_mat->addTexture(omp::ETextureType::SpecularMap, window_texture);
+    window_mat->setShaderName("Grass");
+    window_mat->enableBlending(true);
+    window->setMaterialInstance(std::make_shared<omp::MaterialInstance>(window_mat));
+
+    auto plane = addModelToScene("plane", "../models/plane.obj");
+    auto plane_mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial("plane");
+    auto plane_texture = omp::MaterialManager::getMaterialManager().loadTextureInstantly("../textures/default.png");
+    plane_mat->addTexture(omp::ETextureType::Texture, plane_texture);
+    plane_mat->addTexture(omp::ETextureType::DiffusiveMap, plane_texture);
+    plane_mat->addTexture(omp::ETextureType::SpecularMap, plane_texture);
+    plane_mat->setShaderName("Light");
+    plane->setMaterialInstance(std::make_shared<omp::MaterialInstance>(plane_mat));
 }
 
 void Renderer::postFrame()
