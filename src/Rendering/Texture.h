@@ -7,9 +7,23 @@
 
 namespace omp
 {
-/**
- * @brief Used to load images from PC, and upload directly to GPU
- */
+    struct TextureConfig
+    {
+        enum
+        {
+            CUBEMAP,
+            TEXTURE2D
+        } type;
+
+        size_t layer_amount = 1;
+
+        // to be added
+    };
+
+
+    /**
+     * @brief Used to load images from PC, and upload directly to GPU
+     */
     class Texture
     {
         enum
@@ -19,11 +33,13 @@ namespace omp
             LOADED_TO_UI = 1 << 3
         };
 
-        std::string m_ContentPath;
-        stbi_uc* m_Pixels;
+        // array since cubemap
+        std::vector<std::string> m_ContentPaths;
+        std::vector<stbi_uc*> m_Pixels{};
         int m_Size;
         int m_Width, m_Height;
         uint32_t m_MipLevels;
+        TextureConfig m_Config{};
 
         uint16_t m_Flags = 0;
 
@@ -41,6 +57,7 @@ namespace omp
     public:
         explicit Texture(const std::string& inPath);
         Texture(const std::string& inPath, const std::shared_ptr<VulkanContext>& helper);
+        Texture(const std::shared_ptr<VulkanContext>& inContext, const std::vector<std::string>& inPaths, TextureConfig inConfig);
 
         void fullLoad();
         void lazyLoad();
@@ -54,7 +71,7 @@ namespace omp
         VkImage getImage();
         VkSampler getSampler();
 
-        std::string getPath() const { return m_ContentPath; }
+        std::vector<std::string> getPaths() const { return m_ContentPaths; }
 
     protected:
         // Subroutines //

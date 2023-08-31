@@ -63,7 +63,9 @@ void omp::VulkanContext::createImage(
         VkFormat format, VkImageTiling tiling,
         VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
         VkImage& image, VkDeviceMemory& imageMemory,
-        VkSampleCountFlagBits numSamples)
+        VkSampleCountFlagBits numSamples,
+        VkImageCreateFlags flags,
+        uint32_t arrayLayers)
 {
     VkImageCreateInfo image_info{};
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -72,14 +74,14 @@ void omp::VulkanContext::createImage(
     image_info.extent.height = static_cast<uint32_t>(height);
     image_info.extent.depth = 1;
     image_info.mipLevels = mipLevels;
-    image_info.arrayLayers = 1;
+    image_info.arrayLayers = arrayLayers;
     image_info.format = format;
     image_info.tiling = tiling;
     image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     image_info.usage = usage;
     image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     image_info.samples = numSamples;
-    image_info.flags = 0;
+    image_info.flags = flags;
 
     if (vkCreateImage(logical_device, &image_info, nullptr, &image) != VK_SUCCESS)
     {
@@ -196,6 +198,15 @@ void omp::VulkanContext::copyBufferToImage(VkBuffer buffer, VkImage image, uint3
     region.imageExtent = {width, height, 1};
 
     vkCmdCopyBufferToImage(command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+    endSingleTimeCommands(command_buffer);
+}
+
+void omp::VulkanContext::copyBufferToImage(VkBuffer buffer, VkImage image, const std::vector<VkBufferImageCopy>& regions)
+{
+    VkCommandBuffer command_buffer = beginSingleTimeCommands();
+
+    vkCmdCopyBufferToImage(command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
 
     endSingleTimeCommands(command_buffer);
 }
