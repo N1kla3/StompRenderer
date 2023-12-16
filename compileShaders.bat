@@ -6,3 +6,5 @@
 %VULKAN_SDK%/Bin/glslc.exe shaders/outline.frag -o SPRV/fragOutline.spv
 %VULKAN_SDK%/Bin/glslc.exe shaders/shaderLightBlend.vert -o SPRV/vertLightBlend.spv
 %VULKAN_SDK%/Bin/glslc.exe shaders/shaderLightBlend.frag -o SPRV/fragLightBlend.spv
+%VULKAN_SDK%/Bin/glslc.exe shaders/skybox.vert -o SPRV/vertSkybox.spv
+%VULKAN_SDK%/Bin/glslc.exe shaders/skybox.frag -o SPRV/fragSkybox.spv

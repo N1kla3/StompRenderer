@@ -8,4 +8,6 @@ glslc shaders/outline.frag -o $dir/fragOutline.spv
 glslc shaders/outline.vert -o $dir/vertOutline.spv
 glslc shaders/shaderLightBlend.frag -o $dir/fragLightBlend.spv
 glslc shaders/shaderLightBlend.vert -o $dir/vertLightBlend.spv
+glslc shaders/skybox.frag -o $dir/fragSkybox.spv
+glslc shaders/skybox.vert -o $dir/vertSkybox.spv
 

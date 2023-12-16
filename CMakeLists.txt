@@ -1,11 +1,20 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.21)
 project(renderer)
 
 set(CMAKE_CXX_STANDARD 20)
 
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+include(ProjectOptions.cmake)
+renderer_setup_options()
+renderer_local_options()
+
+add_library(renderer::renderer_options ALIAS renderer_options)
+add_library(renderer::renderer_warnings ALIAS renderer_warnings)
+
 find_package(Vulkan REQUIRED)
 
-add_subdirectory(glfw-3.3.8)
+add_subdirectory(glfw)
 add_subdirectory(glm)
 add_subdirectory(tinyobjloader-master)
 add_subdirectory(spdlog)
@@ -139,13 +148,17 @@ add_library(imgui
 list(TRANSFORM TESTS PREPEND "tests/")
 list(TRANSFORM SOURCE PREPEND "src/")
 
-enable_testing()
-
 add_executable(renderer src/main.cpp ${SOURCE} ${IMGUI})
-target_compile_definitions(renderer PRIVATE)
-target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json stompprofiler)
+target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json stompprofiler renderer::renderer_options renderer::renderer_warnings)
+
+# TODO make subdirs for tests
+
+include(CTest)
 
 add_executable(tests ${TESTS} ${SOURCE} ${IMGUI})
+target_link_libraries(tests gtest gtest_main Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json renderer::renderer_options renderer::renderer_warnings)
+
+enable_testing()
 add_test(NAME RendererTests COMMAND tests)
-target_compile_definitions(tests PRIVATE)
-target_link_libraries(tests gtest gtest_main Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json)
+
+#TODO CPack

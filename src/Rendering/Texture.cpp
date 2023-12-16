@@ -73,7 +73,7 @@ void omp::Texture::loadTextureToCpu()
         for (const std::string& path : m_ContentPaths)
         {
             m_Pixels.reserve(m_Config.layer_amount);
-            m_Pixels.push_back(stbi_load(m_ContentPaths[0].c_str(), &m_Width, &m_Height, &tex_channels, STBI_rgb_alpha));
+            m_Pixels.push_back(stbi_load(path.c_str(), &m_Width, &m_Height, &tex_channels, STBI_rgb_alpha));
         }
     }
 

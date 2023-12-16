@@ -8,6 +8,43 @@
 #include "Rendering/Material.h"
 
 class Renderer;
+namespace omp
+{
+    struct CubeMapHandle;
+}
+
+struct omp::CubeMapHandle
+{
+    uint32_t id;
+
+    CubeMapHandle()
+    {
+        static uint32_t static_id = 0;
+        id = static_id;
+        static_id++;
+    }
+    CubeMapHandle(const CubeMapHandle& handle)
+    {
+        id = handle.id;
+    }
+
+    bool operator==(const CubeMapHandle& inHandle) const
+    {
+        return id == inHandle.id;
+    }
+};
+
+namespace std
+{
+    template<>
+    struct hash<omp::CubeMapHandle>
+    {
+        size_t operator()(const omp::CubeMapHandle& k) const
+        {
+            return hash<uint32_t>()(k.id);
+        }
+    };
+}
 
 namespace omp
 {
@@ -15,7 +52,9 @@ namespace omp
     {
         std::weak_ptr<VulkanContext> m_VulkanContext;
 
+        // TODO: Transit all textures to handles
         std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
+        std::unordered_map<CubeMapHandle, std::shared_ptr<omp::Texture>> m_CubeMaps;
         std::unordered_map<std::string, std::shared_ptr<omp::Material>> m_Materials;
 
         std::shared_ptr<omp::Texture> m_DefaultTexture;
@@ -34,6 +73,7 @@ namespace omp
 
         std::shared_ptr<omp::Texture> loadTextureInstantly(const std::string& path);
         std::shared_ptr<omp::Texture> loadTextureLazily(const std::string& path);
+        CubeMapHandle loadCubeMapTexture(const std::vector<std::string>& inPaths);
 
         std::shared_ptr<omp::Material> createOrGetMaterial(const std::string& path);
 

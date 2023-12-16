@@ -12,3 +12,7 @@ logs
 /imgui-docking/
 /json/
 /ImGuizmo/
+/out/
+/glfw/
+/windows-msvc-debug-user-mode/
+/windows-msvc-release-user-mode/

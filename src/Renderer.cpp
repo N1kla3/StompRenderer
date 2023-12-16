@@ -129,6 +129,7 @@ void Renderer::cleanup()
 
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_UboDescriptorSetLayout, nullptr);
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_OutlineSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_SkyboxSetLayout, nullptr);
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_TexturesDescriptorSetLayout, nullptr);
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
 
@@ -668,6 +669,23 @@ void Renderer::createGraphicsPipeline()
     light_pipe->setDepthStencil(depth_stencil);
     light_pipe->confirmCreation(m_RenderPass);
 
+    std::shared_ptr<omp::Shader> skybox_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vertSkybox.spv", "../SPRV/fragSkybox.spv");
+
+    std::unique_ptr<omp::GraphicsPipeline> skybox_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    skybox_pipe->startDefaultCreation();
+    skybox_pipe->addColorBlendingAttachment(color_blend_attachment);
+    skybox_pipe->addColorBlendingAttachment(color_blend_attachment);
+    skybox_pipe->createMultisamplingInfo(m_MSAASamples);
+    skybox_pipe->createViewport(m_SwapChainExtent);
+    // ? skybox_pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    skybox_pipe->addPipelineSetLayout(m_SkyboxSetLayout);
+    // ? skybox_pipe->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
+    depth_stencil.depthTestEnable = VK_TRUE;
+    skybox_pipe->setDepthStencil(depth_stencil);
+    skybox_pipe->createShaders(skybox_shader);
+    skybox_pipe->confirmCreation(m_RenderPass);
+    depth_stencil.depthTestEnable = VK_FALSE;
+
     // Simple pipeline
     std::shared_ptr<omp::Shader> shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vert.spv",
                                                                         "../SPRV/frag.spv");
@@ -760,6 +778,7 @@ void Renderer::createGraphicsPipeline()
     m_Pipelines.insert({"Outline", std::move(outline_pipe)});
     m_Pipelines.insert({"LightStencil", std::move(light_stencil)});
     m_Pipelines.insert({"Grass", std::move(grass_pipe)});
+    m_Pipelines.insert({"Skybox", std::move(skybox_pipe)});
 }
 
 void Renderer::createRenderPass()
@@ -1255,6 +1274,34 @@ void Renderer::framebufferResizeCallback(GLFWwindow* window, int width, int heig
 void Renderer::createDescriptorSetLayout()
 {
     // TODO: need abstraction
+    // Skybox layout
+    {
+        VkDescriptorSetLayoutBinding skybox_layout_binding{};
+        skybox_layout_binding.binding = 0;
+        skybox_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        skybox_layout_binding.descriptorCount = 1;
+        skybox_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+        skybox_layout_binding.pImmutableSamplers = nullptr;
+
+        VkDescriptorSetLayoutBinding cubemap_layout{};
+        cubemap_layout.binding = 1;
+        cubemap_layout.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        cubemap_layout.descriptorCount = 1;
+        cubemap_layout.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        cubemap_layout.pImmutableSamplers = nullptr;
+
+        std::array<VkDescriptorSetLayoutBinding, 2> bindings = { skybox_layout_binding, cubemap_layout };
+        VkDescriptorSetLayoutCreateInfo info{};
+        info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        info.bindingCount = bindings.size();
+        info.pBindings = bindings.data();
+
+        if (vkCreateDescriptorSetLayout(m_LogicalDevice, &info, nullptr, &m_SkyboxSetLayout) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Cant create skybox set layout");
+        }
+    }
+
     // OUTLINE LAYOUT
     {
         VkDescriptorSetLayoutBinding ubo_layout_binding{};
@@ -1430,6 +1477,42 @@ void Renderer::createDescriptorPool()
 
 void Renderer::createDescriptorSets()
 {
+    // Skybox
+    {
+        std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_SkyboxSetLayout);
+
+        VkDescriptorSetAllocateInfo allocate_info{};
+        allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        allocate_info.descriptorPool = m_DescriptorPool;
+        allocate_info.descriptorSetCount = m_PresentKHRImagesNum;
+        allocate_info.pSetLayouts = layouts.data();
+
+        m_SkyboxDescriptorSets.resize(m_PresentKHRImagesNum);
+        if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, m_SkyboxDescriptorSets.data()) != VK_SUCCESS)
+        {
+            throw std::runtime_error("Failed to allocate descriptor sets!");
+        }
+        for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
+        {
+            // Same ubo for outline, so use the same
+            VkDescriptorBufferInfo buffer_info{};
+            buffer_info.buffer = m_OutlineBuffer->getBuffer(i);
+            buffer_info.offset = 0;
+            buffer_info.range = sizeof(OutlineUniformBuffer);
+
+            std::array<VkWriteDescriptorSet, 1> descriptor_writes{};
+            descriptor_writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptor_writes[0].dstSet = m_SkyboxDescriptorSets[i];
+            descriptor_writes[0].dstBinding = 0;
+            descriptor_writes[0].dstArrayElement = 0;
+            descriptor_writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptor_writes[0].descriptorCount = 1;
+            descriptor_writes[0].pBufferInfo = &buffer_info;
+            vkUpdateDescriptorSets(m_LogicalDevice,
+                                   static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
+        }
+    }
+
     // OUTLINE
     {
         std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_OutlineSetLayout);
@@ -2112,6 +2195,7 @@ void Renderer::destroyAllCommandBuffers()
 
 void Renderer::initializeScene()
 {
+    // TODO: should go to asset initialization
     auto lambda = [this](ImVec2 pos)
     {
         m_MousePickingData.push(pos);
@@ -2138,6 +2222,14 @@ void Renderer::initializeScene()
             m_CurrentScene->getCurrentEntity()->getModel()->getScale() = glm::vec3(inVec[0], inVec[1], inVec[2]);
         }
     });
+
+    omp::MaterialManager::getMaterialManager().loadCubeMapTexture({     "../textures/skybox/back.jpg",
+                                                                        "../textures/skybox/bottom.jpg",
+                                                                        "../textures/skybox/front.jpg",
+                                                                        "../textures/skybox/left.jpg",
+                                                                        "../textures/skybox/right.jpg",
+                                                                        "../textures/skybox/top.jpg",
+                                                                        });
 
     // TODO: model split
     addModelToScene("1-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};

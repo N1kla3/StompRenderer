@@ -348,6 +348,7 @@ private:
     VkDescriptorSetLayout m_UboDescriptorSetLayout;
     VkDescriptorSetLayout m_TexturesDescriptorSetLayout;
     VkDescriptorSetLayout m_OutlineSetLayout;
+    VkDescriptorSetLayout m_SkyboxSetLayout;
 
     std::shared_ptr<omp::RenderPass> m_RenderPass;
 
@@ -358,6 +359,7 @@ private:
     std::vector<VkDescriptorSet> m_UboDescriptorSets;
     std::vector<VkDescriptorSet> m_MaterialSets;
     std::vector<VkDescriptorSet> m_OutlineDescriptorSets;
+    std::vector<VkDescriptorSet> m_SkyboxDescriptorSets;
 
     std::shared_ptr<omp::Material> m_DefaultMaterial;
 

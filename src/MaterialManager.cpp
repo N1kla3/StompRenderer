@@ -36,6 +36,24 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureLazily(const std:
     return texture_ptr;
 }
 
+omp::CubeMapHandle omp::MaterialManager::loadCubeMapTexture(const std::vector<std::string>& inPaths)
+{
+    TextureConfig config;
+    config.type = TextureConfig::CUBEMAP;
+    config.layer_amount = inPaths.size();
+    auto texture_ptr = std::make_shared<Texture>(m_VulkanContext.lock(), inPaths, config);
+
+    CubeMapHandle handle{};
+    m_CubeMaps.insert(std::pair<omp::CubeMapHandle, std::shared_ptr<omp::Texture>>{handle, texture_ptr});
+
+    if (!m_VulkanContext.expired())
+    {
+        texture_ptr->specifyVulkanContext(m_VulkanContext.lock());
+    }
+    texture_ptr->lazyLoad();
+    return handle;
+}
+
 std::shared_ptr<omp::Texture> omp::MaterialManager::getTexture(const std::string& path) const
 {
     if (m_Textures.find(path) != m_Textures.end())
