@@ -293,7 +293,6 @@ void Renderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoE
 
 void Renderer::pickPhysicalDevice()
 {
-    VkPhysicalDevice phys_device = VK_NULL_HANDLE;
     uint32_t device_count = 0;
     vkEnumeratePhysicalDevices(m_Instance, &device_count, nullptr);
     if (device_count == 0)
@@ -910,7 +909,7 @@ void Renderer::createFramebuffers()
 void Renderer::createFramebufferAtImage(size_t index)
 {
     std::vector<VkImageView> attachments{m_ColorImageView, m_PickingImageView, m_DepthImageView, m_ViewportImageView, m_PickingResolveView};
-    omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, m_RenderViewport->getSize().x, m_RenderViewport->getSize().y);
+    omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, static_cast<uint32_t>(m_RenderViewport->getSize().x), static_cast<uint32_t>(m_RenderViewport->getSize().y));
     m_SwapChainFramebuffers[index] = frame_buffer;
 }
 
@@ -948,8 +947,8 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
 
     rect.offset.x = 0;
     rect.offset.y = 0;
-    rect.extent.height = m_RenderViewport->getSize().y;
-    rect.extent.width = m_RenderViewport->getSize().x;
+    rect.extent.height = static_cast<uint32_t>(m_RenderViewport->getSize().y);
+    rect.extent.width = static_cast<uint32_t>(m_RenderViewport->getSize().x);
     beginRenderPass(m_RenderPass.get(), main_buffer, m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
     setViewport(main_buffer);
 
@@ -973,7 +972,7 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
           // TODO remove sqrt
           return glm::distance(m_CurrentScene->getCurrentCamera()->getPosition(), inEnt->getModel()->getPosition()) >
               glm::distance(m_CurrentScene->getCurrentCamera()->getPosition(), inEnt2->getModel()->getPosition());
-          return true;
+          //return true;
     });
     for (size_t index = 0; index < scene_copy.size(); index++)
     {
@@ -1265,7 +1264,7 @@ void Renderer::cleanupSwapChain()
     m_ImguiRenderPass->destroyInnerState();
 }
 
-void Renderer::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+void Renderer::framebufferResizeCallback(GLFWwindow* window, int /*width*/, int /*height*/)
 {
     auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
     app->m_FramebufferResized = true;
@@ -1443,7 +1442,7 @@ void Renderer::updateUniformBuffer(uint32_t currentImage)
     auto entity = m_CurrentScene->getEntity(m_CurrentScene->getCurrentId());
     if (entity)
     {
-        outline_buffer.model = glm::scale(entity->getModel()->getTransform(), glm::vec3{1.2});
+        outline_buffer.model = glm::scale(entity->getModel()->getTransform(), glm::vec3{1.2f});
     }
     outline_buffer.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
     m_OutlineBuffer->mapMemory(outline_buffer, currentImage);
@@ -1743,7 +1742,7 @@ void Renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 void Renderer::createDepthResources()
 {
     VkFormat depth_format = findDepthFormat();
-    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1, depth_format, VK_IMAGE_TILING_OPTIMAL,
+    m_VulkanContext->createImage(static_cast<uint32_t>(m_RenderViewport->getSize().x), static_cast<uint32_t>(m_RenderViewport->getSize().y), 1, depth_format, VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                 m_DepthImage, m_DepthImageMemory, m_MSAASamples);
     m_DepthImageView = m_VulkanContext->createImageView(m_DepthImage, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, 1);
@@ -1941,7 +1940,7 @@ void Renderer::createColorResources()
 {
     VkFormat color_format = m_SwapChainImageFormat;
 
-    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1,
+    m_VulkanContext->createImage(static_cast<uint32_t>(m_RenderViewport->getSize().x), static_cast<uint32_t>(m_RenderViewport->getSize().y), 1,
                 color_format, VK_IMAGE_TILING_OPTIMAL,
                 VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ColorImage, m_ColorImageMemory,
@@ -1953,7 +1952,7 @@ void Renderer::createViewportResources()
 {
     VkFormat color_format = m_SwapChainImageFormat;
 
-    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1,
+    m_VulkanContext->createImage(static_cast<uint32_t>(m_RenderViewport->getSize().x), static_cast<uint32_t>(m_RenderViewport->getSize().y), 1,
                                  color_format, VK_IMAGE_TILING_OPTIMAL,
                                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ViewportImage, m_ViewportImageMemory,
@@ -1984,14 +1983,14 @@ void Renderer::createPickingResources()
 {
     VkFormat image_format = VK_FORMAT_R32_SINT;
 
-    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1,
+    m_VulkanContext->createImage(static_cast<uint32_t>(m_RenderViewport->getSize().x), static_cast<uint32_t>(m_RenderViewport->getSize().y), 1,
                                  image_format, VK_IMAGE_TILING_OPTIMAL,
                                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_PickingImage, m_PickingMemory,
                                  m_MSAASamples);
     m_PickingImageView = m_VulkanContext->createImageView(m_PickingImage, image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
-    m_VulkanContext->createImage(m_RenderViewport->getSize().x, m_RenderViewport->getSize().y, 1,
+    m_VulkanContext->createImage(static_cast<uint32_t>(m_RenderViewport->getSize().x), static_cast<uint32_t>(m_RenderViewport->getSize().y), 1,
                                  image_format, VK_IMAGE_TILING_LINEAR,
                                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_PickingResolve, m_PickingResolveMemory,
@@ -2076,7 +2075,7 @@ void Renderer::destroyMainRenderPassResources()
     }
 }
 
-void Renderer::onViewportResize(size_t imageIndex)
+void Renderer::onViewportResize(size_t /*imageIndex*/)
 {
     if (m_RenderViewport->isResized())
     {
@@ -2139,7 +2138,7 @@ void Renderer::beginRenderPass(
     vkCmdBeginRenderPass(inCommandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void Renderer::endRenderPass(omp::RenderPass* inRenderPass, VkCommandBuffer inCommandBuffer)
+void Renderer::endRenderPass(omp::RenderPass* /*inRenderPass*/, VkCommandBuffer inCommandBuffer)
 {
     vkCmdEndRenderPass(inCommandBuffer);
     if (vkEndCommandBuffer(inCommandBuffer) != VK_SUCCESS)
@@ -2302,8 +2301,8 @@ void Renderer::postFrame()
         region.bufferImageHeight = 1;
         region.imageSubresource = subres;
         VkOffset3D offset{};
-        offset.x = m_RenderViewport->getLocalCursorPos().x;
-        offset.y = m_RenderViewport->getLocalCursorPos().y;
+        offset.x = static_cast<uint32_t>(m_RenderViewport->getLocalCursorPos().x);
+        offset.y = static_cast<uint32_t>(m_RenderViewport->getLocalCursorPos().y);
         offset.z = 0;
         region.imageOffset = offset;
         VkExtent3D extent{};

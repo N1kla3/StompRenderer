@@ -16,30 +16,30 @@ TEST(AsyncSuite, ThreadPool_one)
     try
     {
         first_done = pool.submit([&a, ready, &first_ready]() -> int {
-            first_ready.set_value();
-            ready.wait();
-            a.clear();
-            a = "aaa";
-            return 2;
-        });
+                    first_ready.set_value();
+                    ready.wait();
+                    a.clear();
+                    a = "aaa";
+                    return 2;
+                });
         second_done = pool.submit([&a, ready, &second_ready]() -> float {
-            second_ready.set_value();
-            ready.wait();
-            a.clear();
-            a = "bbb";
-            a.append("cc");
-            a.append("cc");
-            a.append("cc");
-            a.append("cc");
-            a.append("cc");
-            a.append("cc");
-            a.append("cc");
-            a.append("cc");
-            a.append("cc");
-            a.append("cc");
-            a[33];
-            return 0.f;
-        });
+                    second_ready.set_value();
+                    ready.wait();
+                    a.clear();
+                    a = "bbb";
+                    a.append("cc");
+                    a.append("cc");
+                    a.append("cc");
+                    a.append("cc");
+                    a.append("cc");
+                    a.append("cc");
+                    a.append("cc");
+                    a.append("cc");
+                    a.append("cc");
+                    a.append("cc");
+                    a[33];
+                    return 0.f;
+                });
 
         first_ready.get_future().wait();
         second_ready.get_future().wait();

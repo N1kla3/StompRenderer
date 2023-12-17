@@ -83,7 +83,7 @@ void omp::Camera::processMouseMovement(float xOffset, float yOffset, bool constr
     }
 }
 
-void omp::Camera::processMouseScroll(float yOffset)
+void omp::Camera::processMouseScroll(float /*yOffset*/)
 {
 
 }

@@ -64,8 +64,8 @@ void omp::GraphicsPipeline::createViewport(VkExtent2D scissorExtent)
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = scissorExtent.width;
-    viewport.height = scissorExtent.height;
+    viewport.width = static_cast<float>(scissorExtent.width);
+    viewport.height = static_cast<float>(scissorExtent.height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
     m_Viewport = viewport;
@@ -178,7 +178,7 @@ void omp::GraphicsPipeline::addPipelineSetLayout(VkDescriptorSetLayout descripto
     m_PipelineLayoutInfo.pSetLayouts = m_SetLayoutsHandles.data();
 }
 
-void omp::GraphicsPipeline::createShaders(const std::shared_ptr<struct Shader>& shader)
+void omp::GraphicsPipeline::createShaders(const std::shared_ptr<class Shader>& shader)
 {
     m_Shader = std::move(shader);
 }

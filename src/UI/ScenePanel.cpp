@@ -9,7 +9,7 @@ omp::ScenePanel::ScenePanel(const std::shared_ptr<EntityPanel>& entityPanel, con
 
 }
 
-void omp::ScenePanel::renderUi(float deltaTime)
+void omp::ScenePanel::renderUi(float /*deltaTime*/)
 {
 
     ImGui::Begin("Scene Panel");

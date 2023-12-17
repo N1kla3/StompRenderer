@@ -21,15 +21,15 @@ void omp::SceneEntity::draw()
     if (m_Model)
     {
         ImGui::Text("%s", m_Model->getName().c_str());
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, {1.0, 0.5, 0.5, 0.5});
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, {1.0f, 0.5f, 0.5f, 0.5f});
         ImGui::DragFloat3("Position", &m_Model->getPosition()[0], 0.1f, 0.0f, 0.0f, "%.2f", 0);
         ImGui::PopStyleColor(1);
 
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, {0.0, 1.0, 0.5, 0.5});
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, {0.0f, 1.0f, 0.5f, 0.5f});
         ImGui::DragFloat3("Rotation", &m_Model->getRotation()[0], 0.1f, 0.0f, 0.0f, "%.2f", 0);
         ImGui::PopStyleColor(1);
 
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, {0.6, 0.5, 1.0, 0.5});
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, {0.6f, 0.5f, 1.0f, 0.5f});
         ImGui::DragFloat3("Scale", &m_Model->getScale()[0], 0.1f, 0.0f, 0.0f, "%.2f", 0);
         ImGui::PopStyleColor(1);
     }

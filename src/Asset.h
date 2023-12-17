@@ -62,7 +62,7 @@ namespace nlohmann {
 
 namespace omp
 {
-    class ClassTypeBase;
+    struct ClassTypeBase;
     class Asset : public ISaveable
     {
     protected:

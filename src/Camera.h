@@ -61,7 +61,7 @@ namespace omp
 
         void processKeyboard(ECameraMovement direction);
         void processMouseMovement(float xOffset, float yOffset, bool constrainPitch = true);
-        void processMouseScroll(float yOffset);
+        [[maybe_unused]] void processMouseScroll(float yOffset);
 
         void applyInputs(float deltaTime);
 

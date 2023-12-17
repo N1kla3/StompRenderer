@@ -5,7 +5,7 @@
 #include "ImGuizmo/ImGuizmo.h"
 #include "Logs.h"
 
-void omp::ViewPort::renderUi(float deltaTime)
+void omp::ViewPort::renderUi(float /*deltaTime*/)
 {
     ImGuiWindowClass window_class;
     window_class.ClassId = ImGui::GetID("Window");

@@ -8,7 +8,7 @@ omp::CameraPanel::CameraPanel(const std::shared_ptr<Camera>& camera)
 
 }
 
-void omp::CameraPanel::renderUi(float deltaTime)
+void omp::CameraPanel::renderUi(float /*deltaTime*/)
 {
 
     ImGui::Begin("Camera Panel");

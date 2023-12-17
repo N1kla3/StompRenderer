@@ -7,7 +7,7 @@ void omp::EntityPanel::setEntity(const std::shared_ptr<IDrawable>& inEntity)
     m_Entity = inEntity;
 }
 
-void omp::EntityPanel::renderUi(float deltaTime)
+void omp::EntityPanel::renderUi(float /*deltaTime*/)
 {
 
     ImGui::Begin("Entity Panel");

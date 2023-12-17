@@ -1,0 +1,29 @@
+[submodule "glm"]
+    path = glm
+    url = https://github.com/icaven/glm.git
+    branch = master
+
+[submodule "googletest"]
+    path = googletest
+    url = https://github.com/google/googletest.git
+    branch = main
+
+[submodule "imgui"]
+    path = imgui-docking
+    url = https://github.com/ocornut/imgui.git
+    branch = docking
+
+[submodule "json"]
+    path = json
+    url = https://github.com/nlohmann/json.git
+    branch = master
+
+[submodule "spdlog"]
+    path = spdlog
+    url = https://github.com/gabime/spdlog.git
+    branch = master
+
+[submodule "tinyobjloader"]
+    path = tinyobjloader-master
+    url = https://github.com/tinyobjloader/tinyobjloader.git
+    branch = release

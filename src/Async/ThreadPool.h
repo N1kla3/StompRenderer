@@ -61,11 +61,11 @@ public:
 class ThreadJoin
 {
 private:
-    std::vector<std::thread> m_Threads;
+    std::vector<std::thread>& m_Threads;
 public:
-    explicit ThreadJoin(const std::vector<std::thread>& inThreads)
+    explicit ThreadJoin(std::vector<std::thread>& inThreads)
+        : m_Threads(inThreads)
     {
-        //m_Threads = inThreads;
     }
     ~ThreadJoin()
     {

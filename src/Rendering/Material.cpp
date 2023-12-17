@@ -61,7 +61,7 @@ omp::Material::Material()
     m_RenderInfo = std::make_unique<omp::MaterialRenderInfo>();
 }
 
-omp::Material::Material(const std::string& name)
+omp::Material::Material(const std::string& /*name*/)
     : Material()
 {
 

@@ -1,7 +1,7 @@
 #include "MainLayer.h"
 #include "imgui.h"
 
-void omp::MainLayer::renderUi(float deltaTime)
+void omp::MainLayer::renderUi(float)
 {
     auto viewport = ImGui::GetMainViewport();
 

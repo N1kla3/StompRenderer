@@ -15,7 +15,7 @@ std::is_base_of_v<omp::SpotLight, T>;
 namespace omp
 {
     template<LightClassReq LightType>
-class LightObject : public omp::SceneEntity
+    class LightObject : public omp::SceneEntity
     {
     private:
         LightType m_Light;
@@ -26,6 +26,7 @@ class LightObject : public omp::SceneEntity
         LightObject();
         LightObject(const std::string& inName);
         LightObject(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel);
+        virtual ~LightObject() = default;
         LightClass& getLight();
 
         inline void updateLightObject(){};

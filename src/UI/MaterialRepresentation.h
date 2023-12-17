@@ -14,6 +14,7 @@ namespace omp
 
     public:
         MaterialRepresentation(const std::shared_ptr<Texture>& texture);
+        virtual ~MaterialRepresentation() = default;
         void setDependency(const std::shared_ptr<Texture>& texture);
 
         virtual void renderUIonPanel() override;
