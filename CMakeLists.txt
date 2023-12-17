@@ -113,6 +113,9 @@ set(SOURCE
         Rendering/ModelInstance.cpp
         ImGuizmo/ImGuizmo.cpp
         ImGuizmo/ImGuizmo.h
+        Async/ThreadPool.h
+        Async/ThreadPool.cpp
+        Async/threadsafe_queue.h
         )
 
 

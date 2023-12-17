@@ -1,1 +1,2 @@
 add_subdirectory(AssetTests)
+add_subdirectory(AsyncTests)
