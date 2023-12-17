@@ -20,7 +20,6 @@ add_subdirectory(tinyobjloader-master)
 add_subdirectory(spdlog)
 add_subdirectory(googletest)
 add_subdirectory(json)
-add_subdirectory(profiler)
 
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src)
@@ -116,13 +115,6 @@ set(SOURCE
         ImGuizmo/ImGuizmo.h
         )
 
-set(TESTS
-        InitializationTests.cpp
-        AssetSystemTests.cpp
-        MaterialAssetTest.cpp
-        ModelAssetTest.cpp
-        SceneAssetTest.cpp
-        )
 
 set(IMGUI
         imgui-docking/backends/imgui_impl_vulkan.h
@@ -145,20 +137,17 @@ add_library(imgui
         imgui-docking/imstb_truetype.h
         )
 
-list(TRANSFORM TESTS PREPEND "tests/")
 list(TRANSFORM SOURCE PREPEND "src/")
 
-add_executable(renderer src/main.cpp ${SOURCE} ${IMGUI})
-target_link_libraries(renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json stompprofiler renderer::renderer_options renderer::renderer_warnings)
 
-# TODO make subdirs for tests
+add_library(stomp_renderer ${SOURCE} ${IMGUI})
+target_link_libraries(stomp_renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json renderer::renderer_options renderer::renderer_warnings)
+
+add_executable(renderer src/main.cpp)
+target_link_libraries(renderer stomp_renderer)
 
 include(CTest)
-
-add_executable(tests ${TESTS} ${SOURCE} ${IMGUI})
-target_link_libraries(tests gtest gtest_main Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json renderer::renderer_options renderer::renderer_warnings)
-
 enable_testing()
-add_test(NAME RendererTests COMMAND tests)
 
+add_subdirectory(tests)
 #TODO CPack
