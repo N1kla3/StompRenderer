@@ -140,6 +140,7 @@ add_library(imgui
         imgui/imstb_textedit.h
         imgui/imstb_truetype.h
         )
+target_compile_definitions(imgui PRIVATE -IMGUI_USER_CONFIG="src/stomp_imconfig.h")
 
 list(TRANSFORM SOURCE PREPEND "src/")
 
