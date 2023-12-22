@@ -1834,9 +1834,7 @@ void Renderer::initializeImgui()
     // Imgui render pass should be created before call of this method
     ImGui_ImplVulkan_Init(&init_info, m_ImguiRenderPass->getRenderPass());
 
-    VkCommandBuffer command_buffer = beginSingleTimeCommands();
-    ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-    endSingleTimeCommands(command_buffer);
+    ImGui_ImplVulkan_CreateFontsTexture();
 
     createImguiFramebuffers();
     createImguiCommandPools();

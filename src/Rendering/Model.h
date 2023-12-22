@@ -1,16 +1,10 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include "glm/vec2.hpp"
-#include "glm/vec3.hpp"
-#include "glm/glm.hpp"
+#include "Math/GlmHash.h"
 #include "Material.h"
 #include "MaterialInstance.h"
 #include <array>
-
-#define GLM_ENABLE_EXPERIMENTAL
-
-#include <glm/gtx/hash.hpp>
 #include <vector>
 
 namespace omp

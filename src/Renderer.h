@@ -293,15 +293,24 @@ private:
     omp::GraphicsPipeline* findGraphicsPipeline(const std::string& name);
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-            VkDebugUtilsMessageSeverityFlagBitsEXT /*messageSeverity*/,
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
             VkDebugUtilsMessageTypeFlagsEXT /*messageType*/,
             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
             void* /*pUserData*/
     )
     {
-        ERROR(Rendering, "Validation layer{}", pCallbackData->pMessage);
-        // std::cerr << "validation layer" << pCallbackData->pMessage << std::endl;
-
+        if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+        {
+            WARN(Rendering, "Validation layer{}", pCallbackData->pMessage);
+        }
+        else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+        {
+            ERROR(Rendering, "Validation layer{}", pCallbackData->pMessage);
+        }
+        else
+        {
+            INFO(Rendering, "Validation layer{}", pCallbackData->pMessage);
+        }
         return VK_FALSE;
     }
 

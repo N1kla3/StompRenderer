@@ -16,7 +16,7 @@ find_package(Vulkan REQUIRED)
 
 add_subdirectory(glfw)
 add_subdirectory(glm)
-add_subdirectory(tinyobjloader-master)
+add_subdirectory(tinyobjloader)
 add_subdirectory(spdlog)
 add_subdirectory(googletest)
 add_subdirectory(json)
@@ -24,8 +24,8 @@ add_subdirectory(json)
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-include_directories(imgui-docking)
-include_directories(imgui-docking/backends)
+include_directories(imgui)
+include_directories(imgui/backends)
 
 set(SOURCE
         Renderer.cpp
@@ -116,28 +116,29 @@ set(SOURCE
         Async/ThreadPool.h
         Async/ThreadPool.cpp
         Async/threadsafe_queue.h
+        Math/GlmHash.h
         )
 
 
 set(IMGUI
-        imgui-docking/backends/imgui_impl_vulkan.h
-        imgui-docking/backends/imgui_impl_vulkan.cpp
-        imgui-docking/backends/imgui_impl_glfw.h
-        imgui-docking/backends/imgui_impl_glfw.cpp
+        imgui/backends/imgui_impl_vulkan.h
+        imgui/backends/imgui_impl_vulkan.cpp
+        imgui/backends/imgui_impl_glfw.h
+        imgui/backends/imgui_impl_glfw.cpp
         )
 
 add_library(imgui
-        imgui-docking/imgui.h
-        imgui-docking/imgui.cpp
-        imgui-docking/imconfig.h
-        imgui-docking/imgui_demo.cpp
-        imgui-docking/imgui_draw.cpp
-        imgui-docking/imgui_internal.h
-        imgui-docking/imgui_tables.cpp
-        imgui-docking/imgui_widgets.cpp
-        imgui-docking/imstb_rectpack.h
-        imgui-docking/imstb_textedit.h
-        imgui-docking/imstb_truetype.h
+        imgui/imgui.h
+        imgui/imgui.cpp
+        imgui/imconfig.h
+        imgui/imgui_demo.cpp
+        imgui/imgui_draw.cpp
+        imgui/imgui_internal.h
+        imgui/imgui_tables.cpp
+        imgui/imgui_widgets.cpp
+        imgui/imstb_rectpack.h
+        imgui/imstb_textedit.h
+        imgui/imstb_truetype.h
         )
 
 list(TRANSFORM SOURCE PREPEND "src/")
