@@ -9,3 +9,5 @@ logs
 /glfw/
 /windows-msvc-debug-user-mode/
 /windows-msvc-release-user-mode/
+/windows-mingw-release-user-mode/
+/windows-mingw-debug-user-mode/

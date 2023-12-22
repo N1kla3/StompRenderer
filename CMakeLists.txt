@@ -144,9 +144,11 @@ target_compile_definitions(imgui PRIVATE -IMGUI_USER_CONFIG="src/stomp_imconfig.
 
 list(TRANSFORM SOURCE PREPEND "src/")
 
+include(cmake/SystemLink.cmake)
 
 add_library(stomp_renderer ${SOURCE} ${IMGUI})
-target_link_libraries(stomp_renderer Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json renderer::renderer_options renderer::renderer_warnings)
+target_link_libraries(stomp_renderer PUBLIC renderer::renderer_options renderer::renderer_warnings)
+target_link_system_libraries(stomp_renderer PUBLIC Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json)
 
 add_executable(renderer src/main.cpp)
 target_link_libraries(renderer stomp_renderer)

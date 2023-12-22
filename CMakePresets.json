@@ -81,6 +81,28 @@
             }
         },
         {
+            "name": "windows-mingw-debug-user-mode",
+            "displayName": "mingw Debug",
+            "description": "Target Windows with the mingw compiler, debug build type",
+            "inherits": "conf-windows-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "windows-mingw-release-user-mode",
+            "displayName": "mingw Release",
+            "description": "Target Windows with the mingw compiler, release build type",
+            "inherits": "conf-windows-common",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
             "name": "windows-clang-debug",
             "displayName": "clang Debug",
             "description": "Target Windows with the clang compiler, debug build type",
