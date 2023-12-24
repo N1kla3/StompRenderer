@@ -1459,7 +1459,7 @@ void Renderer::createDescriptorPool()
     pool_sizes[0].descriptorCount = 100;
 
     pool_sizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pool_sizes[1].descriptorCount = 10;
+    pool_sizes[1].descriptorCount = 100;
 
     VkDescriptorPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

@@ -128,6 +128,7 @@ set(IMGUI
         )
 
 add_library(imgui
+        src/stomp_imconfig.h
         imgui/imgui.h
         imgui/imgui.cpp
         imgui/imconfig.h
@@ -140,7 +141,7 @@ add_library(imgui
         imgui/imstb_textedit.h
         imgui/imstb_truetype.h
         )
-target_compile_definitions(imgui PRIVATE -IMGUI_USER_CONFIG="src/stomp_imconfig.h")
+target_compile_definitions(imgui PUBLIC -DIMGUI_USER_CONFIG="stomp_imconfig.h")
 
 list(TRANSFORM SOURCE PREPEND "src/")
 
