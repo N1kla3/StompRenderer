@@ -7,5 +7,6 @@ namespace omp
     public:
         virtual void renderUIonPanel() = 0;
         virtual void renderUIonContentBrowser() = 0;
+        virtual ~AssetRepresentation() = default;
     };
 }

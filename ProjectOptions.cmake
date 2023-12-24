@@ -28,13 +28,13 @@ endmacro()
 
 macro(renderer_local_options)
   if(PROJECT_IS_TOP_LEVEL)
-    include(cmake/StandardProjectSettings.cmake)
+    include(CMake/StandardProjectSettings.cmake)
   endif()
 
   add_library(renderer_warnings INTERFACE)
   add_library(renderer_options INTERFACE)
 
-  include(cmake/CompilerWarnings.cmake)
+  include(CMake/CompilerWarnings.cmake)
   renderer_set_project_warnings(
     renderer_warnings
     ${renderer_WARNINGS_AS_ERRORS}
@@ -55,7 +55,7 @@ macro(renderer_local_options)
   endif()
 
   if(renderer_ENABLE_CACHE)
-    include(cmake/Cache.cmake)
+    include(CMake/Cache.cmake)
     renderer_enable_cache()
   endif()
 

@@ -14,6 +14,7 @@ namespace omp
     struct ClassTypeBase
     {
         virtual std::shared_ptr<Asset> CreateAsset() const = 0;
+        virtual ~ClassTypeBase() = default;
     };
 
     template<class T>

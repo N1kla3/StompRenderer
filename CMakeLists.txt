@@ -145,7 +145,7 @@ target_compile_definitions(imgui PUBLIC -DIMGUI_USER_CONFIG="stomp_imconfig.h")
 
 list(TRANSFORM SOURCE PREPEND "src/")
 
-include(cmake/SystemLink.cmake)
+include(CMake/SystemLink.cmake)
 
 add_library(stomp_renderer ${SOURCE} ${IMGUI})
 target_link_libraries(stomp_renderer PUBLIC renderer::renderer_options renderer::renderer_warnings)

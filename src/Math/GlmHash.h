@@ -2,28 +2,30 @@
 #include "glm/vec2.hpp"
 #include "glm/vec3.hpp"
 #include "glm/glm.hpp"
+#include <functional>
+#include <unordered_map>
 
 namespace std
 {
-    template<typename T, glm::qualifier Q>
-    struct hash<glm::vec<2, T, Q> >
+    template<>
+    struct hash<glm::vec2 >
     {
-        size_t operator()(glm::vec<2, T, Q> const& v) const
+        size_t operator()(glm::vec2 const& v) const
         {
-            return ((hash<T>()(v[0]) ^
-                     (hash<T>()(v[1]) << 1)) >> 1);
+            return ((hash<glm::vec2::value_type>()(v[0]) ^
+                     (hash<glm::vec2::value_type>()(v[1]) << 1)) >> 1);
         }
     };
 
-    template<typename T, glm::qualifier Q>
-    struct hash<glm::vec<3, T, Q> >
+    template<>
+    struct hash<glm::vec3 >
     {
-        size_t operator()(glm::vec<3, T, Q> const& v) const
+        size_t operator()(glm::vec3 const& v) const
         {
 
-            return ((hash<T>()(v[0]) ^
-                     (hash<T>()(v[1]) << 1)) >> 1) ^
-                   (hash<T>()(v[2]) << 1);
+            return ((hash<glm::vec3::value_type>()(v[0]) ^
+                     (hash<glm::vec3::value_type>()(v[1]) << 1)) >> 1) ^
+                   (hash<glm::vec3::value_type>()(v[2]) << 1);
         }
     };
 }

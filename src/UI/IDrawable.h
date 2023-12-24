@@ -6,5 +6,6 @@ namespace omp
     {
     public:
         virtual void draw() = 0;
+        virtual ~IDrawable() = default;
     };
 }
