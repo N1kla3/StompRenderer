@@ -8,3 +8,6 @@
 %VULKAN_SDK%/Bin/glslc.exe shaders/shaderLightBlend.frag -o SPRV/fragLightBlend.spv
 %VULKAN_SDK%/Bin/glslc.exe shaders/skybox.vert -o SPRV/vertSkybox.spv
 %VULKAN_SDK%/Bin/glslc.exe shaders/skybox.frag -o SPRV/fragSkybox.spv
+
+for %%f in (shaders\*.vert) do %VULKAN_SDK%/Bin/glslc.exe %%f -o SPRV/%%~nfvert.spv
+for %%v in (shaders\*.frag) do %VULKAN_SDK%/Bin/glslc.exe %%v -o SPRV/%%~nvfrag.spv

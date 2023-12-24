@@ -95,4 +95,7 @@ function(
               # C warnings
               $<$<COMPILE_LANGUAGE:C>:${PROJECT_WARNINGS_C}>
               )
+
+  include(CMakePrintHelpers)
+  cmake_print_variables(PROJECT_WARNINGS_CXX)
 endfunction()

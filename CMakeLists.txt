@@ -98,8 +98,6 @@ set(SOURCE
         UI/CameraPanel.h
         UI/CameraPanel.cpp
         UI/IDrawable.h
-        stb_image.h
-        stb_image.cpp
         tinyobjloader.cpp
         Logs.h
         Logs.cpp
@@ -111,8 +109,6 @@ set(SOURCE
         Rendering/UniformBuffer.cpp
         Rendering/ModelInstance.h
         Rendering/ModelInstance.cpp
-        ImGuizmo/ImGuizmo.cpp
-        ImGuizmo/ImGuizmo.h
         Async/ThreadPool.h
         Async/ThreadPool.cpp
         Async/threadsafe_queue.h
@@ -143,13 +139,28 @@ add_library(imgui
         )
 target_compile_definitions(imgui PUBLIC -DIMGUI_USER_CONFIG="stomp_imconfig.h")
 
+add_library(imguihelp ${IMGUI})
+target_link_libraries(imguihelp PUBLIC Vulkan::Vulkan imgui glfw)
+
+add_library(imguizmo src/ImGuizmo/ImGuizmo.cpp src/ImGuizmo/ImGuizmo.h)
+target_link_libraries(imguizmo PUBLIC imgui)
+
+add_library(stbimage src/stb_image.cpp src/stb_image.h)
+
 list(TRANSFORM SOURCE PREPEND "src/")
 
 include(CMake/SystemLink.cmake)
 
-add_library(stomp_renderer ${SOURCE} ${IMGUI})
-target_link_libraries(stomp_renderer PUBLIC renderer::renderer_options renderer::renderer_warnings)
-target_link_system_libraries(stomp_renderer PUBLIC Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json)
+add_library(stomp_renderer ${SOURCE})
+#target_link_libraries(stomp_renderer PUBLIC renderer::renderer_options renderer::renderer_warnings)
+target_link_system_libraries(stomp_renderer PUBLIC Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json imguizmo imguihelp stbimage)
+renderer_set_project_warnings(
+        stomp_renderer
+        ${renderer_WARNINGS_AS_ERRORS}
+        ""
+        ""
+        ""
+        "")
 
 add_executable(renderer src/main.cpp)
 target_link_libraries(renderer stomp_renderer)
