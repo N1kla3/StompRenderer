@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Asset.h"
+#include "AssetSystem/Asset.h"
 
 namespace omp
 {

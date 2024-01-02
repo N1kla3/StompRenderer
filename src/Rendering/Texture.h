@@ -2,7 +2,7 @@
 
 #include <string>
 #include "vulkan/vulkan.h"
-#include "stb_image.h"
+#include "IO/stb_image.h"
 #include "VulkanContext.h"
 
 namespace omp

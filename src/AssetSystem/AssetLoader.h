@@ -3,9 +3,9 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
-#include "MaterialAsset.h"
-#include "ModelAsset.h"
-#include "Asset.h"
+#include "AssetSystem/MaterialAsset.h"
+#include "AssetSystem/ModelAsset.h"
+#include "AssetSystem/Asset.h"
 
 #define ADD_CLASS(ClassName) { typeid(std::decay_t<ClassName>).name(), new omp::ClassType<ClassName>() }
 

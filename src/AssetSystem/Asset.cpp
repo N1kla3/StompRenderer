@@ -1,8 +1,8 @@
 #include <filesystem>
 #include <fstream>
-#include "Asset.h"
+#include "AssetSystem/Asset.h"
 #include "Logs.h"
-#include "AssetLoader.h"
+#include "AssetSystem/AssetLoader.h"
 #include "nlohmann/json.hpp"
 
 void omp::Asset::saveAssetToFile(const std::string& inPath, const std::string& inClassName)

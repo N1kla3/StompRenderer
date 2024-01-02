@@ -12,7 +12,7 @@
 
 #include <chrono>
 
-#include "stb_image.h"
+#include "IO/stb_image.h"
 #include "backends/imgui_impl_glfw.h"
 #include "UI/MainLayer.h"
 #include "UI/EntityPanel.h"

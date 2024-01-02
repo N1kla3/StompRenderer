@@ -32,16 +32,16 @@ set(SOURCE
         Renderer.h
         Rendering/Model.h
         Rendering/Model.cpp
-        ModelAsset.h
-        ModelAsset.cpp
+        AssetSystem/ModelAsset.h
+        AssetSystem/ModelAsset.cpp
         Rendering/ModelStatics.cpp
         Rendering/ModelStatics.h
         Scene.h
         Scene.cpp
         SceneEntity.h
         SceneEntity.cpp
-        SceneAsset.h
-        SceneAsset.cpp
+        AssetSystem/SceneAsset.h
+        AssetSystem/SceneAsset.cpp
         Rendering/Texture.h
         Rendering/Texture.cpp
         MaterialManager.h
@@ -50,21 +50,21 @@ set(SOURCE
         Rendering/Material.cpp
         MaterialInstance.h
         MaterialInstance.cpp
-        MaterialAsset.h
-        MaterialAsset.cpp
+        AssetSystem/MaterialAsset.h
+        AssetSystem/MaterialAsset.cpp
         Rendering/VulkanContext.h
         Rendering/VulkanContext.cpp
         Rendering/Shader.h
         Rendering/Shader.cpp
         FileDialog.h
         FileDialog.cpp
-        ISaveable.h
-        Asset.h
-        Asset.cpp
+        IO/ISaveable.h
+        AssetSystem/Asset.h
+        AssetSystem/Asset.cpp
         Camera.h
         Camera.cpp
-        AssetManager.h
-        AssetManager.cpp
+        AssetSystem/AssetManager.h
+        AssetSystem/AssetManager.cpp
         Light.h
         Light.cpp
         LightObject.h
@@ -72,8 +72,8 @@ set(SOURCE
         LightSystem.cpp
         Rendering/GraphicsPipeline.h
         Rendering/GraphicsPipeline.cpp
-        AssetLoader.h
-        AssetLoader.cpp
+        AssetSystem/AssetLoader.h
+        AssetSystem/AssetLoader.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
@@ -98,7 +98,7 @@ set(SOURCE
         UI/CameraPanel.h
         UI/CameraPanel.cpp
         UI/IDrawable.h
-        tinyobjloader.cpp
+        IO/tinyobjloader.cpp
         Logs.h
         Logs.cpp
         Rendering/FrameBuffer.h
@@ -145,7 +145,7 @@ target_link_libraries(imguihelp PUBLIC Vulkan::Vulkan imgui glfw)
 add_library(imguizmo src/ImGuizmo/ImGuizmo.cpp src/ImGuizmo/ImGuizmo.h)
 target_link_libraries(imguizmo PUBLIC imgui)
 
-add_library(stbimage src/stb_image.cpp src/stb_image.h)
+add_library(stbimage src/IO/stb_image.cpp src/IO/stb_image.h)
 
 list(TRANSFORM SOURCE PREPEND "src/")
 

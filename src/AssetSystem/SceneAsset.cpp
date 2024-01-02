@@ -1,5 +1,5 @@
-#include "SceneAsset.h"
-#include "AssetManager.h"
+#include "AssetSystem/SceneAsset.h"
+#include "AssetSystem/AssetManager.h"
 
 omp::SceneAsset::SceneAsset()
         : Asset()

@@ -1,5 +1,5 @@
 #pragma once
-#include "Asset.h"
+#include "AssetSystem/Asset.h"
 #include "Rendering/Model.h"
 
 namespace omp

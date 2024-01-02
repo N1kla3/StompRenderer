@@ -4,7 +4,7 @@
 #include "Texture.h"
 #include "Logs.h"
 #include "imgui_impl_vulkan.h"
-#include "stb_image.h"
+#include "IO/stb_image.h"
 
 omp::Texture::Texture(const std::string& inPath)
 {

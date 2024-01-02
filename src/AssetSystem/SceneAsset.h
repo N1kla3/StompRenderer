@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Asset.h"
+#include "AssetSystem/Asset.h"
 #include "glm/vec3.hpp"
 #include "Light.h"
 #include "Scene.h"

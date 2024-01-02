@@ -1,4 +1,4 @@
-#include "ModelAsset.h"
+#include "AssetSystem/ModelAsset.h"
 #include "Rendering/ModelStatics.h"
 #include "MaterialManager.h"
 

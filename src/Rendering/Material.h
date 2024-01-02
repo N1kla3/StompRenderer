@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 #include "Texture.h"
-#include "Asset.h"
+#include "AssetSystem/Asset.h"
 #include "UI/MaterialPanel.h"
 #include "glm/vec4.hpp"
 

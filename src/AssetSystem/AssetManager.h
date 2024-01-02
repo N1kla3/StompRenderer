@@ -6,8 +6,8 @@
 #include <filesystem>
 #include <fstream>
 #include "Rendering/VulkanContext.h"
-#include "Asset.h"
-#include "AssetLoader.h"
+#include "AssetSystem/Asset.h"
+#include "AssetSystem/AssetLoader.h"
 #include "Logs.h"
 
 namespace omp
