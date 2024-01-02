@@ -652,8 +652,8 @@ void Renderer::createGraphicsPipeline()
     depth_stencil.back = stencil_state;
 
     // Light pipeline
-    std::shared_ptr<omp::Shader> light_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vertLight.spv",
-                                                                              "../SPRV/fragLight.spv");
+    std::shared_ptr<omp::Shader> light_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/shaderLightvert.spv",
+                                                                              "../SPRV/shaderLightfrag.spv");
 
     std::unique_ptr<omp::GraphicsPipeline> light_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     light_pipe->startDefaultCreation();
@@ -668,7 +668,7 @@ void Renderer::createGraphicsPipeline()
     light_pipe->setDepthStencil(depth_stencil);
     light_pipe->confirmCreation(m_RenderPass);
 
-    std::shared_ptr<omp::Shader> skybox_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vertSkybox.spv", "../SPRV/fragSkybox.spv");
+    std::shared_ptr<omp::Shader> skybox_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/skyboxvert.spv", "../SPRV/skyboxfrag.spv");
 
     std::unique_ptr<omp::GraphicsPipeline> skybox_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     skybox_pipe->startDefaultCreation();
@@ -686,8 +686,8 @@ void Renderer::createGraphicsPipeline()
     depth_stencil.depthTestEnable = VK_FALSE;
 
     // Simple pipeline
-    std::shared_ptr<omp::Shader> shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vert.spv",
-                                                                        "../SPRV/frag.spv");
+    std::shared_ptr<omp::Shader> shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/shadervert.spv",
+                                                                        "../SPRV/shaderfrag.spv");
 
     std::unique_ptr<omp::GraphicsPipeline> pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     pipe->startDefaultCreation();
@@ -703,8 +703,8 @@ void Renderer::createGraphicsPipeline()
     pipe->confirmCreation(m_RenderPass);
 
 
-    std::shared_ptr<omp::Shader> blend_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/vertLightBlend.spv",
-                                                                              "../SPRV/fragLightBlend.spv");
+    std::shared_ptr<omp::Shader> blend_shader = std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/shaderLightBlendvert.spv",
+                                                                              "../SPRV/shaderLightBlendfrag.spv");
     VkPipelineRasterizationStateCreateInfo rasterization_state{};
     rasterization_state.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterization_state.depthClampEnable = VK_FALSE;
@@ -751,8 +751,8 @@ void Renderer::createGraphicsPipeline()
     light_stencil->confirmCreation(m_RenderPass);
 
     // Outline pipeline
-    std::shared_ptr<omp::Shader> outline_shader = std::make_unique<omp::Shader>(m_VulkanContext, "../SPRV/vertOutline.spv",
-                                                                                "../SPRV/fragOutline.spv");
+    std::shared_ptr<omp::Shader> outline_shader = std::make_unique<omp::Shader>(m_VulkanContext, "../SPRV/outlinevert.spv",
+                                                                                "../SPRV/outlinefrag.spv");
     std::unique_ptr<omp::GraphicsPipeline> outline_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     outline_pipe->startDefaultCreation();
     outline_pipe->addColorBlendingAttachment(color_blend_attachment);
