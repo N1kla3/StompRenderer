@@ -1,9 +1,9 @@
 #include "ThreadPool.h"
 
-void interruption_point()
+void InterruptionPoint()
 {
-    if (this_thread_interrupt_flag.is_set())
+    if (omp::g_ThisThreadInterruptFlag.isSet())
     {
-        throw thread_interrupted();
+        throw omp::ThreadInterruptedException();
     }
 }

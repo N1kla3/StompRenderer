@@ -1,6 +1,7 @@
 
 set(TESTS
         ThreadPoolTests.cpp
+        SafeQueueTests.cpp
 )
 
 

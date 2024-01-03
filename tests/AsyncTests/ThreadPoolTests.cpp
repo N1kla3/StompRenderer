@@ -3,14 +3,14 @@
 #include <future>
 #include "Async/ThreadPool.h"
 
-TEST(AsyncSuite, ThreadPool_one)
+TEST(ThreadPoolSuite, ThreadPool_one)
 {
     std::promise<void> start, first_ready, second_ready;
     std::shared_future<void> ready(start.get_future());
     std::future<int> first_done;
     std::future<float> second_done;
 
-    ThreadPool pool{};
+    omp::ThreadPool pool{};
 
     std::string a = "dfdf";
     try
@@ -53,10 +53,10 @@ TEST(AsyncSuite, ThreadPool_one)
                                         {
                                             while (true)
                                             {
-                                                interruption_point();
+                                                omp::InterruptionPoint();
                                             }
                                         });
-        interruptible_thread inter(std::move(task));
+        omp::InterruptibleThread inter(std::move(task));
 
         inter.interrupt();
         inter.join();
