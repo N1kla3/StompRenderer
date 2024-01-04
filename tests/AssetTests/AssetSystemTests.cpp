@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "AssetManager.h"
+#include "AssetSystem/AssetManager.h"
 
 TEST(AssetLoading, AssetLoaderTest)
 {

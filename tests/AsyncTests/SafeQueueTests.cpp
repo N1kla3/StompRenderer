@@ -1,9 +1,19 @@
 #include "gtest/gtest.h"
-#include <iostream>
 #include <future>
+#include "Logs.h"
 #include "Async/threadsafe_queue.h"
 
-TEST(SafeQueueSuite, SafeQueue_one)
+class SafeQueueSuite : public ::testing::Test
+{
+protected:
+
+    static void SetUpTestSuite()
+    {
+        omp::InitializeTestLogs();
+    }
+};
+
+TEST_F(SafeQueueSuite, SafeQueue_one)
 {
 
 }

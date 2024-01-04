@@ -1,6 +1,6 @@
 #include "ThreadPool.h"
 
-void InterruptionPoint()
+void omp::InterruptionPoint()
 {
     if (omp::g_ThisThreadInterruptFlag.isSet())
     {

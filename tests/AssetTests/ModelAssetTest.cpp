@@ -1,8 +1,7 @@
 #include "gtest/gtest.h"
-#include "AssetManager.h"
-#include "AssetLoader.h"
-#include "ModelAsset.h"
-
+#include "AssetSystem/AssetManager.h"
+#include "AssetSystem/AssetLoader.h"
+#include "AssetSystem/ModelAsset.h"
 
 class Test_ModelAsset : public omp::ModelAsset
 {

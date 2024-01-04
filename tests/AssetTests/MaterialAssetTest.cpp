@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
-#include "AssetManager.h"
-#include "MaterialAsset.h"
+#include "AssetSystem/AssetManager.h"
+#include "AssetSystem/MaterialAsset.h"
 #include "Logs.h"
 
 const std::string g_ShaderTest = "shader";

@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
-#include "AssetManager.h"
-#include "AssetLoader.h"
-#include "SceneAsset.h"
+#include "AssetSystem/AssetManager.h"
+#include "AssetSystem/AssetLoader.h"
+#include "AssetSystem/SceneAsset.h"
 
 
 class Test_SceneAsset : public omp::SceneAsset

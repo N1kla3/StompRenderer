@@ -2,8 +2,19 @@
 #include <iostream>
 #include <future>
 #include "Async/ThreadPool.h"
+#include "Logs.h"
 
-TEST(ThreadPoolSuite, ThreadPool_one)
+class ThreadPoolSuite : public ::testing::Test
+{
+protected:
+
+    static void SetUpTestSuite()
+    {
+        omp::InitializeTestLogs();
+    }
+};
+
+TEST_F(ThreadPoolSuite, ThreadPool_one)
 {
     std::promise<void> start, first_ready, second_ready;
     std::shared_future<void> ready(start.get_future());
