@@ -337,11 +337,11 @@ namespace omp
             m_Done = true;
         }
 
-        template< typename FunctionType >
-        std::future<typename std::invoke_result_t<FunctionType>> submit(FunctionType f)
+        template< typename FunctionType, typename ...Args >
+        std::future<typename std::invoke_result_t<FunctionType, Args...>> submit(FunctionType&& f, Args&&... args)
         {
-            using ResultType = std::invoke_result_t<FunctionType>;
-            std::packaged_task < ResultType() > task(f);
+            using ResultType = std::invoke_result_t<FunctionType, Args...>;
+            std::packaged_task < ResultType() > task(std::bind(std::forward<FunctionType>(f), std::forward<Args>(args)...));
             std::future<ResultType> result(task.get_future());
             if (s_LocalQueue)
             {
