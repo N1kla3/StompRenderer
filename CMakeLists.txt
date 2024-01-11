@@ -99,6 +99,8 @@ set(SOURCE
         UI/CameraPanel.cpp
         UI/IDrawable.h
         IO/tinyobjloader.cpp
+        IO/JsonParser.h
+        IO/JsonParser.cpp
         Logs.h
         Logs.cpp
         Rendering/FrameBuffer.h
