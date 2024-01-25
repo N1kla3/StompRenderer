@@ -16,6 +16,8 @@ namespace omp
 constexpr int Rendering = 0;
 constexpr int UI = 0;
 constexpr int AssetManager = 0;
+constexpr int IO = 0;
+constexpr int Testing = 0;
 
 // Logs
 #define INFO(Category, ...) spdlog::get(#Category)->info(__VA_ARGS__)
