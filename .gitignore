@@ -11,3 +11,4 @@ logs
 /windows-msvc-release-user-mode/
 /windows-mingw-release-user-mode/
 /windows-mingw-debug-user-mode/
+/tests/testAssets/

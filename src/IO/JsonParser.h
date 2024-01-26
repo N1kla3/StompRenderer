@@ -91,11 +91,11 @@ namespace omp
         JsonParser() = default;
         JsonParser(JsonParser&& other)
         {
-            m_Parser = std::move(m_Parser);
+            m_Parser = std::move(other.m_Parser);
         }
         JsonParser& operator=(JsonParser&& other)
         {
-            m_Parser = std::move(m_Parser);
+            m_Parser = std::move(other.m_Parser);
             return *this;
         }
 

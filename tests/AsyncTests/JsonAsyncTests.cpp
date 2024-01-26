@@ -17,6 +17,7 @@ protected:
 const std::string g_PathOne = "../../../tests/testAssets/one.json";
 const std::string g_PathTwo = "../../../tests/testAssets/two.json";
 const std::string g_PathThree = "../../../tests/testAssets/three.json";
+const std::string g_PathFour = "../../../tests/testAssets/four.json";
 
 TEST_F(JsonAsyncSuite, JsonAsync_one)
 {
@@ -142,6 +143,51 @@ TEST_F(JsonAsyncSuite, JsonAsync_two)
 
 TEST_F(JsonAsyncSuite, JsonAsync_three)
 {
+    omp::JsonParser parser;
+    std::string a = "text";
+    std::string& b = a;
+    EXPECT_NO_THROW(parser.writeValue("one", a));
+    EXPECT_NO_THROW(parser.writeValue("two", b));
+    EXPECT_NO_THROW(parser.writeValue("three", "another text"));
+    EXPECT_NO_THROW(parser.writeValue("four", true));
+    EXPECT_NO_THROW(parser.writeValue("five", 4));
+    EXPECT_NO_THROW(parser.writeValue("six", 4.5f));
+    EXPECT_NO_THROW(parser.writeValue("seven", 3.4));
+    EXPECT_NO_THROW(parser.writeValue("eight", 'd'));
+    EXPECT_TRUE(parser.writeToFile(g_PathFour));
+
+    {
+        omp::JsonParser read_parser;
+        EXPECT_TRUE(read_parser.populateFromFile(g_PathFour));
+        EXPECT_STREQ(read_parser.readValue<std::string>("one").value_or("no").c_str(), a.c_str());
+        EXPECT_STREQ(read_parser.readValue<std::string>("two").value_or("no").c_str(), b.c_str());
+        EXPECT_STREQ(read_parser.readValue<std::string>("three").value_or("no").c_str(), "another text");
+        EXPECT_EQ(read_parser.readValue<bool>("four").value_or(false), true);
+        EXPECT_EQ(read_parser.readValue<int>("five").value_or(2), 4);
+        EXPECT_EQ(read_parser.readValue<float>("six").value_or(1.f), 4.5f);
+        EXPECT_EQ(read_parser.readValue<double>("seven").value_or(1.0), 3.4);
+        EXPECT_EQ(read_parser.readValue<char>("eight").value_or('a'), 'd');
+    }
+    omp::JsonParser read_parser;
+    read_parser = std::move(parser);
+    EXPECT_STREQ(read_parser.readValue<std::string>("one").value_or("no").c_str(), a.c_str());
+    EXPECT_STREQ(read_parser.readValue<std::string>("two").value_or("no").c_str(), b.c_str());
+    EXPECT_STREQ(read_parser.readValue<std::string>("three").value_or("no").c_str(), "another text");
+    EXPECT_EQ(read_parser.readValue<bool>("four").value_or(false), true);
+    EXPECT_EQ(read_parser.readValue<int>("five").value_or(2), 4);
+    EXPECT_EQ(read_parser.readValue<float>("six").value_or(1.f), 4.5f);
+    EXPECT_EQ(read_parser.readValue<double>("seven").value_or(1.0), 3.4);
+    EXPECT_EQ(read_parser.readValue<char>("eight").value_or('a'), 'd');
+
+    omp::JsonParser new_read_parser(std::move(read_parser));
+    EXPECT_STREQ(new_read_parser.readValue<std::string>("one").value_or("no").c_str(), a.c_str());
+    EXPECT_STREQ(new_read_parser.readValue<std::string>("two").value_or("no").c_str(), b.c_str());
+    EXPECT_STREQ(new_read_parser.readValue<std::string>("three").value_or("no").c_str(), "another text");
+    EXPECT_EQ(new_read_parser.readValue<bool>("four").value_or(false), true);
+    EXPECT_EQ(new_read_parser.readValue<int>("five").value_or(2), 4);
+    EXPECT_EQ(new_read_parser.readValue<float>("six").value_or(1.f), 4.5f);
+    EXPECT_EQ(new_read_parser.readValue<double>("seven").value_or(1.0), 3.4);
+    EXPECT_EQ(new_read_parser.readValue<char>("eight").value_or('a'), 'd');
 
     ASSERT_TRUE(true);
 }
