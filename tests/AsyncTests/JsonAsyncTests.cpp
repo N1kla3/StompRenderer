@@ -154,6 +154,13 @@ TEST_F(JsonAsyncSuite, JsonAsync_three)
     EXPECT_NO_THROW(parser.writeValue("six", 4.5f));
     EXPECT_NO_THROW(parser.writeValue("seven", 3.4));
     EXPECT_NO_THROW(parser.writeValue("eight", 'd'));
+    std::array<float, 4> arr{ 4.f, 5.f, 6.f, 7.f};
+    EXPECT_NO_THROW(parser.writeValue("nine", arr));
+    omp::JsonParser nested;
+    EXPECT_NO_THROW(nested.writeValue("four", true));
+    EXPECT_NO_THROW(nested.writeValue("five", 4));
+    EXPECT_NO_THROW(nested.writeValue("six", 4.5f));
+    EXPECT_NO_THROW(parser.writeObject("obj", std::move(nested)));
     EXPECT_TRUE(parser.writeToFile(g_PathFour));
 
     {
@@ -167,6 +174,10 @@ TEST_F(JsonAsyncSuite, JsonAsync_three)
         EXPECT_EQ(read_parser.readValue<float>("six").value_or(1.f), 4.5f);
         EXPECT_EQ(read_parser.readValue<double>("seven").value_or(1.0), 3.4);
         EXPECT_EQ(read_parser.readValue<char>("eight").value_or('a'), 'd');
+        omp::JsonParser read_nest = read_parser.readObject("obj");
+        EXPECT_EQ(read_nest.readValue<bool>("four").value_or(false), true);
+        EXPECT_EQ(read_nest.readValue<int>("five").value_or(2), 4);
+        EXPECT_EQ(read_nest.readValue<float>("six").value_or(1.f), 4.5f);
     }
     omp::JsonParser read_parser;
     read_parser = std::move(parser);

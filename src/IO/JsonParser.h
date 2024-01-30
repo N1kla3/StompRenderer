@@ -12,7 +12,12 @@ namespace omp
     private:
         nlohmann::json m_Data;
     public:
+        using ImplementationType = nlohmann::json;
         nlohmannjson() = default;
+        nlohmannjson(nlohmann::json&& value)
+        {
+            m_Data = value;
+        }
         nlohmannjson(nlohmannjson&& other)
         {
             m_Data = std::move(other.m_Data);
@@ -78,6 +83,10 @@ namespace omp
             return m_Data.contains(inKey);
         }
 
+        ImplementationType getImplementation()
+        {
+            return m_Data;
+        }
     };
 
 
@@ -89,6 +98,10 @@ namespace omp
 
     public:
         JsonParser() = default;
+        JsonParser(ParserType&& parser)
+        {
+            m_Parser = std::move(parser);
+        }
         JsonParser(JsonParser&& other)
         {
             m_Parser = std::move(other.m_Parser);
@@ -111,9 +124,13 @@ namespace omp
 
         template<typename T>
         std::optional<T> readValue(const std::string& inKey) const;
+        // Read json object
+        JsonParser readObject(const std::string& inKey) const;
 
         template<typename T>
         void writeValue(const std::string& inKey, T&& value);
+        // Add json object
+        void writeObject(const std::string& inKey, JsonParser&& parser);
 
         bool contains(const std::string& inKey) const;
 
@@ -139,10 +156,22 @@ namespace omp
     }
 
     template< typename ParserType >
+    JsonParser<ParserType> JsonParser<ParserType>::readObject(const std::string& inKey) const
+    {
+        return JsonParser(ParserType(m_Parser.template read<typename ParserType::ImplementationType>(inKey).value()));
+    }
+
+    template< typename ParserType >
     template< typename T >
     void JsonParser<ParserType>::writeValue(const std::string& inKey, T&& value)
     {
         m_Parser.template write<T>(inKey, std::forward<T>(value));
+    }
+
+    template< typename ParserType >
+    void JsonParser<ParserType>::writeObject(const std::string& inKey, JsonParser&& parser)
+    {
+        m_Parser.template write<typename ParserType::ImplementationType>(inKey, parser.m_Parser.getImplementation());
     }
 
     template< typename ParserType >
