@@ -205,10 +205,10 @@ void Renderer::createInstance()
     std::vector<VkExtensionProperties> extensions(ext_count);
     vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, extensions.data());
 
-    INFO(Rendering, "Available extensions");
+    INFO(LogRendering, "Available extensions");
     for (const auto& ext: extensions)
     {
-        INFO(Rendering, ext.extensionName);
+        INFO(LogRendering, ext.extensionName);
     }
 
     if (g_EnableValidationLayers && !checkValidationLayerSupport())
@@ -981,7 +981,7 @@ void Renderer::prepareFrameForImage(size_t KHRImageIndex)
         auto material = material_instance->getStaticMaterial().lock();
         if (!material)
         {
-            WARN(Rendering, "Material is invalid in material instance");
+            WARN(LogRendering, "Material is invalid in material instance");
         }
 
         VkPipeline model_pipeline{};
@@ -1625,7 +1625,7 @@ void Renderer::retrieveMaterialRenderState(const std::shared_ptr<omp::Material>&
 {
     if (!material)
     {
-        VWARN(Rendering, "Material is invalid");
+        VWARN(LogRendering, "Material is invalid");
         return;
     }
     if (material->isPotentiallyReadyForRendering())
@@ -2323,7 +2323,7 @@ void Renderer::postFrame()
         vkUnmapMemory(m_VulkanContext->logical_device, m_PixelReadMemory);
 
         m_CurrentScene->setCurrentId(pixel_value);
-        INFO(Rendering, "value {}", pixel_value);
+        INFO(LogRendering, "value {}", pixel_value);
 
         m_MousePickingData.pop();
     }

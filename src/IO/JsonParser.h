@@ -41,7 +41,7 @@ namespace omp
             }
             else
             {
-                VWARN(IO, "Cant read json file {1}", inFilePath);
+                VWARN(LogIO, "Cant read json file {1}", inFilePath);
                 return false;
             }
         }
@@ -56,7 +56,7 @@ namespace omp
             }
             else
             {
-                VWARN(IO, "Cant write json to file: {1}", inFilePath);
+                VWARN(LogIO, "Cant write json to file: {1}", inFilePath);
                 return false;
             }
         }

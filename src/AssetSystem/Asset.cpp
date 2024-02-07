@@ -2,39 +2,71 @@
 #include <fstream>
 #include "AssetSystem/Asset.h"
 #include "Logs.h"
-#include "AssetSystem/AssetLoader.h"
-#include "nlohmann/json.hpp"
+#include "AssetSystem/ObjectFactory.h"
 
-void omp::Asset::saveAssetToFile(const std::string& inPath, const std::string& inClassName)
+bool omp::Asset::loadMetadata()
 {
-    m_Path = inPath;
-    m_ClassName = inClassName;
-    auto file = std::filesystem::directory_entry(inPath);
-    std::ofstream stream(file.path().string());
-    if (stream.is_open())
-    {
-        nlohmann::json data;
-        data[NAME_MEMBER] = m_Name;
-        data[CLASS_MEMBER] = inClassName;
-        serializeData(data);
-        stream << std::setw(4) << data << std::endl;
-        INFO(AssetManager, "Asset saved successfully: {0}", inPath);
-    }
-
-    stream.close();
+    return false;
 }
 
-bool omp::Asset::saveToLastValidPath()
+bool omp::Asset::loadAsset(ObjectFactory& factory)
 {
-    if (!m_Path.empty())
+    if (m_Metadata)
     {
-        saveAssetToFile(m_Path, m_ClassName);
-        // TODO add check for existent class name
+        m_Object = factory.createSerializableObject(m_Metadata.class_id);
+        m_Object->serialize(m_Parser);
         return true;
     }
-    else
+    return false;
+}
+
+bool omp::Asset::unloadAsset()
+{
+    m_Object.reset();
+    return true;
+}
+
+bool omp::Asset::saveAsset()
+{
+    if (m_Metadata)
     {
-        VWARN(AssetManager, "Not valid file path");
-        return false;
+        //TODO: overwritten???
+        //TODO: What if some keys are deleted? they still in json?
+        if (m_Object)
+        {
+            m_Object->deserialize(m_Parser);
+            return m_Parser.writeToFile(m_Metadata.path_on_disk);
+        }
+        else
+        {
+            ERROR(LogAssetManager, "Cant deserialize object while saving asset");
+            return false;
+        }
     }
+    return false;
+}
+
+omp::MetaData omp::Asset::getMetaData() const
+{
+    return m_Metadata;
+}
+
+omp::SerializableObject* omp::Asset::getObject() const
+{
+    return m_Object.get();
+}
+
+omp::Asset::Asset(const std::string& inPathToAsset)
+{
+
+}
+
+bool omp::Asset::operator==(const omp::Asset& inOther)
+{
+    return false;
+}
+
+bool omp::Asset::operator!=(const omp::Asset& inOther)
+{
+    return false;
 }

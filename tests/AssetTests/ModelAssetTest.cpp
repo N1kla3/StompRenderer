@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "AssetSystem/AssetManager.h"
-#include "AssetSystem/AssetLoader.h"
+#include "AssetSystem/ObjectFactory.h"
 #include "AssetSystem/ModelAsset.h"
 
 class Test_ModelAsset : public omp::ModelAsset
@@ -18,7 +18,7 @@ protected:
     {
         omp::InitializeTestLogs();
 
-        omp::AssetLoader::s_AssetClasses.insert(ADD_CLASS(Test_ModelAsset));
+        omp::ObjectFactory::s_CreationMap.insert(ADD_CLASS(Test_ModelAsset));
     }
 };
 

@@ -20,7 +20,7 @@ void omp::SceneAsset::initialize()
         }
         else
         {
-            VWARN(AssetManager, "Cant load asset of Model class {0}", model_data.path);
+            VWARN(LogAssetManager, "Cant load asset of Model class {0}", model_data.path);
         }
     }
 

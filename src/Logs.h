@@ -13,11 +13,11 @@ namespace omp
 }
 
 // Categories
-constexpr int Rendering = 0;
-constexpr int UI = 0;
-constexpr int AssetManager = 0;
-constexpr int IO = 0;
-constexpr int Testing = 0;
+constexpr int LogRendering = 0;
+constexpr int LogUI = 0;
+constexpr int LogAssetManager = 0;
+constexpr int LogIO = 0;
+constexpr int LogTesting = 0;
 
 // Logs
 #define INFO(Category, ...) spdlog::get(#Category)->info(__VA_ARGS__)

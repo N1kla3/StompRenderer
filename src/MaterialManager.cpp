@@ -60,7 +60,7 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::getTexture(const std::string
     {
         return m_Textures.at(path);
     }
-    WARN(Rendering, "Texture do not exists: " + path);
+    WARN(LogRendering, "Texture do not exists: " + path);
     return nullptr;
 }
 

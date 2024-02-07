@@ -25,7 +25,7 @@ protected:
     {
         omp::InitializeTestLogs();
 
-        omp::AssetLoader::s_AssetClasses.insert(ADD_CLASS(Test_MaterialAsset));
+        omp::ObjectFactory::s_CreationMap.insert(ADD_CLASS(Test_MaterialAsset));
     }
 };
 

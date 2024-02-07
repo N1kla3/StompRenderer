@@ -7,7 +7,7 @@
 #include <fstream>
 #include "Rendering/VulkanContext.h"
 #include "AssetSystem/Asset.h"
-#include "AssetSystem/AssetLoader.h"
+#include "AssetSystem/ObjectFactory.h"
 #include "Logs.h"
 
 namespace omp
@@ -48,6 +48,13 @@ namespace omp
         void loadAssetsFromDrive(const std::string& pathDirectory);
         void loadAsset_internal(const std::string& inPath);
 
+        // This is the only places to store data
+        inline static const std::string_view ASSET_FOLDER = "../assets/";
+
+        inline static const std::string_view ASSET_FORMAT = ".json";
+
+        inline static const std::string_view NAME_MEMBER = "Name";
+        inline static const std::string_view CLASS_MEMBER = "Class";
     }; // Asset Manager
 
     template<class T>
@@ -56,7 +63,7 @@ namespace omp
     {
         std::shared_ptr<Asset> asset_ptr = std::make_shared<T>();
         asset_ptr->setName(inName);
-        asset_ptr->saveAssetToFile(inPath, omp::AssetLoader::getClassString<T>());
+        asset_ptr->saveAssetToFile(inPath, omp::ObjectFactory::getClassString<T>());
         m_Assets.insert({inPath, asset_ptr});
     }
 }

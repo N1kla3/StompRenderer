@@ -105,7 +105,7 @@ struct CommandBufferScope
     {
         if (!is_allocated)
         {
-            VWARN(Renderer, "Cant free already cleared command buffer");
+            VWARN(LogRenderer, "Cant free already cleared command buffer");
             return;
         }
         vkFreeCommandBuffers(device, pool, 1, &buffer);
@@ -301,15 +301,15 @@ private:
     {
         if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
         {
-            WARN(Rendering, "Validation layer{}", pCallbackData->pMessage);
+            WARN(LogRendering, "Validation layer{}", pCallbackData->pMessage);
         }
         else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
         {
-            ERROR(Rendering, "Validation layer{}", pCallbackData->pMessage);
+            ERROR(LogRendering, "Validation layer{}", pCallbackData->pMessage);
         }
         else
         {
-            INFO(Rendering, "Validation layer{}", pCallbackData->pMessage);
+            INFO(LogRendering, "Validation layer{}", pCallbackData->pMessage);
         }
         return VK_FALSE;
     }

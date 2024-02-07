@@ -10,7 +10,7 @@
 int main()
 {
     omp::InitializeLogs();
-    INFO(Rendering, "=================Create Renderer=================");
+    INFO(LogRendering, "=================Create Renderer=================");
     Renderer application;
 
     try
@@ -19,9 +19,9 @@ int main()
     }
     catch (const std::exception& e)
     {
-        ERROR(Rendering, e.what());
+        ERROR(LogRendering, e.what());
         return EXIT_FAILURE;
     }
-    INFO(Rendering, "================Destroy Renderer=================");
+    INFO(LogRendering, "================Destroy Renderer=================");
     return EXIT_SUCCESS;
 }

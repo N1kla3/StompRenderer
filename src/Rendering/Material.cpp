@@ -7,7 +7,7 @@ void omp::Material::addTextureInternal(TextureData&& data)
 {
     if (m_RenderInfo->textures.size() > MaterialRenderInfo::MAX_TEXTURES)
     {
-        WARN(Rendering, "Reached limit of textures for material");
+        WARN(LogRendering, "Reached limit of textures for material");
     }
 
     clearDescriptorSets();

@@ -59,7 +59,7 @@ void omp::Texture::loadTextureToCpu()
 
     if (m_ContentPaths.empty())
     {
-        VWARN(Rendering, "Incorrect path to load texture");
+        VWARN(LogRendering, "Incorrect path to load texture");
         return;
     }
 

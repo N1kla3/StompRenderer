@@ -99,7 +99,7 @@ TEST_F(ThreadPoolSuite, ThreadPool_one)
     }
     catch ( ... )
     {
-        ERROR(AssetManager, "this is EXCEPTION");
+        ERROR(LogAssetManager, "this is EXCEPTION");
     }
     ASSERT_TRUE(true);
 }

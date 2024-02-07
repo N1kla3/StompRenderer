@@ -36,7 +36,7 @@ TEST_F(JsonAsyncSuite, JsonAsync_one)
                     parser.writeValue("name", "firstname");
                     parser.writeValue("age", 5);
                     EXPECT_TRUE(parser.writeToFile(g_PathOne));
-                    INFO(Testing, "one done");
+                    INFO(LogTesting, "one done");
 
                     return 1;
                 });
@@ -50,7 +50,7 @@ TEST_F(JsonAsyncSuite, JsonAsync_one)
                     parser.writeValue("name", "firstname");
                     parser.writeValue("age", 5);
                     EXPECT_TRUE(parser.writeToFile(g_PathTwo));
-                    INFO(Testing, "two done");
+                    INFO(LogTesting, "two done");
                     return 1;
                 });
 
@@ -63,7 +63,7 @@ TEST_F(JsonAsyncSuite, JsonAsync_one)
                     parser.writeValue("name", "firstname");
                     parser.writeValue("age", 5);
                     EXPECT_TRUE(parser.writeToFile(g_PathThree));
-                    INFO(Testing, "three done");
+                    INFO(LogTesting, "three done");
                     return 1;
                 });
 
@@ -97,7 +97,7 @@ TEST_F(JsonAsyncSuite, JsonAsync_two)
                         EXPECT_TRUE(parser.populateFromFile(g_PathOne));
                         EXPECT_STREQ(parser.readValue<std::string>("name").value_or("dd").c_str(), "firstname");
                         EXPECT_EQ(parser.readValue<int>("age").value_or(1), 5);
-                        INFO(Testing, "one done");
+                        INFO(LogTesting, "one done");
                         return 1;
                     });
 
@@ -110,7 +110,7 @@ TEST_F(JsonAsyncSuite, JsonAsync_two)
                         EXPECT_TRUE(parser.populateFromFile(g_PathTwo));
                         EXPECT_STREQ(parser.readValue<std::string>("name").value_or("dd").c_str(), "firstname");
                         EXPECT_EQ(parser.readValue<int>("age").value_or(1), 5);
-                        INFO(Testing, "two done");
+                        INFO(LogTesting, "two done");
                         return 1;
                     });
 
@@ -123,7 +123,7 @@ TEST_F(JsonAsyncSuite, JsonAsync_two)
                         EXPECT_TRUE(parser.populateFromFile(g_PathThree));
                         EXPECT_STREQ(parser.readValue<std::string>("name").value_or("dd").c_str(), "firstname");
                         EXPECT_EQ(parser.readValue<int>("age").value_or(1), 5);
-                        INFO(Testing, "three done");
+                        INFO(LogTesting, "three done");
                         return 1;
                     });
 

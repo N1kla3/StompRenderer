@@ -16,7 +16,7 @@ void omp::AssetManager::saveAsset(const std::string& inPath)
 {
     if (m_Assets.find(inPath) == m_Assets.end())
     {
-        ERROR(AssetManager, "Cant save asset " + inPath);
+        ERROR(LogAssetManager, "Cant save asset " + inPath);
     }
 
     auto& asset = m_Assets.at(inPath);
@@ -27,7 +27,7 @@ void omp::AssetManager::deleteAsset(const std::string& inPath)
 {
     if (m_Assets.find(inPath) == m_Assets.end())
     {
-        ERROR(AssetManager, "Cant delete asset " + inPath);
+        ERROR(LogAssetManager, "Cant delete asset " + inPath);
     }
 }
 
@@ -57,7 +57,7 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 
 void omp::AssetManager::loadAsset_internal(const std::string& inPath)
 {
-    auto&& loading_asset = AssetLoader::loadAssetFromStorage(inPath);
+    auto&& loading_asset = ObjectFactory::loadAssetFromStorage(inPath);
     if (loading_asset)
     {
         auto file = std::filesystem::directory_entry(inPath);
@@ -70,7 +70,7 @@ void omp::AssetManager::loadAsset_internal(const std::string& inPath)
             m_Assets.erase(loading_asset->getPath());
             m_Assets.insert({loading_asset->getPath(), loading_asset});
             loading_asset->initialize();
-            INFO(AssetManager, "Asset loaded successfully: {0}", loading_asset->getPath());
+            INFO(LogAssetManager, "Asset loaded successfully: {0}", loading_asset->getPath());
         }
 
         stream.close();
@@ -93,7 +93,7 @@ std::shared_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string& inPat
 {
     if (m_Assets.find(inPath) == m_Assets.end())
     {
-        ERROR(AssetManager, "Cant find asset " + inPath);
+        ERROR(LogAssetManager, "Cant find asset " + inPath);
         return nullptr;
     }
     return m_Assets.at(inPath);

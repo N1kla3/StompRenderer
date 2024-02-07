@@ -58,7 +58,7 @@ set(SOURCE
         Rendering/Shader.cpp
         FileDialog.h
         FileDialog.cpp
-        IO/ISaveable.h
+        IO/SerializableObject.h
         AssetSystem/Asset.h
         AssetSystem/Asset.cpp
         Camera.h
@@ -72,8 +72,8 @@ set(SOURCE
         LightSystem.cpp
         Rendering/GraphicsPipeline.h
         Rendering/GraphicsPipeline.cpp
-        AssetSystem/AssetLoader.h
-        AssetSystem/AssetLoader.cpp
+        AssetSystem/ObjectFactory.h
+        AssetSystem/ObjectFactory.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
