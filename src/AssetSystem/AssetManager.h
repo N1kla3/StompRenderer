@@ -3,45 +3,33 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <filesystem>
-#include <fstream>
-#include "Rendering/VulkanContext.h"
 #include "AssetSystem/Asset.h"
 #include "AssetSystem/ObjectFactory.h"
-#include "Logs.h"
+#include "Async/ThreadPool.h"
 
 namespace omp
 {
     class AssetManager
     {
     private:
-        std::unordered_map<std::string, std::shared_ptr<Asset>> m_Assets;
+        std::unordered_map<uint64_t, std::unique_ptr<Asset>> m_AssetRegistry;
+        omp::ThreadPool m_ThreadPool;
+        omp::ObjectFactory m_Factory;
+public:
 
         AssetManager();
         ~AssetManager() = default;
-    public:
-
         AssetManager(const AssetManager&) = delete;
-        AssetManager operator=(const AssetManager&) = delete;
+        AssetManager& operator=(const AssetManager&) = delete;
         AssetManager(AssetManager&&) = delete;
-        AssetManager operator=(AssetManager&&) = delete;
-        static AssetManager& getAssetManager();
+        AssetManager& operator=(AssetManager&&) = delete;
 
-        template<class T>
-        requires std::is_base_of_v<Asset, T>
-        void createAsset(const std::string& inName, const std::string& inPath);
+        Asset* loadAsset(uint64_t assetId);
+        void saveAsset(uint64_t assetId);
+        void deleteAsset(uint64_t assetId);
+        void createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass);
 
-        std::shared_ptr<Asset> loadAsset(const std::string& inPath);
-        void saveAsset(const std::string& inPath);
-        void deleteAsset(const std::string& inPath);
-
-        template<typename T>
-        std::shared_ptr<T> getAssetCasted(const std::string& inPath);
-        std::shared_ptr<Asset> getAsset(const std::string& inPath);
-
-        template<typename T>
-        std::shared_ptr<T> tryGetAndLoadIfNot_casted(const std::string& inPath);
-        std::shared_ptr<Asset> tryGetAndLoadIfNot(const std::string& inPath);
+        Asset* getAsset(uint64_t assetId);
 
     private:
         void loadAssetsFromDrive();
@@ -49,37 +37,18 @@ namespace omp
         void loadAsset_internal(const std::string& inPath);
 
         // This is the only places to store data
-        inline static const std::string_view ASSET_FOLDER = "../assets/";
+        inline static const std::string ASSET_FOLDER = "../assets/";
 
-        inline static const std::string_view ASSET_FORMAT = ".json";
+        inline static const std::string ASSET_FORMAT = ".json";
 
-        inline static const std::string_view NAME_MEMBER = "Name";
-        inline static const std::string_view CLASS_MEMBER = "Class";
+        inline static const std::string NAME_MEMBER = "Name";
+        inline static const std::string CLASS_MEMBER = "Class";
     }; // Asset Manager
 
-    template<class T>
-    requires std::is_base_of_v<Asset, T>
-    void AssetManager::createAsset(const std::string& inName, const std::string& inPath)
-    {
-        std::shared_ptr<Asset> asset_ptr = std::make_shared<T>();
-        asset_ptr->setName(inName);
-        asset_ptr->saveAssetToFile(inPath, omp::ObjectFactory::getClassString<T>());
-        m_Assets.insert({inPath, asset_ptr});
-    }
-}
-
-template<typename T>
-std::shared_ptr<T> omp::AssetManager::getAssetCasted(const std::string& inPath)
-{
-    auto&& ptr = getAsset(inPath);
-    auto&& res = dynamic_pointer_cast<T>(ptr);
-    return res;
-}
-
-template<typename T>
-std::shared_ptr<T> omp::AssetManager::tryGetAndLoadIfNot_casted(const std::string& inPath)
-{
-    auto&& ptr = tryGetAndLoadIfNot(inPath);
-    auto&& res = dynamic_pointer_cast<T>(ptr);
-    return res;
+//    {
+//        std::shared_ptr<Asset> asset_ptr = std::make_shared<T>();
+//        asset_ptr->setName(inName);
+//        asset_ptr->saveAssetToFile(inPath, omp::ObjectFactory::getClassString<T>());
+//        m_Assets.insert({inPath, asset_ptr});
+//    }
 }

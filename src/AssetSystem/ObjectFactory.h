@@ -1,11 +1,9 @@
 #pragma once
 
+#include "IO/SerializableObject.h"
 #include <string>
 #include <unordered_map>
 #include <functional>
-#include "AssetSystem/MaterialAsset.h"
-#include "AssetSystem/ModelAsset.h"
-#include "AssetSystem/Asset.h"
 
 // DEPRECATED
 //#define ADD_CLASS(ClassName) { typeid(std::decay_t<ClassName>).name(), new omp::ClassType<ClassName>() }

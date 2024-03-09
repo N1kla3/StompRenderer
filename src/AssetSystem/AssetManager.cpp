@@ -1,39 +1,50 @@
 #include "AssetSystem/AssetManager.h"
 #include "Logs.h"
 #include <filesystem>
-#include <fstream>
-#include "nlohmann/json.hpp"
-#include "Rendering/Material.h"
 
 using namespace std::filesystem;
 
 omp::AssetManager::AssetManager()
 {
-    loadAssetsFromDrive();
+    // TODO: strange
+    // loadAssetsFromDrive();
 }
 
-void omp::AssetManager::saveAsset(const std::string& inPath)
+void omp::AssetManager::saveAsset(uint64_t assetId)
 {
-    if (m_Assets.find(inPath) == m_Assets.end())
+    if (m_AssetRegistry.find(assetId) != m_AssetRegistry.end())
     {
-        ERROR(LogAssetManager, "Cant save asset " + inPath);
+        // TODO: saving multithreading handling, conflicts
+        m_ThreadPool.submit([this, assetId]()
+        {
+            m_AssetRegistry[assetId]->saveAsset();
+        });
     }
-
-    auto& asset = m_Assets.at(inPath);
-    asset->saveToLastValidPath();
+    else
+    {
+        WARN(LogAssetManager, "Cant save asset with id specified {}", assetId);
+    }
 }
 
-void omp::AssetManager::deleteAsset(const std::string& inPath)
+void omp::AssetManager::deleteAsset(uint64_t assetID)
 {
-    if (m_Assets.find(inPath) == m_Assets.end())
+    if (m_AssetRegistry.find(assetID) != m_AssetRegistry.end())
     {
-        ERROR(LogAssetManager, "Cant delete asset " + inPath);
+        m_ThreadPool.submit([this, assetID]()
+        {
+            m_AssetRegistry[assetID]->unloadAsset();
+            // TODO: delete file
+        });
+    }
+    else
+    {
+        WARN(LogAssetManager, "Cant delete asset with id specified {}", assetID);
     }
 }
 
 void omp::AssetManager::loadAssetsFromDrive()
 {
-    loadAssetsFromDrive(Asset::ASSET_FOLDER);
+    loadAssetsFromDrive(ASSET_FOLDER);
 }
 
 void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
@@ -45,67 +56,49 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
         {
             loadAssetsFromDrive(iter.path().generic_string());
         }
-        if (iter.path().extension().string() == Asset::ASSET_FORMAT)
+        if (iter.path().extension().string() == ASSET_FORMAT)
         {
-            if (!getAsset(iter.path().string()))
-            {
-                loadAsset_internal(iter.path().string());
-            }
+            loadAsset_internal(iter.path().string());
         }
     }
 }
 
 void omp::AssetManager::loadAsset_internal(const std::string& inPath)
 {
-    auto&& loading_asset = ObjectFactory::loadAssetFromStorage(inPath);
-    if (loading_asset)
+    JsonParser<> file_data{};
+    if (file_data.populateFromFile(inPath))
     {
-        auto file = std::filesystem::directory_entry(inPath);
-        std::ifstream stream(file.path().string());
-        if (stream.is_open())
+        std::unique_ptr<omp::Asset> asset = std::make_unique<omp::Asset>((std::move(file_data)));
+        if (asset->loadMetadata())
         {
-            nlohmann::json data;
-            stream >> data;
-            loading_asset->deserializeData(data);// memory leak watch
-            m_Assets.erase(loading_asset->getPath());
-            m_Assets.insert({loading_asset->getPath(), loading_asset});
-            loading_asset->initialize();
-            INFO(LogAssetManager, "Asset loaded successfully: {0}", loading_asset->getPath());
+            m_AssetRegistry.insert({asset->getMetaData().asset_id, std::move(asset)});
+            INFO(LogAssetManager, "Asset loaded successfully: {0}", inPath);
         }
-
-        stream.close();
+        else
+        {
+            // should not be possible
+            // TODO: assert
+        }
     }
 }
 
-omp::AssetManager& omp::AssetManager::getAssetManager()
+omp::Asset* omp::AssetManager::loadAsset(uint64_t assetId)
 {
-    static AssetManager singleton{};
-    return singleton;
-}
-
-std::shared_ptr<omp::Asset> omp::AssetManager::loadAsset(const std::string& inPath)
-{
-    loadAsset_internal(inPath);
-    return getAsset(inPath);
-}
-
-std::shared_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string& inPath)
-{
-    if (m_Assets.find(inPath) == m_Assets.end())
+    if (m_AssetRegistry.at(assetId)->loadAsset(m_Factory))
     {
-        ERROR(LogAssetManager, "Cant find asset " + inPath);
+        return getAsset(assetId);
+    }
+    ERROR(LogAssetManager, "Cant find asset with id {0}", assetId);
+    return nullptr;
+}
+
+omp::Asset* omp::AssetManager::getAsset(uint64_t assetId)
+{
+    if (m_AssetRegistry.find(assetId) == m_AssetRegistry.end())
+    {
+        ERROR(LogAssetManager, "Cant find asset {0}", assetId);
         return nullptr;
     }
-    return m_Assets.at(inPath);
-}
-
-std::shared_ptr<omp::Asset> omp::AssetManager::tryGetAndLoadIfNot(const std::string& inPath)
-{
-    if (m_Assets.find(inPath) == m_Assets.end())
-    {
-        loadAsset_internal(inPath);
-        return getAsset(inPath);
-    }
-    return m_Assets.at(inPath);
+    return m_AssetRegistry.at(assetId).get();
 }
 

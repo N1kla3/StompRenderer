@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include "IO/SerializableObject.h"
 #include "ObjectFactory.h"
 
@@ -29,6 +30,7 @@ namespace omp
         MetaData m_Metadata;
         JsonParser<> m_Parser;
         std::unique_ptr<SerializableObject> m_Object;
+        std::mutex m_Access;
 
     // Methods //
     // ======= //
@@ -37,6 +39,7 @@ namespace omp
         bool loadAsset(ObjectFactory& factory);
         bool unloadAsset();
         bool saveAsset();
+        void specifyFileData(JsonParser<>&& fileData);
 
     public:
         MetaData getMetaData() const;
@@ -52,7 +55,7 @@ namespace omp
     // ====================== //
     public:
         Asset() = default;
-        Asset(const std::string& inPathToAsset);
+        Asset(JsonParser<>&& fileData);
         Asset(const Asset&) = delete;
         Asset(Asset&&) = delete;
         Asset& operator=(const Asset&) = delete;

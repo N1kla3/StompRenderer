@@ -12,3 +12,4 @@ logs
 /windows-mingw-release-user-mode/
 /windows-mingw-debug-user-mode/
 /tests/testAssets/
+/.cache/
