@@ -32,15 +32,40 @@ private:
         }
 
     public:
-        Value value_for(const Key& key, const Value& default_value) const;
-        void add_or_update_mapping(const Key& key, const Value& value);
-        void remove_mapping(const Key& key);
+        Value value_for(const Key& key, const Value& default_value) const
+        {
+            std::shared_lock<std::shared_mutex> lock(m_Mutex);
+            const bucket_iterator found_entry = find_entry_for(key);
+            return (found_entry == m_Data.end()) ? default_value : found_entry->second;
+        }
+        void add_or_update_mapping(const Key& key, const Value& value)
+        {
+            std::unique_lock<std::shared_mutex> lock(m_Mutex);
+            const bucket_iterator found_entry = find_entry_for(key);
+            if (found_entry == m_Data.end())
+            {
+                m_Data.push_back(bucket_value(key, value));
+            }
+            else
+            {
+                found_entry->second = value;
+            }
+        }
+        void remove_mapping(const Key& key)
+        {
+            std::unique_lock<std::shared_mutex> lock(m_Mutex);
+            const bucket_iterator found_entry = find_entry_for(key);
+            if (found_entry != m_Data.end())
+            {
+                m_Data.erase(found_entry);
+            }
+        }
     };
 
     // Hash Map Impl //
     // ============= //
     std::vector<std::unique_ptr<bucket_type>> m_Buckets;
-    Hash m_hasher;
+    Hash m_Hasher;
 
     bucket_type& get_bucket(const Key& key) const
     {
@@ -53,14 +78,33 @@ public:
     using mapped_type = Value;
     using hash_type = Hash;
 
-    threadsafe_map(uint32_t num_buckets = 19, const hash_type& = hash_type());
+    threadsafe_map(uint32_t num_buckets = 19, const hash_type& hasher = hash_type())
+        : m_Buckets(num_buckets)
+        , m_Hasher(hasher)
+    {
+        for (uint32_t index = 0; index < num_buckets; index++)
+        {
+            m_Buckets[index].reset(new bucket_type);
+        }
+    }
     threadsafe_map(const threadsafe_map& other) = delete;
     threadsafe_map& operator=(const threadsafe_map& other) = delete;
 
     // Methods //
     // ======= //
-    mapped_type value_for(const key_type& key, const mapped_type& value = mapped_type()) const;
-    void add_or_update_mapping(const key_type& key, const mapped_type& value);
-    void remove_mapping(const key_type& key);
+    mapped_type value_for(const key_type& key, const mapped_type& value = mapped_type()) const
+    {
+        return get_bucket(key).value_for(key, value);
+    }
+
+    void add_or_update_mapping(const key_type& key, const mapped_type& value)
+    {
+        get_bucket(key).add_or_update_mapping(key, value);
+    }
+
+    void remove_mapping(const key_type& key)
+    {
+        get_bucket(key).remove_mapping(key);
+    }
 };
 

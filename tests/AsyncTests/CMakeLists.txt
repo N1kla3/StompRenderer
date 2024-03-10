@@ -3,6 +3,7 @@ set(TESTS
         ThreadPoolTests.cpp
         SafeQueueTests.cpp
         JsonAsyncTests.cpp
+        SafeMapTests.cpp
 )
 
 
