@@ -114,6 +114,7 @@ set(SOURCE
         Async/ThreadPool.h
         Async/ThreadPool.cpp
         Async/threadsafe_queue.h
+        Async/threadsafe_map.h
         Math/GlmHash.h
         )
 
