@@ -1,18 +1,27 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
-#include <unordered_map>
+#include "Async/threadsafe_map.h"
 #include "AssetSystem/Asset.h"
 #include "AssetSystem/ObjectFactory.h"
 #include "Async/ThreadPool.h"
 
 namespace omp
 {
+    struct AssetHandle
+    {
+        const uint64_t id;
+
+        AssetHandle(uint64_t newId)
+            : id(newId){}
+    };
+
     class AssetManager
     {
     private:
-        std::unordered_map<uint64_t, std::unique_ptr<Asset>> m_AssetRegistry;
+        omp::threadsafe_map<AssetHandle, std::shared_ptr<Asset>> m_AssetRegistry;
         omp::ThreadPool m_ThreadPool;
         omp::ObjectFactory m_Factory;
 public:
@@ -24,12 +33,12 @@ public:
         AssetManager(AssetManager&&) = delete;
         AssetManager& operator=(AssetManager&&) = delete;
 
-        Asset* loadAsset(uint64_t assetId);
-        void saveAsset(uint64_t assetId);
-        void deleteAsset(uint64_t assetId);
+        std::future<std::weak_ptr<Asset>> loadAsset(AssetHandle assetId);
+        void saveAsset(AssetHandle assetId);
+        void deleteAsset(AssetHandle assetId);
         void createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass);
 
-        Asset* getAsset(uint64_t assetId);
+        std::weak_ptr<Asset> getAsset(AssetHandle assetId);
 
     private:
         void loadAssetsFromDrive();

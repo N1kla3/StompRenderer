@@ -1,6 +1,7 @@
 #include "AssetSystem/AssetManager.h"
 #include "Logs.h"
 #include <filesystem>
+#include <future>
 
 using namespace std::filesystem;
 
@@ -10,35 +11,38 @@ omp::AssetManager::AssetManager()
     // loadAssetsFromDrive();
 }
 
-void omp::AssetManager::saveAsset(uint64_t assetId)
+void omp::AssetManager::saveAsset(AssetHandle assetHandle)
 {
-    if (m_AssetRegistry.find(assetId) != m_AssetRegistry.end())
+    std::shared_ptr<omp::Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
+    if (found_asset)
     {
         // TODO: saving multithreading handling, conflicts
-        m_ThreadPool.submit([this, assetId]()
+        m_ThreadPool.submit([found_asset]()
         {
-            m_AssetRegistry[assetId]->saveAsset();
+            found_asset->saveAsset();
         });
     }
     else
     {
-        WARN(LogAssetManager, "Cant save asset with id specified {}", assetId);
+        WARN(LogAssetManager, "Cant save asset with id specified {}", assetHandle.id);
     }
 }
 
-void omp::AssetManager::deleteAsset(uint64_t assetID)
+void omp::AssetManager::deleteAsset(AssetHandle assetHandle)
 {
-    if (m_AssetRegistry.find(assetID) != m_AssetRegistry.end())
+    std::shared_ptr<Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
+    if (found_asset)
     {
-        m_ThreadPool.submit([this, assetID]()
+        m_ThreadPool.submit([this, found_asset, assetHandle]()
         {
-            m_AssetRegistry[assetID]->unloadAsset();
+            found_asset->unloadAsset();
+            m_AssetRegistry.remove_mapping(assetHandle);
             // TODO: delete file
         });
     }
     else
     {
-        WARN(LogAssetManager, "Cant delete asset with id specified {}", assetID);
+        WARN(LogAssetManager, "Cant delete asset with id specified {}", assetHandle.id);
     }
 }
 
@@ -65,40 +69,49 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 
 void omp::AssetManager::loadAsset_internal(const std::string& inPath)
 {
-    JsonParser<> file_data{};
-    if (file_data.populateFromFile(inPath))
+    m_ThreadPool.submit([this, inPath]()
     {
-        std::unique_ptr<omp::Asset> asset = std::make_unique<omp::Asset>((std::move(file_data)));
-        if (asset->loadMetadata())
+        JsonParser<> file_data{};
+        if (file_data.populateFromFile(inPath))
         {
-            m_AssetRegistry.insert({asset->getMetaData().asset_id, std::move(asset)});
-            INFO(LogAssetManager, "Asset loaded successfully: {0}", inPath);
+            std::shared_ptr<omp::Asset>&& asset = std::make_shared<omp::Asset>((std::move(file_data)));
+            if (asset->loadMetadata())
+            {
+                m_AssetRegistry.add_or_update_mapping(asset->getMetaData().asset_id, std::move(asset));
+                INFO(LogAssetManager, "Asset loaded successfully: {0}", inPath);
+            }
+            else
+            {
+                // should not be possible
+                // TODO: assert
+            }
         }
-        else
-        {
-            // should not be possible
-            // TODO: assert
-        }
-    }
+    });
 }
 
-omp::Asset* omp::AssetManager::loadAsset(uint64_t assetId)
+std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAsset(AssetHandle assetHandle)
 {
-    if (m_AssetRegistry.at(assetId)->loadAsset(m_Factory))
+    std::shared_ptr<Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
+    std::future<std::weak_ptr<Asset>> result;
+    if (found_asset)
     {
-        return getAsset(assetId);
+        result = m_ThreadPool.submit([found_asset, this, assetHandle]()
+        {
+            found_asset->loadAsset(m_Factory);
+            return std::weak_ptr<omp::Asset>(found_asset);
+        });
     }
-    ERROR(LogAssetManager, "Cant find asset with id {0}", assetId);
-    return nullptr;
+    ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);
+    return result;
 }
 
-omp::Asset* omp::AssetManager::getAsset(uint64_t assetId)
+std::weak_ptr<omp::Asset> omp::AssetManager::getAsset(AssetHandle assetHandle)
 {
-    if (m_AssetRegistry.find(assetId) == m_AssetRegistry.end())
+    std::shared_ptr<Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
+    if (!found_asset)
     {
-        ERROR(LogAssetManager, "Cant find asset {0}", assetId);
-        return nullptr;
+        ERROR(LogAssetManager, "Cant find asset {0}", assetHandle.id);
     }
-    return m_AssetRegistry.at(assetId).get();
+    return std::weak_ptr<omp::Asset>(found_asset);
 }
 
