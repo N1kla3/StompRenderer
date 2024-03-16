@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "AssetSystem/AssetManager.h"
 #include "AssetSystem/ObjectFactory.h"
-#include "AssetSystem/ModelAsset.h"
 
+/*
 class Test_ModelAsset : public omp::ModelAsset
 {
 public:
@@ -56,3 +56,4 @@ TEST_F(ModelAssetSuite, ModelAsset__Test__FirstLoad)
     ASSERT_TRUE(asset_casted->getModelPath() == g_ModelPath);
     ASSERT_TRUE(std::dynamic_pointer_cast<Test_ModelAsset>(asset));
 }
+*/

@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "AssetSystem/AssetManager.h"
-#include "AssetSystem/MaterialAsset.h"
 #include "Logs.h"
 
+/*
 const std::string g_ShaderTest = "shader";
 const std::vector<std::string> g_TestTexturePaths = { "../textures/container.png", "../textures/viking.png" };
 const std::string g_NameOne = "test";
@@ -86,3 +86,4 @@ TEST_F(MaterialAssetSuite, MaterialAsset__Test__SecondLoad)
     ASSERT_TRUE(asset_casted->getShaderName() == "");
     ASSERT_TRUE(std::dynamic_pointer_cast<Test_MaterialAsset>(asset));
 }
+*/

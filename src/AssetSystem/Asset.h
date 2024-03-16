@@ -30,7 +30,7 @@ namespace omp
         MetaData m_Metadata;
         JsonParser<> m_Parser;
         std::unique_ptr<SerializableObject> m_Object;
-        std::mutex m_Access;
+        mutable std::mutex m_Access;
 
     // Methods //
     // ======= //
@@ -49,7 +49,7 @@ namespace omp
          *
          * @return Not manageable raw pointer to object that asset owns
          */
-        SerializableObject* getObject() const;
+        SerializableObject const* getObject() const;
 
     // Constructors/operators //
     // ====================== //

@@ -320,7 +320,7 @@ namespace omp
             {
                 for (size_t i = 0; i < thread_count; i++)
                 {
-                    m_Queues.push_back(std::unique_ptr<WorkStealingQueue>(std::make_unique<WorkStealingQueue>()));
+                    m_Queues.push_back(std::make_unique<WorkStealingQueue>());
                 }
                 for (size_t i = 0; i < thread_count; i++)
                 {

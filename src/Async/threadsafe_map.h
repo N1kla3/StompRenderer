@@ -3,6 +3,8 @@
 #include <vector>
 #include <list>
 #include <shared_mutex>
+#include <mutex>
+#include <algorithm>
 
 namespace omp
 {
@@ -20,31 +22,40 @@ namespace omp
             using bucket_value = std::pair<Key, Value>;
             using bucket_data = std::list<bucket_value>;
             using bucket_iterator = typename bucket_data::iterator;
+            using bucket_const_iterator = typename bucket_data::const_iterator;
 
 
             bucket_data m_Data;
             mutable std::shared_mutex m_Mutex;
 
-            bucket_iterator find_entry_for(const Key& key) const
+            bucket_iterator find_entry_for(const Key& key)
             {
                 return std::find_if(m_Data.begin(), m_Data.end(), [&](const bucket_value& item)
                 {
                     return item.first == key;
                 });
             }
+            bucket_const_iterator find_entry_for(const Key& key) const
+            {
+                return std::find_if(m_Data.cbegin(), m_Data.cend(), [&](const bucket_value& item)
+                {
+                    return item.first == key;
+                });
+            }
+
 
         public:
             Value value_for(const Key& key, const Value& default_value) const
             {
                 std::shared_lock<std::shared_mutex> lock(m_Mutex);
-                const bucket_iterator found_entry = find_entry_for(key);
-                return (found_entry == m_Data.end()) ? default_value : found_entry->second;
+                bucket_const_iterator found_entry = find_entry_for(key);
+                return (found_entry == m_Data.cend()) ? default_value : found_entry->second;
             }
             void add_or_update_mapping(const Key& key, const Value& value)
             {
                 std::unique_lock<std::shared_mutex> lock(m_Mutex);
-                const bucket_iterator found_entry = find_entry_for(key);
-                if (found_entry == m_Data.end())
+                bucket_iterator found_entry = find_entry_for(key);
+                if (found_entry == m_Data.cend())
                 {
                     m_Data.push_back(bucket_value(key, value));
                 }
@@ -56,7 +67,7 @@ namespace omp
             void remove_mapping(const Key& key)
             {
                 std::unique_lock<std::shared_mutex> lock(m_Mutex);
-                const bucket_iterator found_entry = find_entry_for(key);
+                bucket_iterator found_entry = find_entry_for(key);
                 if (found_entry != m_Data.end())
                 {
                     m_Data.erase(found_entry);

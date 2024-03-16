@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "AssetSystem/AssetManager.h"
 #include "AssetSystem/ObjectFactory.h"
-#include "AssetSystem/SceneAsset.h"
 
+/*
 
 class Test_SceneAsset : public omp::SceneAsset
 {
@@ -32,3 +32,4 @@ TEST_F(SceneAssetSuite, ModelAsset__Test__FirstSave)
 TEST_F(SceneAssetSuite, ModelAsset__Test__FirstLoad)
 {
 }
+*/

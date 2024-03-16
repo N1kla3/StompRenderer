@@ -57,7 +57,7 @@ omp::MetaData omp::Asset::getMetaData() const
     return m_Metadata;
 }
 
-omp::SerializableObject* omp::Asset::getObject() const
+omp::SerializableObject const* omp::Asset::getObject() const
 {
     return m_Object.get();
 }

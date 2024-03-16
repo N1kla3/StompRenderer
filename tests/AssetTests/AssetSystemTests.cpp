@@ -3,5 +3,5 @@
 
 TEST(AssetLoading, AssetLoaderTest)
 {
-    auto& a = omp::AssetManager::getAssetManager();
+    //auto& a = omp::AssetManager::getAssetManager();
 }

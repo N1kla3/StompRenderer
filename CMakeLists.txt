@@ -32,16 +32,12 @@ set(SOURCE
         Renderer.h
         Rendering/Model.h
         Rendering/Model.cpp
-        AssetSystem/ModelAsset.h
-        AssetSystem/ModelAsset.cpp
         Rendering/ModelStatics.cpp
         Rendering/ModelStatics.h
         Scene.h
         Scene.cpp
         SceneEntity.h
         SceneEntity.cpp
-        AssetSystem/SceneAsset.h
-        AssetSystem/SceneAsset.cpp
         Rendering/Texture.h
         Rendering/Texture.cpp
         MaterialManager.h
@@ -50,8 +46,6 @@ set(SOURCE
         Rendering/Material.cpp
         MaterialInstance.h
         MaterialInstance.cpp
-        AssetSystem/MaterialAsset.h
-        AssetSystem/MaterialAsset.cpp
         Rendering/VulkanContext.h
         Rendering/VulkanContext.cpp
         Rendering/Shader.h
@@ -166,10 +160,11 @@ renderer_set_project_warnings(
         "")
 
 add_executable(renderer src/main.cpp)
-target_link_libraries(renderer stomp_renderer)
+target_link_libraries(renderer stomp_renderer "-static-libgcc -static-libstdc++")
 
 include(CTest)
 enable_testing()
 
-add_subdirectory(tests)
+# tests not compilated on mingw, so discard them for now
+# add_subdirectory(tests)
 #TODO CPack

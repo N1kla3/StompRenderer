@@ -74,10 +74,10 @@ void omp::AssetManager::loadAsset_internal(const std::string& inPath)
         JsonParser<> file_data{};
         if (file_data.populateFromFile(inPath))
         {
-            std::shared_ptr<omp::Asset>&& asset = std::make_shared<omp::Asset>((std::move(file_data)));
+            std::shared_ptr<omp::Asset> asset = std::make_shared<omp::Asset>((std::move(file_data)));
             if (asset->loadMetadata())
             {
-                m_AssetRegistry.add_or_update_mapping(asset->getMetaData().asset_id, std::move(asset));
+                m_AssetRegistry.add_or_update_mapping(asset->getMetaData().asset_id, asset);
                 INFO(LogAssetManager, "Asset loaded successfully: {0}", inPath);
             }
             else

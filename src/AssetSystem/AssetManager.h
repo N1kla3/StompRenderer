@@ -16,8 +16,25 @@ namespace omp
 
         AssetHandle(uint64_t newId)
             : id(newId){}
-    };
 
+        bool operator==(const AssetHandle& other) const
+        {
+            return id == other.id;
+        }
+    };
+}
+
+template<>
+struct std::hash<omp::AssetHandle>
+{
+    std::size_t operator()(const omp::AssetHandle& handle) const
+    {
+        return std::hash<uint64_t>()(handle.id);
+    }
+};
+
+namespace omp
+{
     class AssetManager
     {
     private:
@@ -61,3 +78,4 @@ public:
 //        m_Assets.insert({inPath, asset_ptr});
 //    }
 }
+
