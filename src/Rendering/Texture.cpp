@@ -83,6 +83,7 @@ void omp::Texture::loadTextureToCpu()
 
     if (!m_Pixels[0])
     {
+        ERROR(LogRendering, "Failed to load texture image from path: {}", m_ContentPaths[0].c_str());
         throw std::runtime_error("Failed to load texture image!");
     }
 
@@ -93,13 +94,13 @@ void omp::Texture::loadToGpu()
 {
     if (hasFlags(LOADED_TO_GPU) || !hasVulkanContext())
     {
-        VERROR(Rendering, "Texture cant be loaded to GPU");
+        VERROR(LogRendering, "Texture cant be loaded to GPU");
         return;
     }
 
     if (!hasFlags(LOADED_TO_CPU))
     {
-        VERROR(Rendering, "Texture not loaded to CPU {1} ", m_ContentPaths[0]);
+        VERROR(LogRendering, "Texture not loaded to CPU {1} ", m_ContentPaths[0]);
         return;
     }
 

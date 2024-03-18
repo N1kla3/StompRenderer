@@ -13,3 +13,10 @@ logs
 /windows-mingw-debug-user-mode/
 /tests/testAssets/
 /.cache/
+unixlike-gcc-release
+unixlike-gcc-debug
+.idea
+unixlike-clang-debug
+unixlike-clang-release
+compile_commands.json
+src/stb_image.h
