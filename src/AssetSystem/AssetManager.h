@@ -10,35 +10,11 @@
 
 namespace omp
 {
-    struct AssetHandle
-    {
-        const uint64_t id;
-
-        AssetHandle(uint64_t newId)
-            : id(newId){}
-
-        bool operator==(const AssetHandle& other) const
-        {
-            return id == other.id;
-        }
-    };
-}
-
-template<>
-struct std::hash<omp::AssetHandle>
-{
-    std::size_t operator()(const omp::AssetHandle& handle) const
-    {
-        return std::hash<uint64_t>()(handle.id);
-    }
-};
-
-namespace omp
-{
     class AssetManager
     {
     private:
         omp::threadsafe_map<AssetHandle, std::shared_ptr<Asset>> m_AssetRegistry;
+        // TODO: Get from Application, should not have own thread pool 
         omp::ThreadPool m_ThreadPool;
         omp::ObjectFactory m_Factory;
 public:

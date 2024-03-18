@@ -9,6 +9,7 @@ omp::AssetManager::AssetManager()
 {
     // TODO: strange
     // loadAssetsFromDrive();
+    // TODO: add all classes that should be read
 }
 
 void omp::AssetManager::saveAsset(AssetHandle assetHandle)

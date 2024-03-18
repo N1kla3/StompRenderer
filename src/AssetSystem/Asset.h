@@ -7,12 +7,44 @@
 
 namespace omp
 {
+    struct AssetHandle
+    {
+        using handle_type = uint64_t;
+        handle_type id;
+
+        AssetHandle(handle_type newId)
+            : id(newId){}
+
+        bool operator==(const AssetHandle& other) const
+        {
+            return id == other.id;
+        }
+        AssetHandle& operator=(handle_type other)
+        {
+            id = other;
+            return *this;
+        }
+    };
+}
+
+template<>
+struct std::hash<omp::AssetHandle>
+{
+    std::size_t operator()(const omp::AssetHandle& handle) const
+    {
+        return std::hash<uint64_t>()(handle.id);
+    }
+};
+
+namespace omp
+{
     struct MetaData
     {
         uint64_t asset_id = 0;
         std::string asset_name = "none";
         std::string path_on_disk = "none";
         std::string class_id = "none";
+        std::vector<AssetHandle::handle_type> dependencies;
 
         bool IsValid() const
         {
@@ -38,6 +70,7 @@ namespace omp
         bool loadMetadata();
         bool loadAsset(ObjectFactory& factory);
         bool unloadAsset();
+        bool saveMetadata();
         bool saveAsset();
         void specifyFileData(JsonParser<>&& fileData);
 
@@ -66,5 +99,12 @@ namespace omp
         bool operator!=(const Asset& inOther);
 
         friend class AssetManager;
+    private:
+
+        inline static const std::string ID_KEY = "ObjectID";
+        inline static const std::string PATH_KEY = "DiscPath";
+        inline static const std::string CLASS_NAME_KEY = "ClassName";
+        inline static const std::string ASSET_NAME_KEY = "AssetName";
+        inline static const std::string DEPENDENCIES_KEY = "Dependencies";
     };
 }

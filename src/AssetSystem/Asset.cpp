@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <mutex>
 #include "AssetSystem/Asset.h"
 #include "Logs.h"
@@ -5,10 +6,11 @@
 
 bool omp::Asset::loadMetadata()
 {
-    m_Metadata.asset_id = m_Parser.readValue<uint64_t>("ObjectID").value_or(0);
-    m_Metadata.path_on_disk = m_Parser.readValue<std::string>("DiscPath").value();
-    m_Metadata.class_id = m_Parser.readValue<std::string>("ClassName").value();
-    m_Metadata.asset_name = m_Parser.readValue<std::string>("AssetName").value();
+    m_Metadata.asset_id = m_Parser.readValue<uint64_t>(ID_KEY).value_or(0);
+    m_Metadata.path_on_disk = m_Parser.readValue<std::string>(PATH_KEY).value();
+    m_Metadata.class_id = m_Parser.readValue<std::string>(CLASS_NAME_KEY).value();
+    m_Metadata.asset_name = m_Parser.readValue<std::string>(ASSET_NAME_KEY).value();
+    m_Metadata.dependencies = m_Parser.readValue<std::vector<AssetHandle::handle_type>>(DEPENDENCIES_KEY).value();
     return true;
 }
 
@@ -29,6 +31,16 @@ bool omp::Asset::unloadAsset()
     std::lock_guard<std::mutex> lock(m_Access);
     m_Object.reset();
     return true;
+}
+
+bool omp::Asset::saveMetadata()
+{
+    m_Parser.writeValue(ID_KEY, m_Metadata.asset_id);
+    m_Parser.writeValue(PATH_KEY, m_Metadata.path_on_disk);
+    m_Parser.writeValue(CLASS_NAME_KEY, m_Metadata.class_id);
+    m_Parser.writeValue(ASSET_NAME_KEY, m_Metadata.asset_name);
+    m_Parser.writeValue(DEPENDENCIES_KEY, m_Metadata.dependencies);
+    return false;
 }
 
 bool omp::Asset::saveAsset()

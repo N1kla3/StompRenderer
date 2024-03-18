@@ -92,11 +92,11 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
     {
         m_Camera->processKeyboard(ECameraMovement::MOVE_RIGHT);
     }
-    if (ImGui::IsKeyDown(ImGuiKey_Q))
+    if (ImGui::IsKeyDown(ImGuiKey_E))
     {
         m_Camera->processKeyboard(ECameraMovement::MOVE_UP);
     }
-    if (ImGui::IsKeyDown(ImGuiKey_E))
+    if (ImGui::IsKeyDown(ImGuiKey_Q))
     {
         m_Camera->processKeyboard(ECameraMovement::MOVE_DOWN);
     }
