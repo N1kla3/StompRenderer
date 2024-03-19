@@ -28,6 +28,8 @@ include_directories(imgui)
 include_directories(imgui/backends)
 
 set(SOURCE
+        Core/Application.h
+        Core/Application.cpp
         Renderer.cpp
         Renderer.h
         Rendering/Model.h

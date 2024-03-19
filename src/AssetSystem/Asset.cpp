@@ -47,8 +47,8 @@ bool omp::Asset::saveAsset()
 {
     if (m_Metadata)
     {
-        //TODO: overwritten???
-        //TODO: What if some keys are deleted? they still in json?
+        // TODO:: overwritten???
+        // TODO : What if some keys are deleted? they still in json?
         std::lock_guard<std::mutex> lock(m_Access);
         if (m_Object)
         {
