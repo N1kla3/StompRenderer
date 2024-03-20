@@ -2,7 +2,7 @@
 
 ## Dependencies:
 - glm
-- glfw 3.3.4
+- glfw 3.3.8
 - Vulkan
 - stb_image
 - Imgui - docking branch
@@ -18,16 +18,33 @@ On linux
 ```bash
 ./compile_shaders.sh
 ```
-
-## Build
+On Windows
 ```bash
-mkdir cmake_build
-cmake -S . -B cmake_build
-cmake --build cmake_build
+.\compile_shaders.bat
+```
+
+## Build Linux/Windows
+Presets located in CMakePresets.json file.
+Existing presets:
+- "windows-msvc-debug-user-mode"
+- "windows-mingw-debug-user-mode"
+- "windows-clang-debug"
+- "unixlike-gcc-debug"
+- "unixlike-clang-debug"
+  
+```bash
+cmake . --preset "name of the preset"
+cmake --build "name of the preset"
 ```
 
 ## Run
+### Linux
 ```bash
-cd cmake_build
+cd "name of the preset"
 ./renderer
+```
+### Windows
+```bash
+cd "name of the preset"
+.\renderer
 ```
