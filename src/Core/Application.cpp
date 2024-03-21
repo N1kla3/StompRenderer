@@ -21,3 +21,7 @@ void omp::Application::tick(float delta)
 {
 }
 
+void omp::Application::parseFlags(const std::string& commands)
+{
+}
+

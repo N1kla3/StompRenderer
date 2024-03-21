@@ -15,7 +15,7 @@ int main()
 
     try
     {
-        application.run();
+        application.init();
     }
     catch (const std::exception& e)
     {

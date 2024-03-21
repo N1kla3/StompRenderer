@@ -151,7 +151,7 @@ namespace omp
     public:
         Renderer();
 
-        void run()
+        void init()
         {
             initWindow();
             initVulkan();

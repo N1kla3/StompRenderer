@@ -30,6 +30,10 @@ include_directories(imgui/backends)
 set(SOURCE
         Core/Application.h
         Core/Application.cpp
+        Core/CoreLib.h
+        Core/CoreLib.cpp
+        Core/Subsystem.h
+        Core/Subsystem.cpp
         Renderer.cpp
         Renderer.h
         Rendering/Model.h
