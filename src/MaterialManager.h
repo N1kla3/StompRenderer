@@ -7,7 +7,6 @@
 #include "Rendering/Texture.h"
 #include "Rendering/Material.h"
 
-class Renderer;
 namespace omp
 {
     struct CubeMapHandle;
@@ -84,7 +83,7 @@ namespace omp
         std::weak_ptr<omp::Texture> getEmptyTexture() const { return m_EmptyTexture; }
 
 
-        friend class ::Renderer;
+        friend class Renderer;
     };
 } // omp
 

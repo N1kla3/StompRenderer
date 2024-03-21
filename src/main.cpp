@@ -11,7 +11,7 @@ int main()
 {
     omp::InitializeLogs();
     INFO(LogRendering, "=================Create Renderer=================");
-    Renderer application;
+    omp::Renderer application;
 
     try
     {
