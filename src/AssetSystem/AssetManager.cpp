@@ -5,8 +5,9 @@
 
 using namespace std::filesystem;
 
-omp::AssetManager::AssetManager()
+omp::AssetManager::AssetManager(omp::ThreadPool* threadPool)
 {
+    m_ThreadPool = threadPool;
     // TODO: strange
     // loadAssetsFromDrive();
     // TODO: add all classes that should be read
@@ -18,7 +19,7 @@ void omp::AssetManager::saveAsset(AssetHandle assetHandle)
     if (found_asset)
     {
         // TODO: saving multithreading handling, conflicts
-        m_ThreadPool.submit([found_asset]()
+        m_ThreadPool->submit([found_asset]()
         {
             found_asset->saveAsset();
         });
@@ -34,7 +35,7 @@ void omp::AssetManager::deleteAsset(AssetHandle assetHandle)
     std::shared_ptr<Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
     if (found_asset)
     {
-        m_ThreadPool.submit([this, found_asset, assetHandle]()
+        m_ThreadPool->submit([this, found_asset, assetHandle]()
         {
             found_asset->unloadAsset();
             m_AssetRegistry.remove_mapping(assetHandle);
@@ -70,7 +71,7 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 
 void omp::AssetManager::loadAsset_internal(const std::string& inPath)
 {
-    m_ThreadPool.submit([this, inPath]()
+    m_ThreadPool->submit([this, inPath]()
     {
         JsonParser<> file_data{};
         if (file_data.populateFromFile(inPath))
@@ -96,7 +97,7 @@ std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAsset(AssetHandle 
     std::future<std::weak_ptr<Asset>> result;
     if (found_asset)
     {
-        result = m_ThreadPool.submit([found_asset, this, assetHandle]()
+        result = m_ThreadPool->submit([found_asset, this, assetHandle]()
         {
             found_asset->loadAsset(m_Factory);
             return std::weak_ptr<omp::Asset>(found_asset);

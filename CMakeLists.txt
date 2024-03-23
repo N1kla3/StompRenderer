@@ -32,8 +32,6 @@ set(SOURCE
         Core/Application.cpp
         Core/CoreLib.h
         Core/CoreLib.cpp
-        Core/Subsystem.h
-        Core/Subsystem.cpp
         Renderer.cpp
         Renderer.h
         Rendering/Model.h

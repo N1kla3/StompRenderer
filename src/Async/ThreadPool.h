@@ -332,6 +332,30 @@ namespace omp
                 m_Done = true;
             }
         }
+        ThreadPool(const unsigned threadCount)
+            : m_Done{ false }
+            , m_Joiner(m_Threads)
+        {
+            unsigned const thread_count_max = std::thread::hardware_concurrency();
+            
+            const unsigned threads_to_create = threadCount > thread_count_max ? thread_count_max : threadCount;
+            try
+            {
+                for (size_t i = 0; i < threads_to_create; i++)
+                {
+                    m_Queues.push_back(std::make_unique<WorkStealingQueue>());
+                }
+                for (size_t i = 0; i < threads_to_create; i++)
+                {
+                    m_Threads.push_back(std::thread(&ThreadPool::workerThread, this, i));
+                }
+            }
+            catch (...)
+            {
+                m_Done = true;
+            }
+        }
+
         ~ThreadPool()
         {
             m_Done = true;

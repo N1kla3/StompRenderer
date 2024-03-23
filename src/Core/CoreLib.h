@@ -2,8 +2,7 @@
 
 namespace omp
 {
-    class CoreLib
+    struct CoreLib
     {
-    private:
     };
 }

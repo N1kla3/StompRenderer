@@ -15,11 +15,11 @@ namespace omp
     private:
         omp::threadsafe_map<AssetHandle, std::shared_ptr<Asset>> m_AssetRegistry;
         // TODO: Get from Application, should not have own thread pool 
-        omp::ThreadPool m_ThreadPool;
+        omp::ThreadPool* m_ThreadPool;
         omp::ObjectFactory m_Factory;
 public:
 
-        AssetManager();
+        AssetManager(omp::ThreadPool* threadPool);
         ~AssetManager() = default;
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;
