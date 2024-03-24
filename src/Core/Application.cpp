@@ -1,4 +1,5 @@
 #include "Core/Application.h"
+#include <GLFW/glfw3.h>
 #include <chrono>
 #include <memory>
 
@@ -71,10 +72,14 @@ void omp::Application::init()
 void omp::Application::preDestroy()
 {
     m_ThreadPool.reset();
+
+    glfwDestroyWindow(m_Window);
+    glfwTerminate();
 }
 
 void omp::Application::tick(float delta)
 {
+    glfwPollEvents();
 }
 
 void omp::Application::parseFlags(const std::string& commands)

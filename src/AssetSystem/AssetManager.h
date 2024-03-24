@@ -16,7 +16,7 @@ namespace omp
         omp::threadsafe_map<AssetHandle, std::shared_ptr<Asset>> m_AssetRegistry;
         // TODO: Get from Application, should not have own thread pool 
         omp::ThreadPool* m_ThreadPool;
-        omp::ObjectFactory m_Factory;
+        omp::ObjectFactory* m_Factory;
 public:
 
         AssetManager(omp::ThreadPool* threadPool);

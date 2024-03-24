@@ -14,12 +14,12 @@ bool omp::Asset::loadMetadata()
     return true;
 }
 
-bool omp::Asset::loadAsset(ObjectFactory& factory)
+bool omp::Asset::loadAsset(ObjectFactory* factory)
 {
     std::lock_guard<std::mutex> lock(m_Access);
     if (m_Metadata)
     {
-        m_Object = factory.createSerializableObject(m_Metadata.class_id);
+        m_Object = factory->createSerializableObject(m_Metadata.class_id);
         m_Object->serialize(m_Parser);
         return true;
     }

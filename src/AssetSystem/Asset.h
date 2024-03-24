@@ -68,7 +68,7 @@ namespace omp
     // ======= //
     private:
         bool loadMetadata();
-        bool loadAsset(ObjectFactory& factory);
+        bool loadAsset(ObjectFactory* factory);
         bool unloadAsset();
         bool saveMetadata();
         bool saveAsset();

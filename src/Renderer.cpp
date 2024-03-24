@@ -43,17 +43,23 @@ namespace
 } // namespace
 
 omp::Renderer::Renderer()
-        : m_CurrentScene(std::make_shared<omp::Scene>()), m_ModelManager(std::make_unique<omp::ModelManager>()) {}
+        : m_ModelManager(std::make_unique<omp::ModelManager>()) {}
 
-void omp::Renderer::initVulkan()
+void omp::Renderer::initVulkan(GLFWwindow* window)
 {
     createInstance();
     setupDebugMessenger();
-    createSurface();
+    createSurface(window);
     pickPhysicalDevice();
     createLogicalDevice();
-    createImguiWidgets();
     createSwapChain();
+}
+
+void omp::Renderer::initResources(omp::Scene* scene)
+{
+    m_CurrentScene = scene;
+
+    createImguiWidgets();
     postSwapChainInitialize();
     createLights();
     createImageViews();
@@ -67,6 +73,7 @@ void omp::Renderer::initVulkan()
     createDepthResources();
     createFramebuffers();
     createTextureImage();
+    // TODO: need window, maybe separate imguie resources
     initializeImgui();
 
     createUniformBuffers();
@@ -75,25 +82,14 @@ void omp::Renderer::initVulkan()
     m_CommandBuffers.resize(m_PresentKHRImagesNum);
     m_ImguiCommandBuffers.resize(m_PresentKHRImagesNum);
     createSyncObjects();
+
 }
 
-void omp::Renderer::mainLoop()
+void omp::Renderer::requestDrawFrame(float deltaTime)
 {
-    while (!glfwWindowShouldClose(m_Window))
-    {
-        static auto prev_time = std::chrono::high_resolution_clock::now();
-
-        auto current_time = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(
-                current_time - prev_time)
-                .count();
-        prev_time = current_time;
-
-        glfwPollEvents();
-        drawFrame();
-        postFrame();
-        tick(time);
-    }
+    drawFrame();
+    postFrame();
+    tick(deltaTime);
 
     vkDeviceWaitIdle(m_LogicalDevice);
 }
@@ -148,20 +144,6 @@ void omp::Renderer::cleanup()
 
     vkDestroyInstance(m_Instance, nullptr);
 
-    glfwDestroyWindow(m_Window);
-
-    glfwTerminate();
-}
-
-void omp::Renderer::initWindow()
-{
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    m_Window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-
-    glfwSetWindowUserPointer(m_Window, this);
-    glfwSetFramebufferSizeCallback(m_Window, framebufferResizeCallback);
 }
 
 void omp::Renderer::createInstance()
@@ -454,9 +436,9 @@ void omp::Renderer::createLogicalDevice()
     m_ImguiRenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
 }
 
-void omp::Renderer::createSurface()
+void omp::Renderer::createSurface(GLFWwindow* window)
 {
-    if (glfwCreateWindowSurface(m_Instance, m_Window, nullptr, &m_Surface) !=
+    if (glfwCreateWindowSurface(m_Instance, window, nullptr, &m_Surface) !=
         VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create window surface!");
@@ -1401,12 +1383,13 @@ void omp::Renderer::cleanupSwapChain()
     m_ImguiRenderPass->destroyInnerState();
 }
 
-void omp::Renderer::framebufferResizeCallback(
-        GLFWwindow* window, int /*width*/,
-        int /*height*/)
+void omp::Renderer::onWindowResize(
+        int width,
+        int height)
 {
-    auto app = reinterpret_cast<omp::Renderer*>(glfwGetWindowUserPointer(window));
-    app->m_FramebufferResized = true;
+    m_CurrentWidth = width;
+    m_CurrentHeight = height;
+    m_FramebufferResized = true;
 }
 
 void omp::Renderer::createDescriptorSetLayout()
@@ -1865,6 +1848,7 @@ void omp::Renderer::retrieveMaterialRenderState(
 
 void omp::Renderer::createTextureImage()
 {
+    // TODO: Asset manager
     omp::MaterialManager::getMaterialManager().loadTextureLazily(
             "../textures/viking.png");
     omp::MaterialManager::getMaterialManager().loadTextureLazily(
@@ -2250,7 +2234,7 @@ void omp::Renderer::createImguiWidgets()
     auto material_panel = std::make_shared<omp::MaterialPanel>();
     auto entity = std::make_shared<omp::EntityPanel>();
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity, material_panel);
-    m_ScenePanel->setScene(m_CurrentScene);
+    // TODO: remake ui m_ScenePanel->setScene(m_CurrentScene);
     auto camera_panel =
             std::make_shared<omp::CameraPanel>(m_CurrentScene->getCurrentCamera());
     // auto light_panel = std::make_shared<omp::GlobalLightPanel>(m_GlobalLight);
@@ -2332,6 +2316,7 @@ void omp::Renderer::onViewportResize(size_t /*imageIndex*/)
 
 void omp::Renderer::createMaterialManager()
 {
+    // TODO: whats happening here
     m_VulkanContext->setCommandPool(m_CommandPool);
 }
 

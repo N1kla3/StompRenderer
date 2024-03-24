@@ -1,6 +1,3 @@
-//
-// Created by kolya on 8/18/2021.
-//
 #pragma once
 
 #define NOMINMAX
@@ -151,25 +148,26 @@ namespace omp
     public:
         Renderer();
 
+        void initVulkan(GLFWwindow* window);
+        void initResources(omp::Scene* scene);
+        // TODO: void initNewScene(omp::Scene* scene);
+        
+        void requestDrawFrame(float deltaTime);
+
         void init()
         {
-            initWindow();
-            initVulkan();
+    //TODO: initWindow();
+            // TODO: initVulkan();
             initializeScene();
-            mainLoop();
+            // TODO: requestDrawFrame();
             cleanup();
         }
 
     private:
-        void initVulkan();
 
-        void initWindow();
-
-        static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+        void onWindowResize(int width, int height);
 
         void pickPhysicalDevice();
-
-        void mainLoop();
 
         void drawFrame();
         void initializeScene();
@@ -183,7 +181,7 @@ namespace omp
 
         void createLogicalDevice();
 
-        void createSurface();
+        void createSurface(GLFWwindow* window);
 
         void createSwapChain();
 
@@ -338,8 +336,6 @@ namespace omp
         // ===== //
         VkSurfaceKHR m_Surface;
 
-        GLFWwindow* m_Window = nullptr;
-
         VkInstance m_Instance;
 
         VkPhysicalDevice m_PhysDevice;
@@ -414,7 +410,7 @@ namespace omp
         VkDeviceMemory m_DepthImageMemory;
         VkImageView m_DepthImageView;
 
-        std::shared_ptr<omp::Scene> m_CurrentScene;
+        omp::Scene* m_CurrentScene;
         std::shared_ptr<omp::ViewPort> m_RenderViewport;
         std::shared_ptr<omp::ScenePanel> m_ScenePanel;
 
@@ -445,8 +441,8 @@ namespace omp
 
         VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-        const uint32_t WIDTH = 1920;
-        const uint32_t HEIGHT = 1080;
+        int m_CurrentWidth = 0;
+        int m_CurrentHeight = 0;
         const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
     };

@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "Renderer.h"
+#include "Scene.h"
 #include "AssetSystem/AssetManager.h"
 
 namespace omp
@@ -12,10 +13,12 @@ namespace omp
         void start();
         void requestExit();
 
-        Renderer* GetRenderer() const { return m_Renderer.get(); }
-        omp::AssetManager* GetAssetManager() const { return m_AssetManager.get(); }
-        GLFWwindow* GetWindow() const { return m_Window; }
-        omp::ThreadPool* GetThreadPool() const { return m_ThreadPool.get(); }
+        Renderer* getRenderer() const { return m_Renderer.get(); }
+        omp::AssetManager* getAssetManager() const { return m_AssetManager.get(); }
+        omp::ThreadPool* getThreadPool() const { return m_ThreadPool.get(); }
+        omp::ObjectFactory* getObjectFactory() const { return m_Factory.get(); }
+        omp::Scene* getCurrentScene() const { return m_CurrentScene.get(); }
+        GLFWwindow* getWindow() const { return m_Window; }
 
     private:
         virtual void preInit();
@@ -30,8 +33,10 @@ namespace omp
 
         std::unique_ptr<Renderer> m_Renderer;
         std::unique_ptr<omp::AssetManager> m_AssetManager;
-        GLFWwindow* m_Window;
         std::unique_ptr<omp::ThreadPool> m_ThreadPool;
+        std::unique_ptr<omp::ObjectFactory> m_Factory;
+        std::unique_ptr<omp::Scene> m_CurrentScene;
+        GLFWwindow* m_Window;
 
         uint32_t m_Width = 1280;
         uint32_t m_Height = 720;
