@@ -5,12 +5,22 @@
 
 using namespace std::filesystem;
 
-omp::AssetManager::AssetManager(omp::ThreadPool* threadPool)
+omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory* factory)
+    : m_ThreadPool(threadPool)
+    , m_Factory(factory)
 {
-    m_ThreadPool = threadPool;
     // TODO: strange
     // loadAssetsFromDrive();
     // TODO: add all classes that should be read
+}
+
+std::future<bool> omp::AssetManager::loadProject()
+{
+    return m_ThreadPool->submit([this]() -> bool
+    {
+        loadAssetsFromDrive();
+        return true;
+    });
 }
 
 void omp::AssetManager::saveAsset(AssetHandle assetHandle)
@@ -56,39 +66,48 @@ void omp::AssetManager::loadAssetsFromDrive()
 void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 {
     directory_iterator directory{std::filesystem::path(path)};
+    std::vector<std::future<bool>> result_wait;
     for (auto iter: directory)
     {
         if (iter.is_directory())
         {
-            loadAssetsFromDrive(iter.path().generic_string());
+            std::string temp_path = iter.path().generic_string();
+            std::future<bool> res = m_ThreadPool->submit([this, temp_path]() -> bool
+            {
+                loadAssetsFromDrive(temp_path);
+                return true;
+            });
+            result_wait.push_back(std::move(res));
         }
         if (iter.path().extension().string() == ASSET_FORMAT)
         {
             loadAsset_internal(iter.path().string());
         }
     }
+    for (std::future<bool>& ref : result_wait)
+    {
+        // TODO: possible recursive stall
+        ref.wait();
+    }
 }
 
 void omp::AssetManager::loadAsset_internal(const std::string& inPath)
 {
-    m_ThreadPool->submit([this, inPath]()
+    JsonParser<> file_data{};
+    if (file_data.populateFromFile(inPath))
     {
-        JsonParser<> file_data{};
-        if (file_data.populateFromFile(inPath))
+        std::shared_ptr<omp::Asset> asset = std::make_shared<omp::Asset>((std::move(file_data)));
+        if (asset->loadMetadata())
         {
-            std::shared_ptr<omp::Asset> asset = std::make_shared<omp::Asset>((std::move(file_data)));
-            if (asset->loadMetadata())
-            {
-                m_AssetRegistry.add_or_update_mapping(asset->getMetaData().asset_id, asset);
-                INFO(LogAssetManager, "Asset loaded successfully: {0}", inPath);
-            }
-            else
-            {
-                // should not be possible
-                // TODO: assert
-            }
+            m_AssetRegistry.add_or_update_mapping(asset->getMetaData().asset_id, asset);
+            INFO(LogAssetManager, "Asset loaded successfully: {0}", inPath);
         }
-    });
+        else
+        {
+            // should not be possible
+            // TODO: assert
+        }
+    }
 }
 
 std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAsset(AssetHandle assetHandle)

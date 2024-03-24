@@ -19,13 +19,14 @@ namespace omp
         omp::ObjectFactory* m_Factory;
 public:
 
-        AssetManager(omp::ThreadPool* threadPool);
+        AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory* factory);
         ~AssetManager() = default;
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;
         AssetManager(AssetManager&&) = delete;
         AssetManager& operator=(AssetManager&&) = delete;
 
+        std::future<bool> loadProject();
         std::future<std::weak_ptr<Asset>> loadAsset(AssetHandle assetId);
         void saveAsset(AssetHandle assetId);
         void deleteAsset(AssetHandle assetId);

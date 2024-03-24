@@ -61,12 +61,19 @@ void omp::Application::preInit()
     {
         m_ThreadPool = std::make_unique<omp::ThreadPool>();
     }
+
+    fillInFactoryClasses();
+
+    m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get(), m_Factory.get());
+    m_Renderer = std::make_unique<omp::Renderer>();
+    m_Renderer->initVulkan(m_Window);
 }
 
 void omp::Application::init()
 {
-    m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get());
-    m_Renderer = std::make_unique<omp::Renderer>();
+    // TODO: wait for asset manager metadata
+    // TODO: then load scene from asset manager
+    // TODO: and initialize renderer after
 }
 
 void omp::Application::preDestroy()
@@ -80,15 +87,35 @@ void omp::Application::preDestroy()
 void omp::Application::tick(float delta)
 {
     glfwPollEvents();
+
+    // Renderer only when not minimized
+    int width, height;
+    glfwGetFramebufferSize(m_Window, &width, &height);
+    if (width != 0 && height != 0)
+    {
+        // TODO: render stuff
+        m_Renderer->requestDrawFrame(delta);
+    }
+
+    // We can run some systems in minimazed application
+
+
 }
 
 void omp::Application::parseFlags(const std::string& commands)
 {
+
+}
+
+void omp::Application::fillInFactoryClasses()
+{
+    // m_Factory->registerClass<texture>("texture");
 }
 
 void omp::Application::windowResizeCallback(GLFWwindow* window, int width, int height)
 {
     omp::Application* app = reinterpret_cast<omp::Application*>(glfwGetWindowUserPointer(window));
-    // TODO: resize renderer
+
+    app->m_Renderer->onWindowResize(width, height);
 }
 

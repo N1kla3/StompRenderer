@@ -163,9 +163,9 @@ namespace omp
             cleanup();
         }
 
-    private:
-
         void onWindowResize(int width, int height);
+
+    private:
 
         void pickPhysicalDevice();
 

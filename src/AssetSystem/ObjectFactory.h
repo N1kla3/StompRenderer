@@ -13,21 +13,21 @@ namespace omp
     class ObjectFactory final
     {
     private:
-        inline static std::unordered_map<std::string, std::function<std::unique_ptr<SerializableObject>()>> s_CreationMap;
+        std::unordered_map<std::string, std::function<std::unique_ptr<SerializableObject>()>> m_CreationMap;
     public:
 
         template< typename T >
         void registerClass(const std::string& inClassName)
         {
-            s_CreationMap.insert( {inClassName, []{ return std::make_unique<T>(); }} );
+            m_CreationMap.insert( {inClassName, []{ return std::make_unique<T>(); }} );
         }
 
         std::unique_ptr<SerializableObject> createSerializableObject(const std::string& inClassName)
         {
-            if (s_CreationMap.find(inClassName) != s_CreationMap.end())
+            if (m_CreationMap.find(inClassName) != m_CreationMap.end())
             {
                 // Call lambda
-                return s_CreationMap[inClassName]();
+                return m_CreationMap[inClassName]();
             }
             VWARN(LogAssetManager, "Cant find specified class {} while creating asset", inClassName);
             return nullptr;

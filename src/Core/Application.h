@@ -47,6 +47,7 @@ namespace omp
 
     private:
         void parseFlags(const std::string& commands);
+        void fillInFactoryClasses();
         inline static void windowResizeCallback(GLFWwindow* window, int width, int height);
     };
 }
