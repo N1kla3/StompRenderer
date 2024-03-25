@@ -6,6 +6,16 @@ omp::Model::Model()
 
 }
 
+void omp::Model::serialize(JsonParser<>& parser)
+{
+
+}
+
+void omp::Model::deserialize(JsonParser<>& parser)
+{
+
+}
+
 void omp::Model::addVertex(const omp::Vertex& inVertex)
 {
     m_Vertices.emplace_back(std::move(inVertex));

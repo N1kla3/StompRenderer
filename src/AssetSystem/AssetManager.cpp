@@ -66,28 +66,17 @@ void omp::AssetManager::loadAssetsFromDrive()
 void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 {
     directory_iterator directory{std::filesystem::path(path)};
-    std::vector<std::future<bool>> result_wait;
     for (auto iter: directory)
     {
         if (iter.is_directory())
         {
             std::string temp_path = iter.path().generic_string();
-            std::future<bool> res = m_ThreadPool->submit([this, temp_path]() -> bool
-            {
-                loadAssetsFromDrive(temp_path);
-                return true;
-            });
-            result_wait.push_back(std::move(res));
+            loadAssetsFromDrive(temp_path);
         }
         if (iter.path().extension().string() == ASSET_FORMAT)
         {
             loadAsset_internal(iter.path().string());
         }
-    }
-    for (std::future<bool>& ref : result_wait)
-    {
-        // TODO: possible recursive stall
-        ref.wait();
     }
 }
 

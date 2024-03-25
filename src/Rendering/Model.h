@@ -5,6 +5,7 @@
 #include "Material.h"
 #include "MaterialInstance.h"
 #include <array>
+#include "IO/SerializableObject.h"
 #include <vector>
 
 namespace omp
@@ -99,7 +100,7 @@ namespace std
     };
 }
 
-class omp::Model
+class omp::Model : public SerializableObject
 {
 public:
     // Lifecycle //
@@ -109,10 +110,14 @@ public:
     Model(Model&& inModel) = delete;
     ~Model();
 
+    virtual void serialize(JsonParser<>& parser) override;
+    virtual void deserialize(JsonParser<>& parser) override;
+
 private:
     // State //
     // ===== //
     std::string m_Name;
+    std::string m_Path;
 
     std::vector<Vertex> m_Vertices;
 

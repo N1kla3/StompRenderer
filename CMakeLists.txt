@@ -109,6 +109,8 @@ set(SOURCE
         Rendering/UniformBuffer.cpp
         Rendering/ModelInstance.h
         Rendering/ModelInstance.cpp
+        Rendering/TextureSrc.h
+        Rendering/TextureSrc.cpp
         Async/ThreadPool.h
         Async/ThreadPool.cpp
         Async/threadsafe_queue.h

@@ -44,15 +44,6 @@ omp::Application::Application(const std::string& flags)
 
 void omp::Application::preInit()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    m_Window = glfwCreateWindow(m_Width, m_Height, "VulkanApplication", nullptr, nullptr);
-
-    glfwSetWindowUserPointer(m_Window, this);
-    glfwSetFramebufferSizeCallback(m_Window, windowResizeCallback);
-
-
     if (m_ThreadCount > 0)
     {
         m_ThreadPool = std::make_unique<omp::ThreadPool>(static_cast<unsigned int>(m_ThreadCount));
@@ -63,17 +54,29 @@ void omp::Application::preInit()
     }
 
     fillInFactoryClasses();
-
     m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get(), m_Factory.get());
+    std::future<bool> wait_assets = m_AssetManager->loadProject();
+
+    glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    m_Window = glfwCreateWindow(m_Width, m_Height, "VulkanApplication", nullptr, nullptr);
+
+    glfwSetWindowUserPointer(m_Window, this);
+    glfwSetFramebufferSizeCallback(m_Window, windowResizeCallback);
+
     m_Renderer = std::make_unique<omp::Renderer>();
     m_Renderer->initVulkan(m_Window);
+
+    // TODO: maybe other stuff while assets loading
+
+    wait_assets.wait();
 }
 
 void omp::Application::init()
 {
-    // TODO: wait for asset manager metadata
     // TODO: then load scene from asset manager
-    // TODO: and initialize renderer after
+    m_Renderer->initResources(m_CurrentScene.get());
 }
 
 void omp::Application::preDestroy()
