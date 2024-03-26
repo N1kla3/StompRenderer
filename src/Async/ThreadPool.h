@@ -204,7 +204,6 @@ namespace omp
         std::mutex m_SetClearMutex;
     };
 
-    inline thread_local InterruptFlag g_ThisThreadInterruptFlag;
 
     class ThreadInterruptedException final : public std::exception
     {
@@ -214,11 +213,15 @@ namespace omp
         }
     };
 
-    template< typename Lockable >
-    void InterruptibleWait(std::condition_variable_any& cond, Lockable& lockable)
+    class Helper
     {
-        g_ThisThreadInterruptFlag.wait(cond, lockable);
-    }
+    public:
+        static thread_local InterruptFlag g_ThisThreadInterruptFlag;
+    };
+
+
+    template< typename Lockable >
+    void InterruptibleWait(std::condition_variable_any& cond, Lockable& lockable);
 
     class InterruptibleThread
     {
@@ -229,7 +232,7 @@ namespace omp
             std::promise<InterruptFlag*> interrupt_flag_promise;
             // Packaged task issue, because it does not have non-const call
             m_InternalThread = std::thread([func = std::forward<FunctionType>(function), &interrupt_flag_promise]() mutable {
-                interrupt_flag_promise.set_value(&g_ThisThreadInterruptFlag);
+                interrupt_flag_promise.set_value(&Helper::g_ThisThreadInterruptFlag);
                 func();
             });
             m_Flag = interrupt_flag_promise.get_future().get();

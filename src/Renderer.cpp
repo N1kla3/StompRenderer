@@ -53,6 +53,7 @@ void omp::Renderer::initVulkan(GLFWwindow* window)
     pickPhysicalDevice();
     createLogicalDevice();
     createSwapChain();
+    initializeImgui(window);
 }
 
 void omp::Renderer::initResources(omp::Scene* scene)
@@ -74,7 +75,6 @@ void omp::Renderer::initResources(omp::Scene* scene)
     createFramebuffers();
     createTextureImage();
     // TODO: need window, maybe separate imguie resources
-    initializeImgui();
 
     createUniformBuffers();
     createDescriptorPool();
@@ -529,7 +529,9 @@ VkPresentModeKHR omp::Renderer::chooseSwapPresentMode(
 VkExtent2D
 omp::Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 {
-    if (capabilities.currentExtent.width !=
+    // TODO: this is strange and possibly incorrect
+    
+    /* if (capabilities.currentExtent.width !=
         std::numeric_limits<uint32_t>::max())
     {
         return capabilities.currentExtent;
@@ -553,7 +555,11 @@ omp::Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
         VkExtent2D actual_extent_sec = {static_cast<uint32_t>(w),
                                         static_cast<uint32_t>(h)};
         return actual_extent_sec;
-    }
+    } */
+
+    VkExtent2D actual_extent_sec = {static_cast<uint32_t>(m_CurrentWidth),
+                                    static_cast<uint32_t>(m_CurrentHeight)};
+    return actual_extent_sec;
 }
 
 void omp::Renderer::createSwapChain()
@@ -1963,7 +1969,7 @@ void omp::Renderer::createImguiContext()
     ImGui::StyleColorsDark();
 }
 
-void omp::Renderer::initializeImgui()
+void omp::Renderer::initializeImgui(GLFWwindow* window)
 {
     createImguiContext();
     createImguiRenderPass();
@@ -1989,7 +1995,7 @@ void omp::Renderer::initializeImgui()
     vkCreateDescriptorPool(m_LogicalDevice, &pool_info, nullptr,
                            &m_ImguiDescriptorPool);
 
-    ImGui_ImplGlfw_InitForVulkan(m_Window, true);
+    ImGui_ImplGlfw_InitForVulkan(window, true);
     ImGui_ImplVulkan_InitInfo init_info = {};
     init_info.Instance = m_Instance;
     init_info.PhysicalDevice = m_PhysDevice;

@@ -171,6 +171,5 @@ target_link_libraries(renderer stomp_renderer "-static-libgcc -static-libstdc++"
 include(CTest)
 enable_testing()
 
-# tests not compilated on mingw, so discard them for now
-# add_subdirectory(tests)
+add_subdirectory(tests)
 #TODO CPack

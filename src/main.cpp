@@ -5,23 +5,23 @@
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include "Logs.h"
-#include "Renderer.h"
+#include "Core/Application.h"
 
 int main()
 {
     omp::InitializeLogs();
-    INFO(LogRendering, "=================Create Renderer=================");
-    omp::Renderer application;
+    INFO(LogRendering, "=================Create Application=================");
+    omp::Application application{ "EMPTY FLAGS" };
 
     try
     {
-        application.init();
+        application.start();
     }
     catch (const std::exception& e)
     {
         ERROR(LogRendering, e.what());
         return EXIT_FAILURE;
     }
-    INFO(LogRendering, "================Destroy Renderer=================");
+    INFO(LogRendering, "================Destroy Application=================");
     return EXIT_SUCCESS;
 }

@@ -154,14 +154,11 @@ namespace omp
         
         void requestDrawFrame(float deltaTime);
 
-        void init()
-        {
-    //TODO: initWindow();
+            //TODO: initWindow();
             // TODO: initVulkan();
-            initializeScene();
+            //initializeScene();
             // TODO: requestDrawFrame();
-            cleanup();
-        }
+            //cleanup();
 
         void onWindowResize(int width, int height);
 
@@ -242,7 +239,7 @@ namespace omp
         void cleanupSwapChain();
 
         void createImguiContext();
-        void initializeImgui();
+        void initializeImgui(GLFWwindow* window);
         void createImguiRenderPass();
 
         void createImguiCommandPools();

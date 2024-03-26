@@ -10,6 +10,8 @@ namespace omp
     {
     public:
         Application(const std::string& flags);
+        virtual ~Application() = default;
+
         void start();
         void requestExit();
 
