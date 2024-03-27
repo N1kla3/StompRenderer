@@ -152,6 +152,8 @@ public:
 
     VkBuffer& getVertexBuffer() { return m_VertexBuffer; }
     VkBuffer& getIndexBuffer() { return m_IndexBuffer; }
+
+    friend class ModelImporter;
 };
 
 

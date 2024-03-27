@@ -412,7 +412,6 @@ namespace omp
         std::shared_ptr<omp::ScenePanel> m_ScenePanel;
 
         std::unique_ptr<omp::LightSystem> m_LightSystem;
-        std::unique_ptr<omp::ModelManager> m_ModelManager;
 
         std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 

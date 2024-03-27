@@ -43,7 +43,8 @@ namespace
 } // namespace
 
 omp::Renderer::Renderer()
-        : m_ModelManager(std::make_unique<omp::ModelManager>()) {}
+{
+}
 
 void omp::Renderer::initVulkan(GLFWwindow* window)
 {
@@ -116,8 +117,6 @@ void omp::Renderer::cleanup()
     {
         DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
     }
-
-    m_ModelManager.reset(nullptr);
 
     m_UboBuffer.reset();
     m_OutlineBuffer.reset();
@@ -2618,7 +2617,8 @@ omp::Renderer::addModelToScene(
         const std::string& inName,
         const std::string& inPath)
 {
-    if (!m_ModelManager->getModel(inPath))
+    // TODO: move it to scene and replace with asset manager
+    /* if (!m_ModelManager->getModel(inPath))
     {
         m_ModelManager->loadModel(inPath);
         loadModelInMemory(m_ModelManager->getModel(inPath));
@@ -2629,7 +2629,8 @@ omp::Renderer::addModelToScene(
     model_inst->setName(inName);
     m_CurrentScene->addEntityToScene(
             std::make_shared<omp::SceneEntity>(inName, model_inst));
-    return model_inst;
+    return model_inst; */
+    return nullptr;
 }
 
 void omp::Renderer::loadModelInMemory(const std::shared_ptr<omp::Model>& inModel)
@@ -2643,7 +2644,8 @@ void omp::Renderer::createLights()
     // LIGHTS
     const std::string model_path = "../models/sphere.obj";
 
-    auto light_model = m_ModelManager->forceGetModel(model_path);
+    // TODO: load model through asset manager
+    std::shared_ptr<omp::Model> light_model = nullptr;
     auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial(
             "default_no_light");
     mat->addTexture(

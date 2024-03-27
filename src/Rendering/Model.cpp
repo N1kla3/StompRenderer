@@ -1,4 +1,5 @@
 #include "Model.h"
+#include "Rendering/ModelStatics.h"
 
 omp::Model::Model()
         : m_Name("NONE")
@@ -8,12 +9,17 @@ omp::Model::Model()
 
 void omp::Model::serialize(JsonParser<>& parser)
 {
-
+    parser.writeValue("ContentPath", m_Path);
 }
 
 void omp::Model::deserialize(JsonParser<>& parser)
 {
+    m_Path = parser.readValue<std::string>("ContentPath").value_or("");
 
+    if (!m_Path.empty())
+    {
+        omp::ModelImporter::loadModel(this, m_Path);
+    }
 }
 
 void omp::Model::addVertex(const omp::Vertex& inVertex)

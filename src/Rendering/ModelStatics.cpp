@@ -1,7 +1,7 @@
 #include "ModelStatics.h"
 #include "tiny_obj_loader.h"
 
-void omp::ModelManager::loadModel(const std::string& inPath)
+void omp::ModelImporter::loadModel(omp::Model* model, const std::string& inPath)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -16,8 +16,6 @@ void omp::ModelManager::loadModel(const std::string& inPath)
     std::unordered_map<omp::Vertex, uint32_t> unique_vertices;
 
     unique_vertices.clear();
-
-    std::shared_ptr<omp::Model> loaded_model = std::make_shared<omp::Model>();
 
     for (const auto& shape: shapes)
     {
@@ -49,42 +47,11 @@ void omp::ModelManager::loadModel(const std::string& inPath)
 
             if (unique_vertices.count(vertex) == 0)
             {
-                unique_vertices[vertex] = static_cast<uint32_t>(loaded_model->getVertices().size());
-                loaded_model->addVertex(vertex);
+                unique_vertices[vertex] = static_cast<uint32_t>(model->getVertices().size());
+                model->addVertex(vertex);
             }
 
-            loaded_model->addIndex(unique_vertices[vertex]);
+            model->addIndex(unique_vertices[vertex]);
         }
     }
-    loaded_model->setName(inPath);
-    m_Models.insert({inPath, loaded_model});
-}
-
-std::shared_ptr<omp::Model> omp::ModelManager::getModel(const std::string& inPath) const
-{
-    if (m_Models.find(inPath) != m_Models.end())
-    {
-        return m_Models.at(inPath);
-    }
-    return nullptr;
-}
-
-std::shared_ptr<omp::Model> omp::ModelManager::forceGetModel(const std::string& inPath)
-{
-    if (m_Models.find(inPath) == m_Models.end())
-    {
-        loadModel(inPath);
-    }
-    return m_Models.at(inPath);
-}
-
-std::shared_ptr<omp::ModelInstance> omp::ModelManager::createInstanceFrom(const std::string& inPath)
-{
-    auto ptr = getModel(inPath);
-    if (ptr.get())
-    {
-        auto instance = std::make_shared<omp::ModelInstance>(ptr);
-        return instance;
-    }
-    return nullptr;
 }
