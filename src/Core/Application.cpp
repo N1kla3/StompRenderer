@@ -69,6 +69,7 @@ void omp::Application::preInit()
     m_Renderer->initVulkan(m_Window);
 
     // TODO: maybe other stuff while assets loading
+    m_CurrentScene = std::make_unique<omp::Scene>();
 
     wait_assets.wait();
 }

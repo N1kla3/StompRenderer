@@ -48,13 +48,13 @@ omp::Renderer::Renderer()
 
 void omp::Renderer::initVulkan(GLFWwindow* window)
 {
+    m_Window = window;
     createInstance();
     setupDebugMessenger();
     createSurface(window);
     pickPhysicalDevice();
     createLogicalDevice();
     createSwapChain();
-    initializeImgui(window);
 }
 
 void omp::Renderer::initResources(omp::Scene* scene)
@@ -76,6 +76,7 @@ void omp::Renderer::initResources(omp::Scene* scene)
     createFramebuffers();
     createTextureImage();
     // TODO: need window, maybe separate imguie resources
+    initializeImgui(m_Window);
 
     createUniformBuffers();
     createDescriptorPool();

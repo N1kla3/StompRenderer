@@ -17,6 +17,16 @@ void omp::Scene::addEntityToScene(const std::shared_ptr<omp::SceneEntity>& model
     m_Entities.push_back(std::move(modelToAdd));
 }
 
+void omp::Scene::serialize(JsonParser<>& parser)
+{
+
+}
+
+void omp::Scene::deserialize(JsonParser<>& parser)
+{
+    
+}
+
 std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(const std::string& inName) const
 {
     auto res_iter = std::find_if(m_Entities.begin(), m_Entities.end(), [&inName](const std::shared_ptr<omp::SceneEntity>& entity)

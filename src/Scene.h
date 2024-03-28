@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "IO/SerializableObject.h"
 #include "Rendering/Model.h"
 #include "Camera.h"
 #include "Rendering/ModelInstance.h"
@@ -8,7 +9,7 @@
 
 namespace omp
 {
-    class Scene
+    class Scene : public omp::SerializableObject
     {
     public:
         Scene();
@@ -25,6 +26,7 @@ namespace omp
 
         std::vector<std::shared_ptr<omp::Camera>> m_Cameras;
 
+        // TODO: remove shared pointers
     public:
         // Methods //
         // ======= //
@@ -33,6 +35,9 @@ namespace omp
         std::shared_ptr<omp::SceneEntity> getEntity(const std::string& entity) const;
         std::shared_ptr<omp::SceneEntity> getEntity(int32_t entity) const;
         std::shared_ptr<omp::SceneEntity> getCurrentEntity() const;
+
+        virtual void serialize(JsonParser<>& parser) override;
+        virtual void deserialize(JsonParser<>& parser) override;
 
         // TODO map, no ref
         std::vector<std::shared_ptr<omp::SceneEntity>>& getEntities();

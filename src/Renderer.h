@@ -411,6 +411,8 @@ namespace omp
         std::shared_ptr<omp::ViewPort> m_RenderViewport;
         std::shared_ptr<omp::ScenePanel> m_ScenePanel;
 
+        GLFWwindow* m_Window;
+
         std::unique_ptr<omp::LightSystem> m_LightSystem;
 
         std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
