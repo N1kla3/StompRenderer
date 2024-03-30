@@ -1,6 +1,6 @@
 #include "Scene.h"
 
-std::vector<std::shared_ptr<omp::SceneEntity>>& omp::Scene::getEntities()
+std::vector<std::unique_ptr<omp::SceneEntity>>& omp::Scene::getEntities()
 {
     return m_Entities;
 }
@@ -8,10 +8,10 @@ std::vector<std::shared_ptr<omp::SceneEntity>>& omp::Scene::getEntities()
 void omp::Scene::addEntityToScene(const omp::SceneEntity& modelToAdd)
 {
     m_StateDirty = true;
-    m_Entities.push_back(std::make_shared<omp::SceneEntity>(modelToAdd));
+    m_Entities.push_back(std::make_unique<omp::SceneEntity>(modelToAdd));
 }
 
-void omp::Scene::addEntityToScene(const std::shared_ptr<omp::SceneEntity>& modelToAdd)
+void omp::Scene::addEntityToScene(std::unique_ptr<omp::SceneEntity>&& modelToAdd)
 {
     m_StateDirty = true;
     m_Entities.push_back(std::move(modelToAdd));
@@ -19,7 +19,7 @@ void omp::Scene::addEntityToScene(const std::shared_ptr<omp::SceneEntity>& model
 
 void omp::Scene::serialize(JsonParser<>& parser)
 {
-
+    
 }
 
 void omp::Scene::deserialize(JsonParser<>& parser)
@@ -27,48 +27,42 @@ void omp::Scene::deserialize(JsonParser<>& parser)
     
 }
 
-std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(const std::string& inName) const
+omp::SceneEntity* omp::Scene::getEntity(const std::string& inName) const
 {
-    auto res_iter = std::find_if(m_Entities.begin(), m_Entities.end(), [&inName](const std::shared_ptr<omp::SceneEntity>& entity)
+    omp::SceneEntity* result = nullptr;
+    for (const std::unique_ptr<omp::SceneEntity>& ptr : m_Entities)
     {
-        if (inName.compare(entity->getName()) == 0)
+        if (inName.compare(ptr->getName()) == 0)
         {
-            return true;
+            result = ptr.get();
+            return result;
         }
-        return false;
-    });
-    if (res_iter != m_Entities.end())
-    {
-        return *res_iter;
     }
-    else return nullptr;
+    return result;
 }
 
-std::shared_ptr<omp::SceneEntity> omp::Scene::getEntity(int32_t inId) const
+omp::SceneEntity* omp::Scene::getEntity(int32_t inId) const
 {
-    auto res_iter = std::find_if(m_Entities.begin(), m_Entities.end(), [&inId](const std::shared_ptr<omp::SceneEntity>& entity)
+    omp::SceneEntity* result = nullptr;
+    for (const std::unique_ptr<omp::SceneEntity>& ptr : m_Entities)
     {
-        if (inId == entity->getId())
+        if (inId == ptr->getId())
         {
-            return true;
+            result = ptr.get();
+            return result;
         }
-        return false;
-    });
-    if (res_iter != m_Entities.end())
-    {
-        return *res_iter;
     }
-    else return nullptr;
+    return result;
 }
 
 
 omp::Scene::Scene()
-    : m_CurrentCamera(std::make_shared<omp::Camera>())
+    : m_CurrentCamera(nullptr)
 {
-
+    // TODO: should take first camera from array
 }
 
-std::shared_ptr <omp::SceneEntity> omp::Scene::getCurrentEntity() const
+omp::SceneEntity* omp::Scene::getCurrentEntity() const
 {
     return getEntity(m_CurrentEntityId);
 }

@@ -2,7 +2,7 @@
 #include "Rendering/Material.h"
 #include "imgui.h"
 
-void omp::EntityPanel::setEntity(const std::shared_ptr<IDrawable>& inEntity)
+void omp::EntityPanel::setEntity(IDrawable* inEntity)
 {
     m_Entity = inEntity;
 }
@@ -12,9 +12,9 @@ void omp::EntityPanel::renderUi(float /*deltaTime*/)
 
     ImGui::Begin("Entity Panel");
 
-    if (m_Entity.lock())
+    if (m_Entity)
     {
-        m_Entity.lock()->draw();
+        m_Entity->draw();
     }
 
     ImGui::End();

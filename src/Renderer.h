@@ -228,7 +228,7 @@ namespace omp
 
         void createDescriptorSets();
 
-        void addModelToScene(const std::shared_ptr<omp::SceneEntity>& inModel);
+        void addModelToScene(std::unique_ptr<omp::SceneEntity>&& inModel);
         std::shared_ptr<omp::ModelInstance> addModelToScene(const std::string& inName, const std::string& inPath);
         void loadModelInMemory(const std::shared_ptr<omp::Model>& inModel);
 

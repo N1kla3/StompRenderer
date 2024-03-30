@@ -12,7 +12,7 @@ namespace omp
     private:
         bool m_ClickedFromViewport = false;
 
-        std::weak_ptr<Scene> m_Scene;
+        Scene* m_Scene = nullptr;
         std::shared_ptr<EntityPanel> m_EntityUi;
         std::shared_ptr<MaterialPanel> m_MaterialPanel;
 
@@ -20,7 +20,7 @@ namespace omp
         explicit ScenePanel(const std::shared_ptr<EntityPanel>& entityPanel, const std::shared_ptr<MaterialPanel>& inMatPanel);
         virtual void renderUi(float deltaTime) override;
 
-        void setScene(const std::shared_ptr<Scene>& inScene) { m_Scene = inScene; }
+        void setScene(Scene* inScene) { m_Scene = inScene; }
     };
 }
 

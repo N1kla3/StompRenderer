@@ -1015,16 +1015,16 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
                     m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
     setViewport(main_buffer);
 
-    std::shared_ptr<omp::SceneEntity> outline_entity = nullptr;
+    omp::SceneEntity* outline_entity = nullptr;
     VkDeviceSize offsets[] = {0};
 
-    std::vector<std::shared_ptr<omp::SceneEntity>> scene_copy =
+    std::vector<std::unique_ptr<omp::SceneEntity>>& scene_ref =
             m_CurrentScene->getEntities();
     std::sort(
-            scene_copy.begin(), scene_copy.end(),
+            scene_ref.begin(), scene_ref.end(),
             [this](
-                    const std::shared_ptr<omp::SceneEntity>& inEnt,
-                    const std::shared_ptr<omp::SceneEntity>& inEnt2) -> bool
+                    const std::unique_ptr<omp::SceneEntity>& inEnt,
+                    const std::unique_ptr<omp::SceneEntity>& inEnt2) -> bool
             {
                 if (inEnt->getModel()
                             ->getMaterialInstance()
@@ -1059,9 +1059,9 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                      inEnt2->getModel()->getPosition());
                 // return true;
             });
-    for (size_t index = 0; index < scene_copy.size(); index++)
+    for (size_t index = 0; index < scene_ref.size(); index++)
     {
-        auto& scene_entity = scene_copy[index];
+        auto& scene_entity = scene_ref[index];
         auto& material_instance = scene_entity->getModel()->getMaterialInstance();
         auto material = material_instance->getStaticMaterial().lock();
         if (!material)
@@ -1075,7 +1075,7 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
         {
             // TODO check this for valid shader, because light have simple shader, and
             // should not have lightstencil layouts
-            outline_entity = scene_entity;
+            outline_entity = scene_entity.get();
             model_pipeline =
                     findGraphicsPipeline("LightStencil")->getGraphicsPipeline();
             model_pipeline_layout =
@@ -2228,7 +2228,7 @@ void omp::Renderer::createImguiWidgets()
     // ORDER IS IMPORTANT DOCK NODES GO FIRST
 
     m_RenderViewport = std::make_shared<omp::ViewPort>();
-    m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
+    // TODO: camera ui m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
     auto material_panel = std::make_shared<omp::MaterialPanel>();
     auto entity = std::make_shared<omp::EntityPanel>();
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity, material_panel);
@@ -2602,15 +2602,15 @@ void omp::Renderer::tick(float deltaTime)
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
 
-void omp::Renderer::addModelToScene(
-        const std::shared_ptr<omp::SceneEntity>& inEntity)
+void omp::Renderer::addModelToScene(std::unique_ptr<omp::SceneEntity>&& inEntity)
 {
+    // TODO: do not handle default mat here
     if (!inEntity->getModel()->getMaterialInstance())
     {
         inEntity->getModel()->setMaterialInstance(
                 std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
     }
-    m_CurrentScene->addEntityToScene(inEntity);
+    m_CurrentScene->addEntityToScene(std::move(inEntity));
 }
 
 std::shared_ptr<omp::ModelInstance>
@@ -2642,7 +2642,7 @@ void omp::Renderer::loadModelInMemory(const std::shared_ptr<omp::Model>& inModel
 
 void omp::Renderer::createLights()
 {
-    // LIGHTS
+    /* // LIGHTS
     const std::string model_path = "../models/sphere.obj";
 
     // TODO: load model through asset manager
@@ -2655,6 +2655,8 @@ void omp::Renderer::createLights()
     mat->setShaderName("Simple");
     // need other way to load, and async
     loadModelInMemory(light_model);
+
+    // TODO: remake light to unique 
 
     m_CurrentScene->addEntityToScene(m_LightSystem->enableGlobalLight(
             std::make_shared<omp::ModelInstance>(light_model, mat)));
@@ -2701,5 +2703,5 @@ void omp::Renderer::createLights()
     {
         light_pos.x += 10.f;
         m_LightSystem->getSpotLight()[index]->getModel()->getPosition() = light_pos;
-    }
+    } */
 }
