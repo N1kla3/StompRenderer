@@ -2,6 +2,9 @@
 #include "Logs.h"
 #include <filesystem>
 #include <future>
+#include "Rendering/TextureSrc.h"
+#include "Scene.h"
+#include "Rendering/Model.h"
 
 using namespace std::filesystem;
 
@@ -12,13 +15,17 @@ omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory*
     // TODO: strange
     // loadAssetsFromDrive();
     // TODO: add all classes that should be read
+    
+    m_Factory->registerClass<omp::TextureSrc>("TextureSrc");
+    m_Factory->registerClass<omp::Model>("Model");
+    m_Factory->registerClass<omp::Scene>("Scene");
 }
 
-std::future<bool> omp::AssetManager::loadProject()
+std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)
 {
-    return m_ThreadPool->submit([this]() -> bool
+    return m_ThreadPool->submit([this, inPath]() -> bool
     {
-        loadAssetsFromDrive();
+        loadAssetsFromDrive(inPath);
         return true;
     });
 }
@@ -58,11 +65,6 @@ void omp::AssetManager::deleteAsset(AssetHandle assetHandle)
     }
 }
 
-void omp::AssetManager::loadAssetsFromDrive()
-{
-    loadAssetsFromDrive(ASSET_FOLDER);
-}
-
 void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 {
     directory_iterator directory{std::filesystem::path(path)};
@@ -93,6 +95,7 @@ void omp::AssetManager::loadAsset_internal(const std::string& inPath)
         }
         else
         {
+            ERROR(LogAssetManager, "Cannot load asset metadata: {}", inPath);
             // should not be possible
             // TODO: assert
         }

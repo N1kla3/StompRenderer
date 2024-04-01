@@ -6,12 +6,13 @@
 
 bool omp::Asset::loadMetadata()
 {
-    m_Metadata.asset_id = m_Parser.readValue<uint64_t>(ID_KEY).value_or(0);
-    m_Metadata.path_on_disk = m_Parser.readValue<std::string>(PATH_KEY).value();
-    m_Metadata.class_id = m_Parser.readValue<std::string>(CLASS_NAME_KEY).value();
-    m_Metadata.asset_name = m_Parser.readValue<std::string>(ASSET_NAME_KEY).value();
-    m_Metadata.dependencies = m_Parser.readValue<std::vector<AssetHandle::handle_type>>(DEPENDENCIES_KEY).value();
-    return true;
+    JsonParser<> metadata_parser = m_Parser.readObject("Metadata");
+    m_Metadata.asset_id = metadata_parser.readValue<uint64_t>(ID_KEY).value_or(0);
+    m_Metadata.path_on_disk = metadata_parser.readValue<std::string>(PATH_KEY).value();
+    m_Metadata.class_id = metadata_parser.readValue<std::string>(CLASS_NAME_KEY).value();
+    m_Metadata.asset_name = metadata_parser.readValue<std::string>(ASSET_NAME_KEY).value();
+    m_Metadata.dependencies = metadata_parser.readValue<std::vector<AssetHandle::handle_type>>(DEPENDENCIES_KEY).value();
+    return m_Metadata.IsValid();
 }
 
 bool omp::Asset::loadAsset(ObjectFactory* factory)
@@ -35,12 +36,15 @@ bool omp::Asset::unloadAsset()
 
 bool omp::Asset::saveMetadata()
 {
-    m_Parser.writeValue(ID_KEY, m_Metadata.asset_id);
-    m_Parser.writeValue(PATH_KEY, m_Metadata.path_on_disk);
-    m_Parser.writeValue(CLASS_NAME_KEY, m_Metadata.class_id);
-    m_Parser.writeValue(ASSET_NAME_KEY, m_Metadata.asset_name);
-    m_Parser.writeValue(DEPENDENCIES_KEY, m_Metadata.dependencies);
-    return false;
+    JsonParser<> metadata_parser;
+    metadata_parser.writeValue(ID_KEY, m_Metadata.asset_id);
+    metadata_parser.writeValue(PATH_KEY, m_Metadata.path_on_disk);
+    metadata_parser.writeValue(CLASS_NAME_KEY, m_Metadata.class_id);
+    metadata_parser.writeValue(ASSET_NAME_KEY, m_Metadata.asset_name);
+    metadata_parser.writeValue(DEPENDENCIES_KEY, m_Metadata.dependencies);
+
+    m_Parser.writeObject("Metadata", std::move(metadata_parser));
+    return m_Metadata.IsValid();
 }
 
 bool omp::Asset::saveAsset()

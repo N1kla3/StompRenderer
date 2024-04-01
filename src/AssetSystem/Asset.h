@@ -56,9 +56,11 @@ namespace omp
         }
     };
 
-    class Asset
+    class Asset : public std::enable_shared_from_this<Asset>
     {
     private:
+        std::vector<std::shared_ptr<omp::Asset>> m_Parents;
+        std::vector<std::shared_ptr<omp::Asset>> m_Children;
         MetaData m_Metadata;
         JsonParser<> m_Parser;
         std::unique_ptr<SerializableObject> m_Object;
@@ -83,6 +85,10 @@ namespace omp
          * @return Not manageable raw pointer to object that asset owns
          */
         SerializableObject const* getObject() const;
+        std::shared_ptr<Asset> getptr()
+        {
+            return shared_from_this();
+        }
 
     // Constructors/operators //
     // ====================== //

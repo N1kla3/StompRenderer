@@ -19,6 +19,18 @@ void omp::Scene::addEntityToScene(std::unique_ptr<omp::SceneEntity>&& modelToAdd
 
 void omp::Scene::serialize(JsonParser<>& parser)
 {
+    for (std::unique_ptr<omp::SceneEntity>& entity : m_Entities)
+    {
+        JsonParser<> new_parser;
+        entity->getModel();
+        entity->getModel()->getMaterialInstance()->getStaticMaterial();
+        entity->getModel()->getTransform();
+        parser.writeObject(entity->getName(), std::move(new_parser));
+    }
+    for (std::unique_ptr<omp::Camera>& camera : m_Cameras)
+    {
+        //camera->getNam
+    }
     
 }
 
@@ -66,3 +78,4 @@ omp::SceneEntity* omp::Scene::getCurrentEntity() const
 {
     return getEntity(m_CurrentEntityId);
 }
+
