@@ -1,9 +1,19 @@
 #include "gtest/gtest.h"
 #include "AssetSystem/AssetManager.h"
 
-const std::string g_TestProjectPath = "../../../tests/";
+class AssetSuite : public ::testing::Test
+{
+protected:
 
-TEST(AssetLoading, AssetLoaderTest)
+    static void SetUpTestSuite()
+    {
+        omp::InitializeTestLogs();
+    }
+};
+
+const std::string g_TestProjectPath = "../../../tests/assets";
+
+TEST(AssetSuite, AssetLoaderTest)
 {
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
@@ -12,7 +22,7 @@ TEST(AssetLoading, AssetLoaderTest)
     std::future<bool> wait = manager.loadProject(g_TestProjectPath);
 }
 
-TEST(AssetLoading, AssetMetadata)
+TEST(AssetSuite, AssetMetadata)
 {
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
@@ -21,7 +31,7 @@ TEST(AssetLoading, AssetMetadata)
     std::future<bool> wait = manager.loadProject(g_TestProjectPath);
 }
 
-TEST(AssetLoading, AssetFirst)
+TEST(AssetSuite, AssetFirst)
 {
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());

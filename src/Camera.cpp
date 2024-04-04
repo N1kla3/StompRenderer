@@ -1,8 +1,10 @@
 #include "Camera.h"
+#include "SceneEntity.h"
 #include "glm/ext/matrix_transform.hpp"
 
 omp::Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-        : m_Position(position)
+        : SceneEntity()
+        , m_Position(position)
         , m_Up(up)
         , m_WorldUp(up)
         , m_Yaw(yaw)
@@ -16,7 +18,8 @@ omp::Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
 }
 
 omp::Camera::Camera(float posx, float posy, float posz, float upx, float upy, float upz, float yaw, float pitch)
-        : m_Position(posx, posy, posz)
+        : SceneEntity()
+        , m_Position(posx, posy, posz)
         , m_Up(upx, upy, upz)
         , m_WorldUp(upx, upy, upz)
         , m_Yaw(yaw)
@@ -86,6 +89,14 @@ void omp::Camera::processMouseMovement(float xOffset, float yOffset, bool constr
 void omp::Camera::processMouseScroll(float /*yOffset*/)
 {
 
+}
+
+void onSceneSave(omp::JsonParser<>& parser)
+{
+}
+
+void onSceneLoad(omp::JsonParser<>& parser)
+{
 }
 
 void omp::Camera::updateCameraVectors()

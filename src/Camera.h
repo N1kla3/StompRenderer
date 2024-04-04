@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glm/glm.hpp"
+#include "SceneEntity.h"
 
 enum class ECameraMovement
 {
@@ -28,7 +29,7 @@ struct InputData
 
 namespace omp
 {
-    class Camera
+    class Camera : public SceneEntity
     {
     private:
         static constexpr float YAW = 0.f;
@@ -38,6 +39,7 @@ namespace omp
         static constexpr float ZOOM = 45.f;
 
     public:
+        // TODO: constructors to scene entity with name etc
         explicit Camera(
                 glm::vec3 position = glm::vec3(0.f, 0.f, 0.f),
                 glm::vec3 up = glm::vec3(0.f, 1.f, 0.f),
@@ -70,6 +72,9 @@ namespace omp
         float getNearClipping() const { return m_NearClipping; }
 
         float getFarClipping() const { return m_FarClipping; }
+
+        virtual void onSceneSave(JsonParser<>& parser) override;
+        virtual void onSceneLoad(JsonParser<>& parser) override;
 
     private:
         glm::vec3 m_Position;

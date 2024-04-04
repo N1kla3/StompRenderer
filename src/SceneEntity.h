@@ -25,5 +25,8 @@ namespace omp
         std::shared_ptr<omp::ModelInstance> getModel() const { return m_Model; }
 
         virtual void draw() override;
+
+        virtual void onSceneSave(JsonParser<>& parser);
+        virtual void onSceneLoad(JsonParser<>& parser);
     };
 }

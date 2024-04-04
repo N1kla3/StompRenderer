@@ -19,24 +19,39 @@ void omp::Scene::addEntityToScene(std::unique_ptr<omp::SceneEntity>&& modelToAdd
 
 void omp::Scene::serialize(JsonParser<>& parser)
 {
+    std::vector<std::string> names;
+    names.reserve(m_Entities.size());
     for (std::unique_ptr<omp::SceneEntity>& entity : m_Entities)
     {
+        names.push_back(entity->getName());
+
         JsonParser<> new_parser;
-        entity->getModel();
-        entity->getModel()->getMaterialInstance()->getStaticMaterial();
-        entity->getModel()->getTransform();
+        entity->onSceneSave(new_parser);
+
         parser.writeObject(entity->getName(), std::move(new_parser));
     }
+    parser.writeValue("EntityNames", names);
+
+    names.clear();
     for (std::unique_ptr<omp::Camera>& camera : m_Cameras)
     {
+        names.push_back(camera->getName());
         //camera->getNam
     }
+    parser.writeValue("CameraNames", names);
     
 }
 
 void omp::Scene::deserialize(JsonParser<>& parser)
 {
+    std::vector<std::string> names = parser.readValue<std::vector<std::string>>("EntityNames").value();
+    size_t entities_num = names.size();
     
+    for (size_t i = 0; i < entities_num; i++)
+    {
+        // entities load
+        // TODO: how to detect subclasses?
+    }
 }
 
 omp::SceneEntity* omp::Scene::getEntity(const std::string& inName) const
@@ -78,4 +93,3 @@ omp::SceneEntity* omp::Scene::getCurrentEntity() const
 {
     return getEntity(m_CurrentEntityId);
 }
-

@@ -199,6 +199,10 @@ TEST_F(JsonAsyncSuite, JsonAsync_three)
     EXPECT_EQ(new_read_parser.readValue<float>("six").value_or(1.f), 4.5f);
     EXPECT_EQ(new_read_parser.readValue<double>("seven").value_or(1.0), 3.4);
     EXPECT_EQ(new_read_parser.readValue<char>("eight").value_or('a'), 'd');
+    std::vector<float> vecnine = new_read_parser.readValue<std::vector<float>>("nine").value();
+    EXPECT_EQ(vecnine.size(), 4);
+    EXPECT_EQ(vecnine[0], 4.f);
+    INFO(LogTesting, "array: {} {} {} {}", vecnine[0], vecnine[1], vecnine[2], vecnine[3]);
 
     ASSERT_TRUE(true);
 }
