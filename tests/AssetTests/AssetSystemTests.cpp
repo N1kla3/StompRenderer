@@ -1,5 +1,11 @@
 #include "gtest/gtest.h"
+#include <memory>
 #include "AssetSystem/AssetManager.h"
+#include "SceneEntity.h"
+#include "Scene.h"
+#include "SceneEntityFactory.h"
+#include "Camera.h"
+#include "LightObject.h"
 
 class AssetSuite : public ::testing::Test
 {
@@ -8,6 +14,11 @@ protected:
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
+        omp::SceneEntityFactory::registerClass<omp::SceneEntity>("SceneEntity");
+        omp::SceneEntityFactory::registerClass<omp::Camera>("Camera");
+        omp::SceneEntityFactory::registerClass<omp::LightObject<omp::GlobalLight>>("GlobalLight");
+        omp::SceneEntityFactory::registerClass<omp::LightObject<omp::PointLight>>("PointLight");
+        omp::SceneEntityFactory::registerClass<omp::LightObject<omp::SpotLight>>("SpotLight");
     }
 };
 
@@ -18,6 +29,8 @@ TEST(AssetSuite, AssetLoaderTest)
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
     omp::AssetManager manager(pool.get(), factory.get());
+
+    std::unique_ptr<omp::Scene> local_scene = std::make_unique<omp::Scene>();
 
     std::future<bool> wait = manager.loadProject(g_TestProjectPath);
 }

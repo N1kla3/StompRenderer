@@ -73,8 +73,9 @@ namespace omp
 
         float getFarClipping() const { return m_FarClipping; }
 
-        virtual void onSceneSave(JsonParser<>& parser) override;
-        virtual void onSceneLoad(JsonParser<>& parser) override;
+        virtual void onSceneSave(JsonParser<>& parser, omp::Scene* scene) override;
+        virtual void onSceneLoad(JsonParser<>& parser, omp::Scene* scene) override;
+        virtual std::string getClassName() const override { return "Camera"; }
 
     private:
         glm::vec3 m_Position;

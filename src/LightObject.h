@@ -31,6 +31,9 @@ namespace omp
 
         inline void updateLightObject(){};
         inline virtual void draw() override { SceneEntity::draw(); };
+        inline virtual void onSceneSave(JsonParser<>& a, omp::Scene* b) override { SceneEntity::onSceneSave(a, b); };
+        inline virtual void onSceneLoad(JsonParser<>& a, omp::Scene* b) override { SceneEntity::onSceneLoad(a, b); };
+        inline virtual std::string getClassName() const override;
         void setModel(const std::shared_ptr<ModelInstance>& inModel);
     };
 }
@@ -80,6 +83,19 @@ inline void omp::LightObject<omp::GlobalLight>::draw()
 }
 
 template<>
+inline void omp::LightObject<omp::GlobalLight>::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
+{
+}
+
+template<>
+inline void omp::LightObject<omp::GlobalLight>::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
+{
+}
+
+template<>
+inline std::string omp::LightObject<omp::GlobalLight>::getClassName() const { return "GlobalLight"; }
+
+template<>
 inline void omp::LightObject<omp::PointLight>::updateLightObject()
 {
     auto& v = m_Model->getPosition();
@@ -103,6 +119,19 @@ inline void omp::LightObject<omp::PointLight>::draw()
     ImGui::DragFloat("Linear", &m_Light.linear, 0.1f);
     ImGui::DragFloat("Quadratic", &m_Light.quadratic, 0.1f);
 }
+
+template<>
+inline void omp::LightObject<omp::PointLight>::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
+{
+}
+
+template<>
+inline void omp::LightObject<omp::PointLight>::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
+{
+}
+
+template<>
+inline std::string omp::LightObject<omp::PointLight>::getClassName() const { return "PointLight"; }
 
 template<>
 inline void omp::LightObject<omp::SpotLight>::updateLightObject()
@@ -134,6 +163,19 @@ inline void omp::LightObject<omp::SpotLight>::draw()
     ImGui::DragFloat("Linear", &m_Light.linear, 0.1f);
     ImGui::DragFloat("Quadratic", &m_Light.quadratic, 0.1f);
 }
+
+template<>
+inline void omp::LightObject<omp::SpotLight>::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
+{
+}
+
+template<>
+inline void omp::LightObject<omp::SpotLight>::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
+{
+}
+
+template<>
+inline std::string omp::LightObject<omp::SpotLight>::getClassName() const { return "SpotLight"; }
 
 template<LightClassReq LightType>
 void omp::LightObject<LightType>::setModel(const std::shared_ptr<ModelInstance>& inModel)

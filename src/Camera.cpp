@@ -91,11 +91,11 @@ void omp::Camera::processMouseScroll(float /*yOffset*/)
 
 }
 
-void onSceneSave(omp::JsonParser<>& parser)
+void omp::Camera::onSceneSave(omp::JsonParser<>& parser, omp::Scene* scene)
 {
 }
 
-void onSceneLoad(omp::JsonParser<>& parser)
+void omp::Camera::onSceneLoad(omp::JsonParser<>& parser, omp::Scene* scene)
 {
 }
 

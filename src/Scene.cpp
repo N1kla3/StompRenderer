@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include "SceneEntityFactory.h"
 
 std::vector<std::unique_ptr<omp::SceneEntity>>& omp::Scene::getEntities()
 {
@@ -26,31 +27,49 @@ void omp::Scene::serialize(JsonParser<>& parser)
         names.push_back(entity->getName());
 
         JsonParser<> new_parser;
-        entity->onSceneSave(new_parser);
+        new_parser.writeValue("ClassName", entity->getClassName());
+        entity->onSceneSave(new_parser, this);
 
         parser.writeObject(entity->getName(), std::move(new_parser));
     }
     parser.writeValue("EntityNames", names);
 
     names.clear();
-    for (std::unique_ptr<omp::Camera>& camera : m_Cameras)
+    for (std::unique_ptr<omp::SceneEntity>& camera : m_Cameras)
     {
         names.push_back(camera->getName());
-        //camera->getNam
+
+        JsonParser<> new_parser;
+        new_parser.writeValue("ClassName", camera->getClassName());
+        camera->onSceneSave(new_parser, this);
+
+        parser.writeObject(camera->getName(), std::move(new_parser));
     }
     parser.writeValue("CameraNames", names);
-    
 }
 
 void omp::Scene::deserialize(JsonParser<>& parser)
 {
     std::vector<std::string> names = parser.readValue<std::vector<std::string>>("EntityNames").value();
     size_t entities_num = names.size();
-    
     for (size_t i = 0; i < entities_num; i++)
     {
-        // entities load
-        // TODO: how to detect subclasses?
+        JsonParser<> local_entity = parser.readObject(names[i]);
+        std::string class_name = local_entity.readValue<std::string>("ClassName").value();
+        std::unique_ptr<SceneEntity> entity = std::move(omp::SceneEntityFactory::createSceneEntity(class_name));
+        entity->onSceneLoad(local_entity, this);
+        m_Entities.push_back(std::move(entity));
+    }
+
+    names = parser.readValue<std::vector<std::string>>("EntityNames").value();
+    size_t camera_num = names.size();
+    for (size_t i = 0; i < camera_num; i++)
+    {
+        JsonParser<> local_entity = parser.readObject(names[i]);
+        std::string class_name = local_entity.readValue<std::string>("ClassName").value();
+        std::unique_ptr<SceneEntity> camera = std::move(omp::SceneEntityFactory::createSceneEntity(class_name));
+        camera->onSceneLoad(local_entity, this);
+        m_Cameras.push_back(std::move(camera));
     }
 }
 

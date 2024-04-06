@@ -17,14 +17,13 @@ namespace omp
         // State //
         // ===== //
         std::vector<std::unique_ptr<omp::SceneEntity>> m_Entities;
-        std::vector<std::unique_ptr<omp::Camera>> m_Cameras;
+        std::vector<std::unique_ptr<omp::SceneEntity>> m_Cameras;
 
         omp::Camera* m_CurrentCamera;
 
         bool m_StateDirty = false;
         int32_t m_CurrentEntityId = -1;
 
-        // TODO: remove shared pointers
     public:
         // Methods //
         // ======= //

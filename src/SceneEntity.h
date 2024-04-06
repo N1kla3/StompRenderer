@@ -7,6 +7,7 @@
 
 namespace omp
 {
+    class Scene;
     class SceneEntity : public IDrawable
     {
     private:
@@ -26,7 +27,8 @@ namespace omp
 
         virtual void draw() override;
 
-        virtual void onSceneSave(JsonParser<>& parser);
-        virtual void onSceneLoad(JsonParser<>& parser);
+        virtual void onSceneSave(JsonParser<>& parser, omp::Scene* scene);
+        virtual void onSceneLoad(JsonParser<>& parser, omp::Scene* scene);
+        virtual std::string getClassName() const { return "SceneEntity"; }
     };
 }

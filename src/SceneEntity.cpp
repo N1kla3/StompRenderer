@@ -1,5 +1,6 @@
-#include "SceneEntity.h"
+#include "Scene.h"
 #include "imgui.h"
+#include "SceneEntity.h"
 
 omp::SceneEntity::SceneEntity()
     : SceneEntity("None", nullptr)
@@ -38,3 +39,11 @@ void omp::SceneEntity::draw()
         ImGui::BulletText("No Entity");
     }
 }
+void omp::SceneEntity::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
+{
+}
+
+void omp::SceneEntity::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
+{
+}
+
