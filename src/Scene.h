@@ -39,7 +39,10 @@ namespace omp
         // TODO map, no ref
         std::vector<std::unique_ptr<omp::SceneEntity>>& getEntities();
 
+        void setCurrentCamera(uint16_t id);
         omp::Camera* getCurrentCamera() const { return m_CurrentCamera; }
+        void addCameraToScene();
+        void addCameraToScene(std::unique_ptr<omp::Camera>&& camera);
 
         void setCurrentId(int32_t inId) { m_CurrentEntityId = inId; }
         int32_t getCurrentId() const { return m_CurrentEntityId; }

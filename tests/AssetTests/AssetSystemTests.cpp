@@ -32,6 +32,15 @@ TEST(AssetSuite, AssetLoaderTest)
 
     std::unique_ptr<omp::Scene> local_scene = std::make_unique<omp::Scene>();
 
+    std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>();
+    std::unique_ptr<omp::SceneEntity> simple = std::make_unique<omp::SceneEntity>("testent", inst);
+    std::unique_ptr<omp::Camera> camera = std::make_unique<omp::Camera>();
+    std::unique_ptr<omp::SceneEntity> light = std::make_unique<omp::LightObject<omp::GlobalLight>>("globallig", inst);
+    std::unique_ptr<omp::SceneEntity> lighttwo = std::make_unique<omp::LightObject<omp::SpotLight>>("lightspot", inst);
+
+    local_scene->addEntityToScene(std::move(simple));
+    local_scene->addCameraToScene(std::move(camera));
+
     std::future<bool> wait = manager.loadProject(g_TestProjectPath);
 }
 

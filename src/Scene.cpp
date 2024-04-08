@@ -1,4 +1,5 @@
 #include "Scene.h"
+#include "Logs.h"
 #include "SceneEntityFactory.h"
 
 std::vector<std::unique_ptr<omp::SceneEntity>>& omp::Scene::getEntities()
@@ -61,7 +62,7 @@ void omp::Scene::deserialize(JsonParser<>& parser)
         m_Entities.push_back(std::move(entity));
     }
 
-    names = parser.readValue<std::vector<std::string>>("EntityNames").value();
+    names = parser.readValue<std::vector<std::string>>("CameraNames").value();
     size_t camera_num = names.size();
     for (size_t i = 0; i < camera_num; i++)
     {
@@ -112,3 +113,30 @@ omp::SceneEntity* omp::Scene::getCurrentEntity() const
 {
     return getEntity(m_CurrentEntityId);
 }
+
+void omp::Scene::setCurrentCamera(uint16_t id)
+{
+    if (id < m_Cameras.size())
+    {
+        m_CurrentCamera = dynamic_cast<omp::Camera*>(m_Cameras.at(id).get());
+        if (!m_CurrentCamera)
+        {
+            // assert
+        }
+    }
+    else
+    {
+        ERROR(LogRendering, "Invalid camera access");
+    }
+}
+
+void omp::Scene::addCameraToScene()
+{
+    m_Cameras.push_back(std::make_unique<omp::Camera>());
+}
+
+void omp::Scene::addCameraToScene(std::unique_ptr<omp::Camera>&& camera)
+{
+    m_Cameras.push_back(std::move(camera));
+}
+

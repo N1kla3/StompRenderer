@@ -14,7 +14,7 @@ namespace omp
         int32_t m_Id;
     protected:
         std::string m_Name;
-        // TODO temporarily
+        // TODO: rename to instance, and divide with material
         std::shared_ptr<omp::ModelInstance> m_Model;
 
     public:
