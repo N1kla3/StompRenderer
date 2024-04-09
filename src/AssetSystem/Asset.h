@@ -10,7 +10,7 @@ namespace omp
 {
     struct AssetHandle
     {
-        using handle_type = uint64_t;
+        using handle_type = omp::SerializableObject::SerializationId;
         handle_type id;
 
         AssetHandle(handle_type newId)
@@ -45,7 +45,7 @@ namespace omp
         std::string asset_name = "none";
         std::string path_on_disk = "none";
         std::string class_id = "none";
-        std::vector<AssetHandle::handle_type> dependencies;
+        std::unordered_set<AssetHandle::handle_type> dependencies;
 
         bool IsValid() const
         {
@@ -117,18 +117,19 @@ namespace omp
         */
         void addChild(const std::shared_ptr<omp::Asset>& asset);
         void addParent(const std::shared_ptr<omp::Asset>& asset);
-        std::shared_ptr<omp::Asset> getChild(AssetHandle handle);
-        std::shared_ptr<omp::Asset> getParent(AssetHandle handle);
-        
 
     public:
         MetaData getMetaData() const;
+
+        std::shared_ptr<omp::Asset> getChild(AssetHandle handle);
+        std::shared_ptr<omp::Asset> getParent(AssetHandle handle);
 
         std::shared_ptr<SerializableObject> getObject() const;
         std::shared_ptr<Asset> getptr()
         {
             return shared_from_this();
         }
+        void addDependency(AssetHandle::handle_type handle);
 
     // Constructors/operators //
     // ====================== //
