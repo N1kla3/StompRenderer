@@ -85,11 +85,53 @@ inline void omp::LightObject<omp::GlobalLight>::draw()
 template<>
 inline void omp::LightObject<omp::GlobalLight>::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
 {
+    SceneEntity::onSceneSave(parser, scene);
+
+    parser.writeValue("posdir_x", m_Light.position_or_direction.x);
+    parser.writeValue("posdir_y", m_Light.position_or_direction.y);
+    parser.writeValue("posdir_z", m_Light.position_or_direction.z);
+    parser.writeValue("posdir_w", m_Light.position_or_direction.w);
+
+    parser.writeValue("ambient_x", m_Light.ambient.x);
+    parser.writeValue("ambient_y", m_Light.ambient.y);
+    parser.writeValue("ambient_z", m_Light.ambient.z);
+    parser.writeValue("ambient_w", m_Light.ambient.w);
+
+    parser.writeValue("diffuse_x", m_Light.diffuse.x);
+    parser.writeValue("diffuse_y", m_Light.diffuse.y);
+    parser.writeValue("diffuse_z", m_Light.diffuse.z);
+    parser.writeValue("diffuse_w", m_Light.diffuse.w);
+
+    parser.writeValue("specular_x", m_Light.specular.x);
+    parser.writeValue("specular_y", m_Light.specular.y);
+    parser.writeValue("specular_z", m_Light.specular.z);
+    parser.writeValue("specular_w", m_Light.specular.w);
 }
 
 template<>
 inline void omp::LightObject<omp::GlobalLight>::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
 {
+    SceneEntity::onSceneLoad(parser, scene);
+
+    m_Light.position_or_direction.x = parser.readValue<float>("posdir_x").value();
+    m_Light.position_or_direction.y = parser.readValue<float>("posdir_y").value();
+    m_Light.position_or_direction.z = parser.readValue<float>("posdir_z").value();
+    m_Light.position_or_direction.w = parser.readValue<float>("posdir_w").value();
+
+    m_Light.ambient.x = parser.readValue<float>("ambient_x").value();
+    m_Light.ambient.y = parser.readValue<float>("ambient_y").value();
+    m_Light.ambient.z = parser.readValue<float>("ambient_z").value();
+    m_Light.ambient.w = parser.readValue<float>("ambient_w").value();
+
+    m_Light.diffuse.x = parser.readValue<float>("diffuse_x").value();
+    m_Light.diffuse.y = parser.readValue<float>("diffuse_y").value();
+    m_Light.diffuse.z = parser.readValue<float>("diffuse_z").value();
+    m_Light.diffuse.w = parser.readValue<float>("diffuse_w").value();
+
+    m_Light.specular.x = parser.readValue<float>("specular_x").value();
+    m_Light.specular.y = parser.readValue<float>("specular_y").value();
+    m_Light.specular.z = parser.readValue<float>("specular_z").value();
+    m_Light.specular.w = parser.readValue<float>("specular_w").value();
 }
 
 template<>
@@ -123,11 +165,61 @@ inline void omp::LightObject<omp::PointLight>::draw()
 template<>
 inline void omp::LightObject<omp::PointLight>::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
 {
+    SceneEntity::onSceneSave(parser, scene);
+
+    parser.writeValue("lpos_x", m_Light.position.x);
+    parser.writeValue("lpos_y", m_Light.position.y);
+    parser.writeValue("lpos_z", m_Light.position.z);
+    parser.writeValue("lpos_w", m_Light.position.w);
+
+    parser.writeValue("ambient_x", m_Light.ambient.x);
+    parser.writeValue("ambient_y", m_Light.ambient.y);
+    parser.writeValue("ambient_z", m_Light.ambient.z);
+    parser.writeValue("ambient_w", m_Light.ambient.w);
+
+    parser.writeValue("diffuse_x", m_Light.diffuse.x);
+    parser.writeValue("diffuse_y", m_Light.diffuse.y);
+    parser.writeValue("diffuse_z", m_Light.diffuse.z);
+    parser.writeValue("diffuse_w", m_Light.diffuse.w);
+
+    parser.writeValue("specular_x", m_Light.specular.x);
+    parser.writeValue("specular_y", m_Light.specular.y);
+    parser.writeValue("specular_z", m_Light.specular.z);
+    parser.writeValue("specular_w", m_Light.specular.w);
+
+    parser.writeValue("constant", m_Light.constant);
+    parser.writeValue("linear", m_Light.linear);
+    parser.writeValue("quadratic", m_Light.quadratic);
 }
 
 template<>
 inline void omp::LightObject<omp::PointLight>::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
 {
+    SceneEntity::onSceneLoad(parser, scene);
+
+    m_Light.position.x = parser.readValue<float>("lpos_x").value();
+    m_Light.position.y = parser.readValue<float>("lpos_y").value();
+    m_Light.position.z = parser.readValue<float>("lpos_z").value();
+    m_Light.position.w = parser.readValue<float>("lpos_w").value();
+
+    m_Light.ambient.x = parser.readValue<float>("ambient_x").value();
+    m_Light.ambient.y = parser.readValue<float>("ambient_y").value();
+    m_Light.ambient.z = parser.readValue<float>("ambient_z").value();
+    m_Light.ambient.w = parser.readValue<float>("ambient_w").value();
+
+    m_Light.diffuse.x = parser.readValue<float>("diffuse_x").value();
+    m_Light.diffuse.y = parser.readValue<float>("diffuse_y").value();
+    m_Light.diffuse.z = parser.readValue<float>("diffuse_z").value();
+    m_Light.diffuse.w = parser.readValue<float>("diffuse_w").value();
+
+    m_Light.specular.x = parser.readValue<float>("specular_x").value();
+    m_Light.specular.y = parser.readValue<float>("specular_y").value();
+    m_Light.specular.z = parser.readValue<float>("specular_z").value();
+    m_Light.specular.w = parser.readValue<float>("specular_w").value();
+
+    m_Light.constant = parser.readValue<float>("constant").value();
+    m_Light.linear = parser.readValue<float>("linear").value();
+    m_Light.quadratic = parser.readValue<float>("quadratic").value();
 }
 
 template<>
@@ -167,11 +259,77 @@ inline void omp::LightObject<omp::SpotLight>::draw()
 template<>
 inline void omp::LightObject<omp::SpotLight>::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
 {
+    SceneEntity::onSceneSave(parser, scene);
+
+    parser.writeValue("lpos_x", m_Light.position.x);
+    parser.writeValue("lpos_y", m_Light.position.y);
+    parser.writeValue("lpos_z", m_Light.position.z);
+    parser.writeValue("lpos_w", m_Light.position.w);
+
+    parser.writeValue("ambient_x", m_Light.ambient.x);
+    parser.writeValue("ambient_y", m_Light.ambient.y);
+    parser.writeValue("ambient_z", m_Light.ambient.z);
+    parser.writeValue("ambient_w", m_Light.ambient.w);
+
+    parser.writeValue("diffuse_x", m_Light.diffuse.x);
+    parser.writeValue("diffuse_y", m_Light.diffuse.y);
+    parser.writeValue("diffuse_z", m_Light.diffuse.z);
+    parser.writeValue("diffuse_w", m_Light.diffuse.w);
+
+    parser.writeValue("specular_x", m_Light.specular.x);
+    parser.writeValue("specular_y", m_Light.specular.y);
+    parser.writeValue("specular_z", m_Light.specular.z);
+    parser.writeValue("specular_w", m_Light.specular.w);
+
+    parser.writeValue("direction_x", m_Light.direction.x);
+    parser.writeValue("direction_y", m_Light.direction.y);
+    parser.writeValue("direction_z", m_Light.direction.z);
+    parser.writeValue("direction_w", m_Light.direction.w);
+
+    parser.writeValue("cut_off", m_Light.cut_off);
+    parser.writeValue("outer_cutoff", m_Light.outer_cutoff);
+
+    parser.writeValue("constant", m_Light.constant);
+    parser.writeValue("linear", m_Light.linear);
+    parser.writeValue("quadratic", m_Light.quadratic);
 }
 
 template<>
 inline void omp::LightObject<omp::SpotLight>::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
 {
+    SceneEntity::onSceneLoad(parser, scene);
+
+    m_Light.position.x = parser.readValue<float>("lpos_x").value();
+    m_Light.position.y = parser.readValue<float>("lpos_y").value();
+    m_Light.position.z = parser.readValue<float>("lpos_z").value();
+    m_Light.position.w = parser.readValue<float>("lpos_w").value();
+
+    m_Light.ambient.x = parser.readValue<float>("ambient_x").value();
+    m_Light.ambient.y = parser.readValue<float>("ambient_y").value();
+    m_Light.ambient.z = parser.readValue<float>("ambient_z").value();
+    m_Light.ambient.w = parser.readValue<float>("ambient_w").value();
+
+    m_Light.diffuse.x = parser.readValue<float>("diffuse_x").value();
+    m_Light.diffuse.y = parser.readValue<float>("diffuse_y").value();
+    m_Light.diffuse.z = parser.readValue<float>("diffuse_z").value();
+    m_Light.diffuse.w = parser.readValue<float>("diffuse_w").value();
+
+    m_Light.specular.x = parser.readValue<float>("specular_x").value();
+    m_Light.specular.y = parser.readValue<float>("specular_y").value();
+    m_Light.specular.z = parser.readValue<float>("specular_z").value();
+    m_Light.specular.w = parser.readValue<float>("specular_w").value();
+
+    m_Light.direction.x = parser.readValue<float>("direction_x").value();
+    m_Light.direction.y = parser.readValue<float>("direction_y").value();
+    m_Light.direction.z = parser.readValue<float>("direction_z").value();
+    m_Light.direction.w = parser.readValue<float>("direction_w").value();
+
+    m_Light.cut_off = parser.readValue<float>("cut_off").value();
+    m_Light.outer_cutoff = parser.readValue<float>("outer_cutoff").value();
+
+    m_Light.constant = parser.readValue<float>("constant").value();
+    m_Light.linear = parser.readValue<float>("linear").value();
+    m_Light.quadratic = parser.readValue<float>("quadratic").value();
 }
 
 template<>

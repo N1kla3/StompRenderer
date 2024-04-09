@@ -125,6 +125,8 @@ void omp::Camera::onSceneSave(omp::JsonParser<>& parser, omp::Scene* scene)
 
 void omp::Camera::onSceneLoad(omp::JsonParser<>& parser, omp::Scene* scene)
 {
+    SceneEntity::onSceneLoad(parser, scene);
+
     m_Position.x = parser.readValue<float>("camerapos_x").value();
     m_Position.y = parser.readValue<float>("camerapos_y").value();
     m_Position.z = parser.readValue<float>("camerapos_z").value();
