@@ -73,9 +73,9 @@ omp::MetaData omp::Asset::getMetaData() const
     return m_Metadata;
 }
 
-omp::SerializableObject const* omp::Asset::getObject() const
+std::shared_ptr<omp::SerializableObject> omp::Asset::getObject() const
 {
-    return m_Object.get();
+    return m_Object;
 }
 
 omp::Asset::Asset(omp::JsonParser<>&& fileData)
@@ -97,3 +97,49 @@ void omp::Asset::specifyFileData(omp::JsonParser<>&& fileData)
 {
     m_Parser = std::move(fileData);
 }
+
+void omp::Asset::addChild(const std::shared_ptr<omp::Asset>& asset)
+{
+    if (asset.get())
+    {
+        asset->addParent(getptr());
+        m_Children.insert(asset);
+    }
+    else
+    {
+        ERROR(LogAssetManager, "Cant add child to asset: {}, with id: ", m_Metadata.asset_name, m_Metadata.class_id);
+    }
+}
+
+void omp::Asset::addParent(const std::shared_ptr<omp::Asset>& asset)
+{
+    if (asset.get())
+    {
+        m_Parents.insert(asset);
+    }
+    else
+    {
+        ERROR(LogAssetManager, "Cant add parent to asset: {}, with id: ", m_Metadata.asset_name, m_Metadata.class_id);
+    }
+}
+
+std::shared_ptr<omp::Asset> omp::Asset::getChild(AssetHandle handle)
+{
+    auto iter = m_Children.find<omp::AssetHandle>(handle);
+    if (iter != m_Children.end())
+    {
+        return *iter;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<omp::Asset> omp::Asset::getParent(AssetHandle handle)
+{
+    auto iter = m_Parents.find<omp::AssetHandle>(handle);
+    if (iter != m_Parents.end())
+    {
+        return *iter;
+    }
+    return nullptr;
+}
+

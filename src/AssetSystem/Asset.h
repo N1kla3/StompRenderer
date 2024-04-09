@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <mutex>
+#include <unordered_set>
 #include "IO/SerializableObject.h"
 #include "ObjectFactory.h"
 
@@ -40,7 +41,7 @@ namespace omp
 {
     struct MetaData
     {
-        uint64_t asset_id = 0;
+        AssetHandle::handle_type asset_id = 0;
         std::string asset_name = "none";
         std::string path_on_disk = "none";
         std::string class_id = "none";
@@ -59,11 +60,46 @@ namespace omp
     class Asset : public std::enable_shared_from_this<Asset>
     {
     private:
-        std::vector<std::shared_ptr<omp::Asset>> m_Parents;
-        std::vector<std::shared_ptr<omp::Asset>> m_Children;
+        struct asset_equal
+        {
+            using is_transparent = void;
+
+            bool operator()(const std::shared_ptr<Asset>& l, const std::shared_ptr<Asset>& r) const
+            {
+                return l->m_Metadata.asset_id == r->m_Metadata.asset_id;
+            }
+
+            bool operator()(const std::shared_ptr<Asset>& l, const AssetHandle& r) const
+            {
+                return l->m_Metadata.asset_id == r.id;
+            }
+
+            bool operator()(const AssetHandle& l, const std::shared_ptr<Asset>& r) const
+            {
+                return l.id == r->m_Metadata.asset_id;
+            }
+        };
+
+        struct asset_hash
+        {
+            using hash_type = std::hash<omp::AssetHandle::handle_type>;
+            using is_transparent = void;
+
+            size_t operator()(const std::shared_ptr<omp::Asset>& r) const
+            {
+                return hash_type{}(r->m_Metadata.asset_id);
+            }
+            size_t operator()(const AssetHandle& r) const
+            {
+                return hash_type{}(r.id);
+            }
+        };
+
+        std::unordered_set<std::shared_ptr<omp::Asset>, asset_hash, asset_equal> m_Parents;
+        std::unordered_set<std::shared_ptr<omp::Asset>, asset_hash, asset_equal> m_Children;
         MetaData m_Metadata;
         JsonParser<> m_Parser;
-        std::unique_ptr<SerializableObject> m_Object;
+        std::shared_ptr<SerializableObject> m_Object;
         mutable std::mutex m_Access;
 
     // Methods //
@@ -76,15 +112,19 @@ namespace omp
         bool saveAsset();
         void specifyFileData(JsonParser<>&& fileData);
 
+        /*
+         * @brief Additionally add self as parent
+        */
+        void addChild(const std::shared_ptr<omp::Asset>& asset);
+        void addParent(const std::shared_ptr<omp::Asset>& asset);
+        std::shared_ptr<omp::Asset> getChild(AssetHandle handle);
+        std::shared_ptr<omp::Asset> getParent(AssetHandle handle);
+        
+
     public:
         MetaData getMetaData() const;
 
-        /**
-         * Asset have full response for lifecycle of that object
-         *
-         * @return Not manageable raw pointer to object that asset owns
-         */
-        SerializableObject const* getObject() const;
+        std::shared_ptr<SerializableObject> getObject() const;
         std::shared_ptr<Asset> getptr()
         {
             return shared_from_this();
