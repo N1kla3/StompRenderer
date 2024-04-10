@@ -1,6 +1,5 @@
 #include "IO/SerializableObject.h"
 #include "AssetSystem/Asset.h"
-#include <cstdint>
 
 void omp::SerializableObject::setAsset(Asset* asset)
 {

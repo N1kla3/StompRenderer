@@ -11,7 +11,7 @@ bool omp::Asset::loadMetadata()
     m_Metadata.path_on_disk = metadata_parser.readValue<std::string>(PATH_KEY).value();
     m_Metadata.class_id = metadata_parser.readValue<std::string>(CLASS_NAME_KEY).value();
     m_Metadata.asset_name = metadata_parser.readValue<std::string>(ASSET_NAME_KEY).value();
-    m_Metadata.dependencies = metadata_parser.readValue<std::vector<AssetHandle::handle_type>>(DEPENDENCIES_KEY).value();
+    m_Metadata.dependencies = metadata_parser.readValue<std::unordered_set<AssetHandle::handle_type>>(DEPENDENCIES_KEY).value();
     return m_Metadata.IsValid();
 }
 

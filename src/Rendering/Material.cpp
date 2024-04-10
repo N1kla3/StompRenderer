@@ -67,6 +67,14 @@ omp::Material::Material(const std::string& /*name*/)
 
 }
 
+void omp::Material::serialize(JsonParser<> &parser)
+{
+}
+
+void omp::Material::deserialize(JsonParser<> &parser)
+{
+}
+
 void omp::Material::enableBlending(bool enable)
 {
     m_EnableBlending = enable;

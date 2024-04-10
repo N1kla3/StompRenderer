@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include "Texture.h"
+#include "IO/SerializableObject.h"
 #include "AssetSystem/Asset.h"
 #include "UI/MaterialPanel.h"
 #include "glm/vec4.hpp"
@@ -35,7 +36,7 @@ namespace omp
         Max
     };
 
-    class Material
+    class Material : public SerializableObject
     {
     private:
         std::unique_ptr<omp::MaterialRenderInfo> m_RenderInfo;
@@ -51,6 +52,9 @@ namespace omp
     public:
         Material();
         explicit Material(const std::string& name);
+
+        virtual void serialize(JsonParser<> &parser) override;
+        virtual void deserialize(JsonParser<> &parser) override;
 
         void addTexture(ETextureType type, const std::shared_ptr<Texture>& texture);
         void removeTexture(const TextureData& data);
