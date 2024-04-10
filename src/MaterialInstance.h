@@ -23,10 +23,13 @@ namespace omp
 
         std::weak_ptr<Material> getStaticMaterial() const { return m_StaticMaterial; }
 
+        void setAmbient(glm::vec4 new_ambient){ m_Ambient = new_ambient; }
         glm::vec4 getAmbient() const { return m_Ambient; }
 
+        void setDiffusive(glm::vec4 new_diffusive){ m_Ambient = new_diffusive; }
         glm::vec4 getDiffusive() const { return m_Diffusive; }
 
+        void setSpecular(glm::vec4 new_specular){ m_Ambient = new_specular; }
         glm::vec4 getSpecular() const { return m_Specular; }
 
         friend class MaterialPanel;

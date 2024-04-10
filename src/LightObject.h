@@ -65,7 +65,7 @@ omp::LightObject<LightType>::LightClass& omp::LightObject<LightType>::getLight()
 template<>
 inline void omp::LightObject<omp::GlobalLight>::updateLightObject()
 {
-    auto& v = m_Model->getPosition();
+    auto& v = m_ModelInstance->getPosition();
     m_Light.position_or_direction.x = v.x;
     m_Light.position_or_direction.y = v.y;
     m_Light.position_or_direction.z = v.z;
@@ -140,7 +140,7 @@ inline std::string omp::LightObject<omp::GlobalLight>::getClassName() const { re
 template<>
 inline void omp::LightObject<omp::PointLight>::updateLightObject()
 {
-    auto& v = m_Model->getPosition();
+    auto& v = m_ModelInstance->getPosition();
     m_Light.position.x = v.x;
     m_Light.position.y = v.y;
     m_Light.position.z = v.z;
@@ -228,12 +228,12 @@ inline std::string omp::LightObject<omp::PointLight>::getClassName() const { ret
 template<>
 inline void omp::LightObject<omp::SpotLight>::updateLightObject()
 {
-    auto& pos = m_Model->getPosition();
+    auto& pos = m_ModelInstance->getPosition();
     m_Light.position.x = pos.x;
     m_Light.position.y = pos.y;
     m_Light.position.z = pos.z;
 
-    auto& rot = m_Model->getRotation();
+    auto& rot = m_ModelInstance->getRotation();
     m_Light.direction.x = rot.x;
     m_Light.direction.y = rot.y;
     m_Light.direction.z = rot.z;
@@ -338,5 +338,5 @@ inline std::string omp::LightObject<omp::SpotLight>::getClassName() const { retu
 template<LightClassReq LightType>
 void omp::LightObject<LightType>::setModel(const std::shared_ptr<ModelInstance>& inModel)
 {
-    m_Model = (inModel);
+    m_ModelInstance = (inModel);
 }
