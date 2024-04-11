@@ -3,10 +3,8 @@
 #include <vector>
 #include <memory>
 #include "Texture.h"
+#include "TextureSrc.h"
 #include "IO/SerializableObject.h"
-#include "AssetSystem/Asset.h"
-#include "UI/MaterialPanel.h"
-#include "glm/vec4.hpp"
 
 namespace omp
 {
@@ -40,6 +38,9 @@ namespace omp
     {
     private:
         std::unique_ptr<omp::MaterialRenderInfo> m_RenderInfo;
+        std::shared_ptr<omp::TextureSrc> m_Texture;
+        std::shared_ptr<omp::TextureSrc> m_DiffusiveMap;
+        std::shared_ptr<omp::TextureSrc> m_SpecularMap;
 
         omp::MaterialManager* m_Manager = nullptr;
 
