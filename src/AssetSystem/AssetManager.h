@@ -30,7 +30,7 @@ public:
         std::future<std::weak_ptr<Asset>> loadAsset(AssetHandle assetId);
         void saveAsset(AssetHandle assetId);
         void deleteAsset(AssetHandle assetId);
-        void createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass);
+        AssetHandle createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass);
 
         std::weak_ptr<Asset> getAsset(AssetHandle assetId);
 

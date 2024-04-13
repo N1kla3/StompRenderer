@@ -7,6 +7,12 @@ omp::Model::Model()
 
 }
 
+omp::Model::Model(const std::string& path)
+        : m_Name("NONE")
+{
+    omp::ModelImporter::loadModel(this, path);
+}
+
 void omp::Model::serialize(JsonParser<>& parser)
 {
     parser.writeValue("ContentPath", m_Path);

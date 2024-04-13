@@ -1,4 +1,5 @@
 #include "AssetSystem/AssetManager.h"
+#include "AssetSystem/Asset.h"
 #include "Logs.h"
 #include <filesystem>
 #include <future>
@@ -64,6 +65,23 @@ void omp::AssetManager::deleteAsset(AssetHandle assetHandle)
         WARN(LogAssetManager, "Cant delete asset with id specified {}", assetHandle.id);
     }
 }
+
+omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass)
+{
+    omp::MetaData init_metadata;
+    // TODO: unique id
+    AssetHandle handle(1);
+    init_metadata.asset_name = inName;
+    init_metadata.path_on_disk = inPath;
+    init_metadata.class_id = inClass;
+    std::shared_ptr<omp::Asset> new_asset = std::make_shared<omp::Asset>();
+    new_asset->specifyMetaData(std::move(init_metadata));
+    // TODO: check collision
+    m_AssetRegistry.add_or_update_mapping(init_metadata.asset_id, new_asset);
+
+    return handle;
+}
+
 
 void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 {

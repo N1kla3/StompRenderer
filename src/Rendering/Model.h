@@ -106,6 +106,7 @@ public:
     // Lifecycle //
     // ========= //
     Model();
+    Model(const std::string& path);
     Model(const Model& inModel) = delete;
     Model(Model&& inModel) = delete;
     ~Model();

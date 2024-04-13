@@ -97,3 +97,8 @@ void omp::Asset::specifyFileData(omp::JsonParser<>&& fileData)
 {
     m_Parser = std::move(fileData);
 }
+void omp::Asset::specifyMetaData(omp::MetaData&& metadata)
+{
+    m_Metadata = metadata;
+}
+

@@ -8,6 +8,14 @@ namespace omp
     class TextureSrc : public SerializableObject
     {
     public:
+        TextureSrc() = default;
+        TextureSrc(const std::string& path)
+            : m_Path(path)
+    {
+        loadTextureFromFile();
+    }
+
+    private:
         std::string m_Path;
         stbi_uc* m_Pixels{};
         int m_Size;

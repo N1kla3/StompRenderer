@@ -75,6 +75,7 @@ namespace omp
         bool saveMetadata();
         bool saveAsset();
         void specifyFileData(JsonParser<>&& fileData);
+        void specifyMetaData(omp::MetaData&& metadata);
 
     public:
         MetaData getMetaData() const;
