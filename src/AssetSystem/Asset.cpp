@@ -151,6 +151,5 @@ std::shared_ptr<omp::Asset> omp::Asset::getParent(AssetHandle handle)
 void omp::Asset::addDependency(AssetHandle::handle_type handle)
 {
     m_Metadata.dependencies.insert(handle);
->>>>>>> d71728b75c38c7f36b80baaf460942bff3fd67e9
 }
 

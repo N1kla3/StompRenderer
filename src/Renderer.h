@@ -29,6 +29,7 @@
 #include "Rendering/GraphicsPipeline.h"
 #include "Rendering/RenderPass.h"
 #include "Rendering/FrameBuffer.h"
+#include "UI/ImguiUnit.h"
 #include "Logs.h"
 #include "LightSystem.h"
 #include "Rendering/ModelStatics.h"
