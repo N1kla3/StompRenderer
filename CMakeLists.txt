@@ -57,6 +57,7 @@ set(SOURCE
         FileDialog.h
         FileDialog.cpp
         IO/SerializableObject.h
+        IO/SerializableObject.cpp
         AssetSystem/Asset.h
         AssetSystem/Asset.cpp
         Camera.h

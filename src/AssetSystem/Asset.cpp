@@ -11,7 +11,7 @@ bool omp::Asset::loadMetadata()
     m_Metadata.path_on_disk = metadata_parser.readValue<std::string>(PATH_KEY).value();
     m_Metadata.class_id = metadata_parser.readValue<std::string>(CLASS_NAME_KEY).value();
     m_Metadata.asset_name = metadata_parser.readValue<std::string>(ASSET_NAME_KEY).value();
-    m_Metadata.dependencies = metadata_parser.readValue<std::vector<AssetHandle::handle_type>>(DEPENDENCIES_KEY).value();
+    m_Metadata.dependencies = metadata_parser.readValue<std::unordered_set<AssetHandle::handle_type>>(DEPENDENCIES_KEY).value();
     return m_Metadata.IsValid();
 }
 
@@ -73,9 +73,9 @@ omp::MetaData omp::Asset::getMetaData() const
     return m_Metadata;
 }
 
-omp::SerializableObject const* omp::Asset::getObject() const
+std::shared_ptr<omp::SerializableObject> omp::Asset::getObject() const
 {
-    return m_Object.get();
+    return m_Object;
 }
 
 omp::Asset::Asset(omp::JsonParser<>&& fileData)
@@ -97,8 +97,60 @@ void omp::Asset::specifyFileData(omp::JsonParser<>&& fileData)
 {
     m_Parser = std::move(fileData);
 }
+
 void omp::Asset::specifyMetaData(omp::MetaData&& metadata)
 {
     m_Metadata = metadata;
+}
+
+void omp::Asset::addChild(const std::shared_ptr<omp::Asset>& asset)
+{
+    if (asset.get())
+    {
+        asset->addParent(getptr());
+        m_Children.insert(asset);
+    }
+    else
+    {
+        ERROR(LogAssetManager, "Cant add child to asset: {}, with id: ", m_Metadata.asset_name, m_Metadata.class_id);
+    }
+}
+
+void omp::Asset::addParent(const std::shared_ptr<omp::Asset>& asset)
+{
+    if (asset.get())
+    {
+        m_Parents.insert(asset);
+    }
+    else
+    {
+        ERROR(LogAssetManager, "Cant add parent to asset: {}, with id: ", m_Metadata.asset_name, m_Metadata.class_id);
+    }
+}
+
+std::shared_ptr<omp::Asset> omp::Asset::getChild(AssetHandle handle)
+{
+    auto iter = m_Children.find<omp::AssetHandle>(handle);
+    if (iter != m_Children.end())
+    {
+        return *iter;
+    }
+    return nullptr;
+}
+
+std::shared_ptr<omp::Asset> omp::Asset::getParent(AssetHandle handle)
+{
+    auto iter = m_Parents.find<omp::AssetHandle>(handle);
+    if (iter != m_Parents.end())
+    {
+        return *iter;
+    }
+    return nullptr;
+}
+
+void omp::Asset::addDependency(AssetHandle::handle_type handle)
+{
+    m_Metadata.dependencies.insert(handle);
+>>>>>>> d71728b75c38c7f36b80baaf460942bff3fd67e9
 }
 

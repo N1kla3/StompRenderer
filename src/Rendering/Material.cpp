@@ -2,6 +2,7 @@
 #include "Logs.h"
 #include "MaterialManager.h"
 #include "UI/MaterialRepresentation.h"
+#include <memory>
 
 void omp::Material::addTextureInternal(TextureData&& data)
 {
@@ -65,6 +66,20 @@ omp::Material::Material(const std::string& /*name*/)
     : Material()
 {
 
+}
+
+void omp::Material::serialize(JsonParser<> &parser)
+{
+    parser.writeValue("texture", serializeDependency(m_Texture.get()));
+    parser.writeValue("diffuse_map", serializeDependency(m_DiffusiveMap.get()));
+    parser.writeValue("specular_map", serializeDependency(m_SpecularMap.get()));
+}
+
+void omp::Material::deserialize(JsonParser<> &parser)
+{
+    m_Texture = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<omp::SerializableObject::SerializationId>("texture").value()));
+    m_DiffusiveMap = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<omp::SerializableObject::SerializationId>("diffuse_map").value()));
+    m_SpecularMap = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<omp::SerializableObject::SerializationId>("specular_map").value()));
 }
 
 void omp::Material::enableBlending(bool enable)

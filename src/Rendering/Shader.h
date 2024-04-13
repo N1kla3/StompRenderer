@@ -4,11 +4,12 @@
 #include <memory>
 #include <vector>
 #include <array>
+#include "IO/SerializableObject.h"
 #include "VulkanContext.h"
 
 namespace omp
 {
-    class Shader
+    class Shader : public SerializableObject
     {
     public:
         Shader(
@@ -25,6 +26,9 @@ namespace omp
         {
             return STAGE_COUNT;
         }
+
+        virtual void serialize(JsonParser<>& parser) override;
+        virtual void deserialize(JsonParser<>& parser) override;
 
     private:
         static constexpr uint32_t STAGE_COUNT = 2;

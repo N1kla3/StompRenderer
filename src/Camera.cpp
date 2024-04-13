@@ -93,10 +93,66 @@ void omp::Camera::processMouseScroll(float /*yOffset*/)
 
 void omp::Camera::onSceneSave(omp::JsonParser<>& parser, omp::Scene* scene)
 {
+    SceneEntity::onSceneSave(parser, scene);
+
+    parser.writeValue("camerapos_x", m_Position.x);
+    parser.writeValue("camerapos_y", m_Position.y);
+    parser.writeValue("camerapos_z", m_Position.z);
+
+    parser.writeValue("front_x", m_Front.x);
+    parser.writeValue("front_y", m_Front.y);
+    parser.writeValue("front_z", m_Front.z);
+
+    parser.writeValue("up_x", m_Up.x);
+    parser.writeValue("up_y", m_Up.y);
+    parser.writeValue("up_z", m_Up.z);
+
+    parser.writeValue("right_x", m_Right.x);
+    parser.writeValue("right_y", m_Right.y);
+    parser.writeValue("right_z", m_Right.z);
+
+    parser.writeValue("worldup_x", m_WorldUp.x);
+    parser.writeValue("worldup_y", m_WorldUp.y);
+    parser.writeValue("worldup_z", m_WorldUp.z);
+
+    parser.writeValue("yaw", m_Yaw);
+    parser.writeValue("pitch", m_Pitch);
+
+    parser.writeValue("view_angle", m_ViewAngle);
+    parser.writeValue("near_clipping",  m_NearClipping);
+    parser.writeValue("far_clipping", m_FarClipping);
 }
 
 void omp::Camera::onSceneLoad(omp::JsonParser<>& parser, omp::Scene* scene)
 {
+    SceneEntity::onSceneLoad(parser, scene);
+
+    m_Position.x = parser.readValue<float>("camerapos_x").value();
+    m_Position.y = parser.readValue<float>("camerapos_y").value();
+    m_Position.z = parser.readValue<float>("camerapos_z").value();
+
+    m_Front.x = parser.readValue<float>("front_x").value();
+    m_Front.y = parser.readValue<float>("front_y").value();
+    m_Front.z = parser.readValue<float>("front_z").value();
+
+    m_Up.x = parser.readValue<float>("up_x").value();
+    m_Up.y = parser.readValue<float>("up_y").value();
+    m_Up.z = parser.readValue<float>("up_z").value();
+
+    m_Right.x = parser.readValue<float>("right_x").value();
+    m_Right.y = parser.readValue<float>("right_y").value();
+    m_Right.z = parser.readValue<float>("right_z").value();
+
+    m_WorldUp.x = parser.readValue<float>("worldup_x").value();
+    m_WorldUp.y = parser.readValue<float>("worldup_y").value();
+    m_WorldUp.z = parser.readValue<float>("worldup_z").value();
+
+    m_Yaw = parser.readValue<float>("yaw").value();
+    m_Pitch = parser.readValue<float>("pitch").value();
+
+    m_ViewAngle = parser.readValue<float>("view_angle").value();
+    m_NearClipping = parser.readValue<float>("near_clipping").value();
+    m_FarClipping = parser.readValue<float>("far_clipping").value();
 }
 
 void omp::Camera::updateCameraVectors()

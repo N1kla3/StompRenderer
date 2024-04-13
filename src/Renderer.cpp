@@ -1026,12 +1026,12 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
                     const std::unique_ptr<omp::SceneEntity>& inEnt,
                     const std::unique_ptr<omp::SceneEntity>& inEnt2) -> bool
             {
-                if (inEnt->getModel()
+                if (inEnt->getModelInstance()
                             ->getMaterialInstance()
                             ->getStaticMaterial()
                             .lock()
                             ->isBlendingEnabled() &&
-                    !inEnt2->getModel()
+                    !inEnt2->getModelInstance()
                             ->getMaterialInstance()
                             ->getStaticMaterial()
                             .lock()
@@ -1039,12 +1039,12 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
                 {
                     return false;
                 }
-                if (!inEnt->getModel()
+                if (!inEnt->getModelInstance()
                         ->getMaterialInstance()
                         ->getStaticMaterial()
                         .lock()
                         ->isBlendingEnabled() &&
-                    inEnt2->getModel()
+                    inEnt2->getModelInstance()
                             ->getMaterialInstance()
                             ->getStaticMaterial()
                             .lock()
@@ -1054,15 +1054,15 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
                 }
                 // TODO remove sqrt
                 return glm::distance(m_CurrentScene->getCurrentCamera()->getPosition(),
-                                     inEnt->getModel()->getPosition()) >
+                                     inEnt->getModelInstance()->getPosition()) >
                        glm::distance(m_CurrentScene->getCurrentCamera()->getPosition(),
-                                     inEnt2->getModel()->getPosition());
+                                     inEnt2->getModelInstance()->getPosition());
                 // return true;
             });
     for (size_t index = 0; index < scene_ref.size(); index++)
     {
         auto& scene_entity = scene_ref[index];
-        auto& material_instance = scene_entity->getModel()->getMaterialInstance();
+        auto& material_instance = scene_entity->getModelInstance()->getMaterialInstance();
         auto material = material_instance->getStaticMaterial().lock();
         if (!material)
         {
@@ -1097,15 +1097,15 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
 
         vkCmdBindVertexBuffers(
                 main_buffer, 0, 1,
-                &scene_entity->getModel()->getModel().lock()->getVertexBuffer(),
+                &scene_entity->getModelInstance()->getModel().lock()->getVertexBuffer(),
                 offsets);
         vkCmdBindIndexBuffer(
                 main_buffer,
-                scene_entity->getModel()->getModel().lock()->getIndexBuffer(), 0,
+                scene_entity->getModelInstance()->getModel().lock()->getIndexBuffer(), 0,
                 VK_INDEX_TYPE_UINT32);
 
         omp::ModelPushConstant constant{
-                scene_entity->getModel()->getTransform(),
+                scene_entity->getModelInstance()->getTransform(),
                 material_instance->getAmbient(), material_instance->getDiffusive(),
                 material_instance->getSpecular(), scene_entity->getId()};
         vkCmdPushConstants(main_buffer, model_pipeline_layout,
@@ -1132,7 +1132,7 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
         vkCmdDrawIndexed(
                 main_buffer,
                 static_cast<uint32_t>(
-                        scene_entity->getModel()->getModel().lock()->getIndices().size()),
+                        scene_entity->getModelInstance()->getModel().lock()->getIndices().size()),
                 1, 0, 0, 0);
     }
 
@@ -1141,11 +1141,11 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
         auto outline_pipeline = findGraphicsPipeline("Outline");
         vkCmdBindVertexBuffers(
                 main_buffer, 0, 1,
-                &outline_entity->getModel()->getModel().lock()->getVertexBuffer(),
+                &outline_entity->getModelInstance()->getModel().lock()->getVertexBuffer(),
                 offsets);
         vkCmdBindIndexBuffer(
                 main_buffer,
-                outline_entity->getModel()->getModel().lock()->getIndexBuffer(), 0,
+                outline_entity->getModelInstance()->getModel().lock()->getIndexBuffer(), 0,
                 VK_INDEX_TYPE_UINT32);
         vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           outline_pipeline->getGraphicsPipeline());
@@ -1156,7 +1156,7 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
         vkCmdDrawIndexed(
                 main_buffer,
                 static_cast<uint32_t>(
-                        outline_entity->getModel()->getModel().lock()->getIndices().size()),
+                        outline_entity->getModelInstance()->getModel().lock()->getIndices().size()),
                 1, 0, 0, 0);
     }
 
@@ -1580,7 +1580,7 @@ void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
     if (entity)
     {
         outline_buffer.model =
-                glm::scale(entity->getModel()->getTransform(), glm::vec3{1.2f});
+                glm::scale(entity->getModelInstance()->getTransform(), glm::vec3{1.2f});
     }
     outline_buffer.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
     m_OutlineBuffer->mapMemory(outline_buffer, currentImage);
@@ -2418,7 +2418,7 @@ void omp::Renderer::initializeScene()
     {
         if (m_CurrentScene->getCurrentEntity())
         {
-            m_CurrentScene->getCurrentEntity()->getModel()->getPosition() = glm::vec3(inVec[0], inVec[1], inVec[2]);
+            m_CurrentScene->getCurrentEntity()->getModelInstance()->getPosition() = glm::vec3(inVec[0], inVec[1], inVec[2]);
         }
     });
     m_RenderViewport->setRotationChangeCallback([this](float inVec[3])
@@ -2426,15 +2426,15 @@ void omp::Renderer::initializeScene()
         if (m_CurrentScene->getCurrentEntity())
         {
             glm::vec3 new_rotation{inVec[0], inVec[1], inVec[2]};
-            glm::vec3 rotation = m_CurrentScene->getCurrentEntity()->getModel()->getRotation();
-            m_CurrentScene->getCurrentEntity()->getModel()->getRotation() += new_rotation - rotation;
+            glm::vec3 rotation = m_CurrentScene->getCurrentEntity()->getModelInstance()->getRotation();
+            m_CurrentScene->getCurrentEntity()->getModelInstance()->getRotation() += new_rotation - rotation;
         }
     });
     m_RenderViewport->setScaleChangeCallback([this](float inVec[3])
     {
          if (m_CurrentScene->getCurrentEntity())
          {
-             m_CurrentScene->getCurrentEntity()->getModel()->getScale() =
+             m_CurrentScene->getCurrentEntity()->getModelInstance()->getScale() =
                      glm::vec3(inVec[0], inVec[1], inVec[2]);
          }
     });
@@ -2591,12 +2591,12 @@ void omp::Renderer::tick(float deltaTime)
     glm::mat4 model{};
     if (ent)
     {
-        model = ent->getModel()->getTransform();
+        model = ent->getModelInstance()->getTransform();
     }
     m_RenderViewport->sendPickingData({id, projection, model});
 
     // m_CurrentScene->getEntity("1-1")->getRotation().x += 1*deltaTime;
-    m_CurrentScene->getEntity("2-1")->getModel()->getRotation().x +=
+    m_CurrentScene->getEntity("2-1")->getModelInstance()->getRotation().x +=
             1 * deltaTime;
     // m_CurrentScene->getEntity("dfasdf")->getRotation().x += 1*deltaTime;
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
@@ -2605,9 +2605,9 @@ void omp::Renderer::tick(float deltaTime)
 void omp::Renderer::addModelToScene(std::unique_ptr<omp::SceneEntity>&& inEntity)
 {
     // TODO: do not handle default mat here
-    if (!inEntity->getModel()->getMaterialInstance())
+    if (!inEntity->getModelInstance()->getMaterialInstance())
     {
-        inEntity->getModel()->setMaterialInstance(
+        inEntity->getModelInstance()->setMaterialInstance(
                 std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
     }
     m_CurrentScene->addEntityToScene(std::move(inEntity));

@@ -64,3 +64,12 @@ omp::Shader::~Shader()
         m_Context->destroyShaderModule(module);
     }
 }
+
+void omp::Shader::serialize(JsonParser<>& parser)
+{
+}
+
+void omp::Shader::deserialize(JsonParser<>& parser)
+{
+}
+

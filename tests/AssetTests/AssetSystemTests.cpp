@@ -48,6 +48,8 @@ TEST(AssetSuite, AssetLoaderTest)
 
     local_scene->addEntityToScene(std::move(simple));
     local_scene->addCameraToScene(std::move(camera));
+    local_scene->addEntityToScene(std::move(light));
+    local_scene->addEntityToScene(std::move(lighttwo));
 
     manager.createAsset("FirstScene", "", "");
 

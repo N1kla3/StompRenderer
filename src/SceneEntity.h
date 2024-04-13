@@ -15,7 +15,7 @@ namespace omp
     protected:
         std::string m_Name;
         // TODO: rename to instance, and divide with material
-        std::shared_ptr<omp::ModelInstance> m_Model;
+        std::shared_ptr<omp::ModelInstance> m_ModelInstance;
 
     public:
         SceneEntity();
@@ -23,7 +23,7 @@ namespace omp
         virtual ~SceneEntity() = default;
         int32_t getId() const { return m_Id; }
         std::string getName() const { return m_Name; }
-        std::shared_ptr<omp::ModelInstance> getModel() const { return m_Model; }
+        std::shared_ptr<omp::ModelInstance> getModelInstance() const { return m_ModelInstance; }
 
         virtual void draw() override;
 

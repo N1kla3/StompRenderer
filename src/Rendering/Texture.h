@@ -3,6 +3,7 @@
 #include <string>
 #include "vulkan/vulkan.h"
 #include "IO/stb_image.h"
+#include <memory>
 #include "VulkanContext.h"
 
 namespace omp

@@ -3,9 +3,8 @@
 #include <vector>
 #include <memory>
 #include "Texture.h"
-#include "AssetSystem/Asset.h"
-#include "UI/MaterialPanel.h"
-#include "glm/vec4.hpp"
+#include "TextureSrc.h"
+#include "IO/SerializableObject.h"
 
 namespace omp
 {
@@ -35,10 +34,13 @@ namespace omp
         Max
     };
 
-    class Material
+    class Material : public SerializableObject
     {
     private:
         std::unique_ptr<omp::MaterialRenderInfo> m_RenderInfo;
+        std::shared_ptr<omp::TextureSrc> m_Texture;
+        std::shared_ptr<omp::TextureSrc> m_DiffusiveMap;
+        std::shared_ptr<omp::TextureSrc> m_SpecularMap;
 
         omp::MaterialManager* m_Manager = nullptr;
 
@@ -51,6 +53,9 @@ namespace omp
     public:
         Material();
         explicit Material(const std::string& name);
+
+        virtual void serialize(JsonParser<> &parser) override;
+        virtual void deserialize(JsonParser<> &parser) override;
 
         void addTexture(ETextureType type, const std::shared_ptr<Texture>& texture);
         void removeTexture(const TextureData& data);
