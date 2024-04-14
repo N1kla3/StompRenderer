@@ -11,6 +11,11 @@ void omp::TextureSrc::deserialize(JsonParser<>& parser)
     loadTextureFromFile();
 }
 
+void omp::TextureSrc::setPath(const std::string& path)
+{
+    m_Path = path;
+}
+
 void omp::TextureSrc::loadTextureFromFile()
 {
     if (m_Path.empty())

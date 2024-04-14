@@ -27,6 +27,18 @@ bool omp::Asset::loadAsset(ObjectFactory* factory)
     return false;
 }
 
+void omp::Asset::createObject(ObjectFactory* factory)
+{
+    if (m_Metadata)
+    {
+        m_Object = factory->createSerializableObject(m_Metadata.class_id);
+    }
+    else
+    {
+        WARN(LogAssetManager, "Invalid metadata to create asset from");
+    }
+}
+
 bool omp::Asset::unloadAsset()
 {
     std::lock_guard<std::mutex> lock(m_Access);

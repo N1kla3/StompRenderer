@@ -15,6 +15,8 @@ namespace omp
         loadTextureFromFile();
     }
 
+    void setPath(const std::string& path);
+
     private:
         std::string m_Path;
         stbi_uc* m_Pixels{};

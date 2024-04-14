@@ -31,6 +31,15 @@ std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)
     });
 }
 
+std::future<bool> omp::AssetManager::saveProject()
+{
+    return m_ThreadPool->submit([this]() -> bool
+    {
+        saveAssetsToDrive();
+        return true;
+    });
+}
+
 void omp::AssetManager::saveAsset(AssetHandle assetHandle)
 {
     std::shared_ptr<omp::Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
@@ -76,12 +85,21 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
     init_metadata.class_id = inClass;
     std::shared_ptr<omp::Asset> new_asset = std::make_shared<omp::Asset>();
     new_asset->specifyMetaData(std::move(init_metadata));
+    new_asset->createObject(m_Factory);
+
     // TODO: check collision
     m_AssetRegistry.add_or_update_mapping(init_metadata.asset_id, new_asset);
 
     return handle;
 }
 
+void omp::AssetManager::saveAssetsToDrive()
+{
+    m_AssetRegistry.foreach([](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
+    {
+        asset.second->saveAsset();
+    });
+}
 
 void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 {

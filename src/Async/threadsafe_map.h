@@ -4,6 +4,7 @@
 #include <list>
 #include <shared_mutex>
 #include <mutex>
+#include <functional>
 #include <algorithm>
 
 namespace omp
@@ -16,13 +17,14 @@ namespace omp
         // ====== //
         class bucket_type
         {
-        private:
+        public:
             // Types //
             // ===== //
             using bucket_value = std::pair<Key, Value>;
             using bucket_data = std::list<bucket_value>;
             using bucket_iterator = typename bucket_data::iterator;
             using bucket_const_iterator = typename bucket_data::const_iterator;
+        private:
 
 
             bucket_data m_Data;
@@ -73,6 +75,14 @@ namespace omp
                     m_Data.erase(found_entry);
                 }
             }
+            void foreach(const std::function<void(bucket_value&)> functor)
+            {
+                std::unique_lock<std::shared_mutex> lock(m_Mutex);
+                for (bucket_value& value : m_Data)
+                {
+                    functor(value);
+                }
+            }
         };
 
         // Hash Map Impl //
@@ -119,5 +129,14 @@ namespace omp
         {
             get_bucket(key).remove_mapping(key);
         }
+
+        void foreach(const std::function<void(typename bucket_type::bucket_value&)> functor)
+        {
+            for (auto& bucket : m_Buckets)
+            {
+                bucket->foreach(functor);
+            }
+        }
+
     };
 }

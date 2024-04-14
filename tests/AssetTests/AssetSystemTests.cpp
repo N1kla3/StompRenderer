@@ -31,12 +31,15 @@ TEST(AssetSuite, AssetLoaderTest)
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
     omp::AssetManager manager(pool.get(), factory.get());
 
-    omp::AssetHandle texture_handle = manager.createAsset("cube", "/texture.json", "TextureSrc");
-    //manager.getAsset()
+    omp::AssetHandle texture_handle = manager.createAsset("cube", g_TestProjectPath + "/texture.json", "TextureSrc");
+    auto texture = manager.getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
+    if (texture)
+    {
+        texture->setPath("../../../textures/container.png");
+    }
 
     std::unique_ptr<omp::Scene> local_scene = std::make_unique<omp::Scene>();
 
-    std::shared_ptr<omp::TextureSrc> texture = std::make_shared<omp::TextureSrc>("../../../textures/container.png");
     std::shared_ptr<omp::Model> model = std::make_shared<omp::Model>("../../../models/cube2.obj");
     auto material = std::make_shared<omp::Material>();
 
@@ -51,7 +54,12 @@ TEST(AssetSuite, AssetLoaderTest)
     local_scene->addEntityToScene(std::move(light));
     local_scene->addEntityToScene(std::move(lighttwo));
 
-    manager.createAsset("FirstScene", "", "");
+    omp::AssetHandle scene_handle = manager.createAsset("main_scene", g_TestProjectPath + "/main_scene.json", "Scene");
+    auto scene = manager.getAsset(scene_handle).lock()->getObjectAs<omp::Scene>();
+    if (scene)
+    {
+
+    }
 
     std::future<bool> wait = manager.loadProject(g_TestProjectPath);
 }

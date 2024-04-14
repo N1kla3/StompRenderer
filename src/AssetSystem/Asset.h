@@ -99,7 +99,7 @@ namespace omp
         std::unordered_set<std::shared_ptr<omp::Asset>, asset_hash, asset_equal> m_Children;
         MetaData m_Metadata;
         JsonParser<> m_Parser;
-        std::shared_ptr<SerializableObject> m_Object;
+        std::shared_ptr<SerializableObject> m_Object = nullptr;
         mutable std::mutex m_Access;
 
     // Methods //
@@ -107,6 +107,7 @@ namespace omp
     private:
         bool loadMetadata();
         bool loadAsset(ObjectFactory* factory);
+        void createObject(ObjectFactory* factory);
         bool unloadAsset();
         bool saveMetadata();
         bool saveAsset();
@@ -126,6 +127,11 @@ namespace omp
         std::shared_ptr<omp::Asset> getParent(AssetHandle handle);
 
         std::shared_ptr<SerializableObject> getObject() const;
+        template< typename T >
+        std::shared_ptr<T> getObjectAs() const
+        {
+            return std::dynamic_pointer_cast<T>(m_Object);
+        }
         std::shared_ptr<Asset> getptr()
         {
             return shared_from_this();
