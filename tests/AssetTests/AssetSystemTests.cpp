@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include <memory>
 #include "AssetSystem/AssetManager.h"
+#include "Logs.h"
 #include "SceneEntity.h"
 #include "Scene.h"
 #include "SceneEntityFactory.h"
@@ -14,6 +15,7 @@ protected:
 
     static void SetUpTestSuite()
     {
+        std::cout <<"hello";
         omp::InitializeTestLogs();
         omp::SceneEntityFactory::registerClass<omp::SceneEntity>("SceneEntity");
         omp::SceneEntityFactory::registerClass<omp::Camera>("Camera");
@@ -25,7 +27,7 @@ protected:
 
 const std::string g_TestProjectPath = "../../../tests/assets";
 
-TEST(AssetSuite, AssetLoaderTest)
+TEST_F(AssetSuite, AssetLoaderTest)
 {
     INFO(LogTesting, "Start first asset test");
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
@@ -70,7 +72,7 @@ TEST(AssetSuite, AssetLoaderTest)
     INFO(LogTesting, "Finished");
 }
 
-TEST(AssetSuite, AssetMetadata)
+TEST_F(AssetSuite, AssetMetadata)
 {
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
@@ -79,7 +81,7 @@ TEST(AssetSuite, AssetMetadata)
     std::future<bool> wait = manager.loadProject(g_TestProjectPath);
 }
 
-TEST(AssetSuite, AssetFirst)
+TEST_F(AssetSuite, AssetFirst)
 {
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
