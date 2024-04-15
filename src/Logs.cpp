@@ -25,7 +25,7 @@ void omp::InitializeTestLogs()
     }
     // TODO Log categories, not strings
     std::vector<spdlog::sink_ptr> sinks;
-    sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/TestLogs.txt"));
+    sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("../TestLogs.txt"));
     sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
     auto&& rendering_log = std::make_shared<spdlog::logger>("LogRendering", begin(sinks), end(sinks));
     auto&& ui_log = std::make_shared<spdlog::logger>("LogUI", begin(sinks), end(sinks));

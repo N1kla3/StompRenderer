@@ -4,6 +4,7 @@
 #include "ImguiUnit.h"
 #include "Scene.h"
 #include "EntityPanel.h"
+#include "MaterialPanel.h"
 
 namespace omp
 {

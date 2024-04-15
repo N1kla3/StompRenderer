@@ -136,6 +136,7 @@ public:
     // Methods //
     // ======= //
     void setName(const std::string& inName) { m_Name = inName; }
+    void setPath(const std::string& inPath) { m_Path = inPath; }
 
     void loadVertexToMemory(const std::shared_ptr<omp::VulkanContext>& inContext);
     void loadIndexToMemory(const std::shared_ptr<omp::VulkanContext>& inContext);
