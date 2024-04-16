@@ -24,6 +24,7 @@ namespace omp
         int32_t getId() const { return m_Id; }
         std::string getName() const { return m_Name; }
         std::shared_ptr<omp::ModelInstance> getModelInstance() const { return m_ModelInstance; }
+        void setModelInstance(const std::shared_ptr<omp::ModelInstance>& instance) { m_ModelInstance = instance; }
 
         virtual void draw() override;
 

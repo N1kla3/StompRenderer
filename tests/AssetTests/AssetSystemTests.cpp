@@ -44,17 +44,22 @@ TEST_F(AssetSuite, AssetLoaderTest)
 
     // TODO: project root automatically added
     omp::AssetHandle model_handle = manager.createAsset("cube_model", g_TestProjectPath + "/cube_model.json", "Model");
-    auto model = manager.getAsset(texture_handle).lock()->getObjectAs<omp::Model>();
+    auto model = manager.getAsset(model_handle).lock()->getObjectAs<omp::Model>();
     if (model)
     {
         model->setPath("../../../models/cube2.obj");
     }
 
     auto material = std::make_shared<omp::Material>();
+    material->addSpecularTexture(texture);
+    material->addTexture(texture);
+    material->addDiffusiveTexture(texture);
 
-    std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>();
+
+    std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
     std::unique_ptr<omp::SceneEntity> simple = std::make_unique<omp::SceneEntity>("testent", inst);
     std::unique_ptr<omp::Camera> camera = std::make_unique<omp::Camera>();
+    camera->setModelInstance(inst);
     std::unique_ptr<omp::SceneEntity> light = std::make_unique<omp::LightObject<omp::GlobalLight>>("globallig", inst);
     std::unique_ptr<omp::SceneEntity> lighttwo = std::make_unique<omp::LightObject<omp::SpotLight>>("lightspot", inst);
 
@@ -69,7 +74,9 @@ TEST_F(AssetSuite, AssetLoaderTest)
     }
 
     std::future<bool> wait = manager.saveProject();
+    EXPECT_NO_THROW(wait.get());
     INFO(LogTesting, "Finished");
+    ASSERT_TRUE(true);
 }
 
 TEST_F(AssetSuite, AssetMetadata)

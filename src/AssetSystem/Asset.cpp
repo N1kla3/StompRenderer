@@ -21,7 +21,7 @@ bool omp::Asset::loadAsset(ObjectFactory* factory)
     if (m_Metadata)
     {
         m_Object = factory->createSerializableObject(m_Metadata.class_id);
-        m_Object->serialize(m_Parser);
+        m_Object->deserialize(m_Parser);
         return true;
     }
     return false;
@@ -68,7 +68,7 @@ bool omp::Asset::saveAsset()
         std::lock_guard<std::mutex> lock(m_Access);
         if (m_Object)
         {
-            m_Object->deserialize(m_Parser);
+            m_Object->serialize(m_Parser);
             return m_Parser.writeToFile(m_Metadata.path_on_disk);
         }
         else
@@ -163,5 +163,14 @@ std::shared_ptr<omp::Asset> omp::Asset::getParent(AssetHandle handle)
 void omp::Asset::addDependency(AssetHandle::handle_type handle)
 {
     m_Metadata.dependencies.insert(handle);
+}
+
+void omp::Asset::addMetadataToObject(omp::Asset* asset, omp::SerializableObject::SerializationId id)
+{
+    if (m_Object)
+    {
+        m_Object->m_SerializationId = id;
+        m_Object->m_Asset = asset;
+    }
 }
 

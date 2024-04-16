@@ -79,13 +79,23 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
 {
     omp::MetaData init_metadata;
     // TODO: unique id
-    AssetHandle handle(1);
+    static uint64_t id = 1;
+    AssetHandle handle(++id);
+    init_metadata.asset_id = id;
     init_metadata.asset_name = inName;
     init_metadata.path_on_disk = inPath;
     init_metadata.class_id = inClass;
     std::shared_ptr<omp::Asset> new_asset = std::make_shared<omp::Asset>();
-    new_asset->specifyMetaData(std::move(init_metadata));
-    new_asset->createObject(m_Factory);
+    if (new_asset)
+    {
+        new_asset->specifyMetaData(std::move(init_metadata));
+        new_asset->createObject(m_Factory);
+        new_asset->addMetadataToObject(new_asset.get(), id);
+    }
+    else
+    {
+        ERROR(LogAssetManager, "Asset failed to create, class: {}", inClass);
+    }
 
     // TODO: check collision
     m_AssetRegistry.add_or_update_mapping(init_metadata.asset_id, new_asset);
@@ -97,7 +107,9 @@ void omp::AssetManager::saveAssetsToDrive()
 {
     m_AssetRegistry.foreach([](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
     {
+        INFO(LogAssetManager, "Starting to Save asset: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
         asset.second->saveAsset();
+        INFO(LogAssetManager, "AssetSaved: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
     });
 }
 

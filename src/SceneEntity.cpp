@@ -60,8 +60,14 @@ void omp::SceneEntity::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
     parser.writeValue("scale_y", scale.y);
     parser.writeValue("scale_z", scale.z);
 
-    parser.writeValue("model_id", scene->serializeDependency(m_ModelInstance->getModel().lock().get()));
-    parser.writeValue("material_id", scene->serializeDependency(m_ModelInstance->getMaterialInstance()->getStaticMaterial().lock().get()));
+    if (!m_ModelInstance->getModel().expired())
+    {
+        parser.writeValue("model_id", scene->serializeDependency(m_ModelInstance->getModel().lock().get()));
+    }
+    if (m_ModelInstance && m_ModelInstance->getMaterialInstance() && m_ModelInstance->getMaterialInstance()->getStaticMaterial().lock().get()) 
+    {
+        parser.writeValue("material_id", scene->serializeDependency(m_ModelInstance->getMaterialInstance()->getStaticMaterial().lock().get()));
+    }
 
     glm::vec4 ambient = m_ModelInstance->getMaterialInstance()->getAmbient();
     parser.writeValue("ambient_x", ambient.x);

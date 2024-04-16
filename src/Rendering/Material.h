@@ -60,6 +60,11 @@ namespace omp
         void addTexture(ETextureType type, const std::shared_ptr<Texture>& texture);
         void removeTexture(const TextureData& data);
 
+        // TODO: implement properly
+        void addTexture(const std::shared_ptr<omp::TextureSrc>& texture) { m_Texture = texture; }
+        void addDiffusiveTexture(const std::shared_ptr<omp::TextureSrc>& texture) { m_DiffusiveMap = texture; }
+        void addSpecularTexture(const std::shared_ptr<omp::TextureSrc>& texture) { m_SpecularMap = texture; }
+
         std::vector<TextureData> getTextureData() const;
 
         void setShaderName(const std::string& newName) { m_RenderInfo->shader_name = newName; };

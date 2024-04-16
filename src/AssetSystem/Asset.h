@@ -42,14 +42,14 @@ namespace omp
     struct MetaData
     {
         AssetHandle::handle_type asset_id = 0;
-        std::string asset_name = "none";
-        std::string path_on_disk = "none";
-        std::string class_id = "none";
+        std::string asset_name = "";
+        std::string path_on_disk = "";
+        std::string class_id = "";
         std::unordered_set<AssetHandle::handle_type> dependencies;
 
         bool IsValid() const
         {
-            return asset_id != 0 && !path_on_disk.empty() && path_on_disk.compare("none") != 0 && !class_id.empty() && class_id.compare("none") != 0;
+            return asset_id != 0 && !path_on_disk.empty() && !class_id.empty() && !asset_name.empty();
         }
         operator bool() const
         {
@@ -108,6 +108,7 @@ namespace omp
         bool loadMetadata();
         bool loadAsset(ObjectFactory* factory);
         void createObject(ObjectFactory* factory);
+        void addMetadataToObject(omp::Asset* asset, omp::SerializableObject::SerializationId id);
         bool unloadAsset();
         bool saveMetadata();
         bool saveAsset();
