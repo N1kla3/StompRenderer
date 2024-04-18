@@ -63,12 +63,15 @@ bool omp::Asset::saveAsset()
 {
     if (m_Metadata)
     {
-        // TODO:: overwritten???
-        // TODO : What if some keys are deleted? they still in json?
         std::lock_guard<std::mutex> lock(m_Access);
         if (m_Object)
         {
-            m_Object->serialize(m_Parser);
+            bool succ = saveMetadata();
+
+            JsonParser<> main_data_parser;
+            m_Object->serialize(main_data_parser);
+            m_Parser.writeObject("main_data", std::move(main_data_parser));
+
             return m_Parser.writeToFile(m_Metadata.path_on_disk);
         }
         else

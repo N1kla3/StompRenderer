@@ -62,6 +62,7 @@ TEST_F(AssetSuite, AssetLoaderTest)
     std::unique_ptr<omp::SceneEntity> simple = std::make_unique<omp::SceneEntity>("testent", inst);
     std::unique_ptr<omp::Camera> camera = std::make_unique<omp::Camera>();
     camera->setModelInstance(inst);
+    camera->setName("camera1");
     std::unique_ptr<omp::SceneEntity> light = std::make_unique<omp::LightObject<omp::GlobalLight>>("globallig", inst);
     std::unique_ptr<omp::SceneEntity> lighttwo = std::make_unique<omp::LightObject<omp::SpotLight>>("lightspot", inst);
 
@@ -86,6 +87,7 @@ TEST_F(AssetSuite, AssetMetadata)
 {
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
+    INFO(LogTesting, "Start loading test");
     omp::AssetManager manager(pool.get(), factory.get());
 
     std::future<bool> wait = manager.loadProject(g_TestProjectPath);
