@@ -37,6 +37,7 @@ TEST_F(AssetSuite, AssetLoaderTest)
 
     omp::AssetHandle texture_handle = manager.createAsset("cube", g_TestProjectPath + "/texture.json", "TextureSrc");
     auto texture = manager.getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
+    EXPECT_TRUE(texture);
     if (texture)
     {
         texture->setPath("../../../textures/container.png");
@@ -45,6 +46,7 @@ TEST_F(AssetSuite, AssetLoaderTest)
     // TODO: project root automatically added
     omp::AssetHandle model_handle = manager.createAsset("cube_model", g_TestProjectPath + "/cube_model.json", "Model");
     auto model = manager.getAsset(model_handle).lock()->getObjectAs<omp::Model>();
+    EXPECT_TRUE(model);
     if (model)
     {
         model->setPath("../../../models/cube2.obj");
@@ -65,6 +67,7 @@ TEST_F(AssetSuite, AssetLoaderTest)
 
     omp::AssetHandle scene_handle = manager.createAsset("main_scene", g_TestProjectPath + "/main_scene.json", "Scene");
     auto scene = manager.getAsset(scene_handle).lock()->getObjectAs<omp::Scene>();
+    EXPECT_TRUE(scene);
     if (scene)
     {
         scene->addEntityToScene(std::move(simple));
