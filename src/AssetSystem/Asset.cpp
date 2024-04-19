@@ -88,6 +88,7 @@ bool omp::Asset::saveAsset()
 
 omp::MetaData omp::Asset::getMetaData() const
 {
+    std::unique_lock lock(m_Access);
     return m_Metadata;
 }
 
@@ -125,7 +126,7 @@ void omp::Asset::addChild(const std::shared_ptr<omp::Asset>& asset)
 {
     if (asset.get())
     {
-        asset->addParent(getptr());
+        asset->m_Parents.insert(getptr());
         m_Children.insert(asset);
     }
     else
@@ -138,6 +139,7 @@ void omp::Asset::addParent(const std::shared_ptr<omp::Asset>& asset)
 {
     if (asset.get())
     {
+        asset->m_Children.insert(getptr());
         m_Parents.insert(asset);
     }
     else

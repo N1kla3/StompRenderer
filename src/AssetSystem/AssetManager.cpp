@@ -157,7 +157,7 @@ void omp::AssetManager::loadAsset_internal(const std::string& inPath)
     }
 }
 
-std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAsset(AssetHandle assetHandle)
+std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAssetAsync(AssetHandle assetHandle)
 {
     std::shared_ptr<Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
     std::future<std::weak_ptr<Asset>> result;
@@ -165,9 +165,40 @@ std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAsset(AssetHandle 
     {
         result = m_ThreadPool->submit([found_asset, this, assetHandle]()
         {
+            auto metadata = found_asset->getMetaData();
+            for (auto dependency_id : metadata.dependencies)
+            {
+                INFO(LogAssetManager, "ASYNC: Start loading dependency for asset {}, dependency: {}", metadata.asset_id, dependency_id);
+
+                std::weak_ptr<omp::Asset> child = loadAsset(dependency_id);
+                found_asset->addChild(child.lock());
+            }
+            
             found_asset->loadAsset(m_Factory);
             return std::weak_ptr<omp::Asset>(found_asset);
         });
+    }
+    ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);
+    return result;
+}
+
+std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(AssetHandle assetHandle)
+{
+    std::shared_ptr<Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
+    std::weak_ptr<Asset> result;
+    if (found_asset)
+    {
+        auto metadata = found_asset->getMetaData();
+        for (auto dependency_id : metadata.dependencies)
+        {
+            INFO(LogAssetManager, "Start loading dependency for asset {}, dependency: {}", metadata.asset_id, dependency_id);
+
+            std::weak_ptr<omp::Asset> child = loadAsset(dependency_id);
+            found_asset->addChild(child.lock());
+        }
+        
+        found_asset->loadAsset(m_Factory);
+        return std::weak_ptr<omp::Asset>(found_asset);
     }
     ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);
     return result;
