@@ -88,16 +88,20 @@ TEST_F(AssetSuite, AssetMetadata)
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
     INFO(LogTesting, "Start loading test");
-    omp::AssetManager manager(pool.get(), factory.get());
+    std::unique_ptr<omp::AssetManager> manager = std::make_unique<omp::AssetManager>(pool.get(), factory.get());
 
-    std::future<bool> wait = manager.loadProject(g_TestProjectPath);
+    std::future<bool> wait = manager->loadProject(g_TestProjectPath);
+    EXPECT_NO_THROW(wait.get());
+    ASSERT_TRUE(true);
 }
 
 TEST_F(AssetSuite, AssetFirst)
 {
     std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
     std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
-    omp::AssetManager manager(pool.get(), factory.get());
+    std::unique_ptr<omp::AssetManager> manager = std::make_unique<omp::AssetManager>(pool.get(), factory.get());
 
-    std::future<bool> wait = manager.loadProject(g_TestProjectPath);
+    std::future<bool> wait = manager->loadProject(g_TestProjectPath);
+    EXPECT_NO_THROW(wait.get());
+    ASSERT_TRUE(true);
 }

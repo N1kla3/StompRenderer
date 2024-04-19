@@ -12,6 +12,7 @@ using namespace std::filesystem;
 omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory* factory)
     : m_ThreadPool(threadPool)
     , m_Factory(factory)
+    , m_AssetRegistry()
 {
     // TODO: strange
     // loadAssetsFromDrive();
@@ -20,6 +21,11 @@ omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory*
     m_Factory->registerClass<omp::TextureSrc>("TextureSrc");
     m_Factory->registerClass<omp::Model>("Model");
     m_Factory->registerClass<omp::Scene>("Scene");
+}
+
+omp::AssetManager::~AssetManager()
+{
+    //m_ThreadPool.reset();
 }
 
 std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)

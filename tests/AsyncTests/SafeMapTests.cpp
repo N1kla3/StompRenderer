@@ -33,7 +33,7 @@ struct test_value
 TEST_F(SafeMapSuite, SafeMap_one)
 {
     std::unique_ptr<omp::ThreadPool> pool = std::make_unique<omp::ThreadPool>(5);
-    omp::threadsafe_map<std::string, test_value> registry;
+    omp::threadsafe_map<std::string, test_value> registry{};
     
     std::promise<void> start, prom_a, prom_b, prom_c;
     std::shared_future<void> ready = start.get_future();

@@ -20,7 +20,7 @@ namespace omp
 public:
 
         AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory* factory);
-        ~AssetManager() = default;
+        ~AssetManager();
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;
         AssetManager(AssetManager&&) = delete;

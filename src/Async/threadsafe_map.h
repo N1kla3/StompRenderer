@@ -101,7 +101,16 @@ namespace omp
         using mapped_type = Value;
         using hash_type = Hash;
 
-        threadsafe_map(uint32_t num_buckets = 19, const hash_type& hasher = hash_type())
+        threadsafe_map()
+                : m_Buckets(19)
+                , m_Hasher(hash_type())
+        {
+            for (uint32_t index = 0; index < m_Buckets.size(); index++)
+            {
+                m_Buckets[index].reset(new bucket_type);
+            }
+        }
+        threadsafe_map(uint32_t num_buckets, const hash_type& hasher)
             : m_Buckets(num_buckets)
             , m_Hasher(hasher)
         {
