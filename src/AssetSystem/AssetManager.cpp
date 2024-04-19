@@ -21,6 +21,7 @@ omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory*
     m_Factory->registerClass<omp::TextureSrc>("TextureSrc");
     m_Factory->registerClass<omp::Model>("Model");
     m_Factory->registerClass<omp::Scene>("Scene");
+    m_Factory->registerClass<omp::Material>("Material");
 }
 
 omp::AssetManager::~AssetManager()

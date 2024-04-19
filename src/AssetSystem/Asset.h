@@ -161,5 +161,7 @@ namespace omp
         inline static const std::string CLASS_NAME_KEY = "ClassName";
         inline static const std::string ASSET_NAME_KEY = "AssetName";
         inline static const std::string DEPENDENCIES_KEY = "Dependencies";
+        inline static const std::string METADATA_KEY = "Metadata";
+        inline static const std::string MAIN_DATA_KEY = "MainData";
     };
 }

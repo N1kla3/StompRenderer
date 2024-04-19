@@ -52,7 +52,8 @@ TEST_F(AssetSuite, AssetLoaderTest)
         model->setPath("../../../models/cube2.obj");
     }
 
-    auto material = std::make_shared<omp::Material>();
+    omp::AssetHandle material_handle = manager.createAsset("def_mat", g_TestProjectPath + "/def_material.json", "Material");
+    auto material = manager.getAsset(material_handle).lock()->getObjectAs<omp::Material>();
     material->addSpecularTexture(texture);
     material->addTexture(texture);
     material->addDiffusiveTexture(texture);

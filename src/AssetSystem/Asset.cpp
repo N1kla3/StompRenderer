@@ -6,7 +6,7 @@
 
 bool omp::Asset::loadMetadata()
 {
-    JsonParser<> metadata_parser = m_Parser.readObject("Metadata");
+    JsonParser<> metadata_parser = m_Parser.readObject(METADATA_KEY);
     m_Metadata.asset_id = metadata_parser.readValue<uint64_t>(ID_KEY).value_or(0);
     m_Metadata.path_on_disk = metadata_parser.readValue<std::string>(PATH_KEY).value();
     m_Metadata.class_id = metadata_parser.readValue<std::string>(CLASS_NAME_KEY).value();
@@ -21,7 +21,8 @@ bool omp::Asset::loadAsset(ObjectFactory* factory)
     if (m_Metadata)
     {
         m_Object = factory->createSerializableObject(m_Metadata.class_id);
-        m_Object->deserialize(m_Parser);
+        JsonParser<> main_parser = m_Parser.readObject(MAIN_DATA_KEY);
+        m_Object->deserialize(main_parser);
         return true;
     }
     return false;
@@ -55,7 +56,7 @@ bool omp::Asset::saveMetadata()
     metadata_parser.writeValue(ASSET_NAME_KEY, m_Metadata.asset_name);
     metadata_parser.writeValue(DEPENDENCIES_KEY, m_Metadata.dependencies);
 
-    m_Parser.writeObject("Metadata", std::move(metadata_parser));
+    m_Parser.writeObject(METADATA_KEY, std::move(metadata_parser));
     return m_Metadata.IsValid();
 }
 
@@ -66,11 +67,13 @@ bool omp::Asset::saveAsset()
         std::lock_guard<std::mutex> lock(m_Access);
         if (m_Object)
         {
-            bool succ = saveMetadata();
 
             JsonParser<> main_data_parser;
             m_Object->serialize(main_data_parser);
-            m_Parser.writeObject("main_data", std::move(main_data_parser));
+            m_Parser.writeObject(MAIN_DATA_KEY, std::move(main_data_parser));
+
+            // Call after main serialization, because we need to know dependencies
+            bool succ = saveMetadata();
 
             return m_Parser.writeToFile(m_Metadata.path_on_disk);
         }
@@ -166,6 +169,7 @@ std::shared_ptr<omp::Asset> omp::Asset::getParent(AssetHandle handle)
 void omp::Asset::addDependency(AssetHandle::handle_type handle)
 {
     m_Metadata.dependencies.insert(handle);
+    INFO(LogAssetManager, "DEPENDENCY ADDED {}", handle);
 }
 
 void omp::Asset::addMetadataToObject(omp::Asset* asset, omp::SerializableObject::SerializationId id)
