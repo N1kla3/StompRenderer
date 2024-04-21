@@ -13,6 +13,7 @@ namespace omp
 }
 
 // Categories
+constexpr int LogCore = 0;
 constexpr int LogRendering = 0;
 constexpr int LogUI = 0;
 constexpr int LogAssetManager = 0;

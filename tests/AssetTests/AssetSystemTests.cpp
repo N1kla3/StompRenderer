@@ -15,7 +15,6 @@ protected:
 
     static void SetUpTestSuite()
     {
-        std::cout <<"hello";
         omp::InitializeTestLogs();
         omp::SceneEntityFactory::registerClass<omp::SceneEntity>("SceneEntity");
         omp::SceneEntityFactory::registerClass<omp::Camera>("Camera");
@@ -93,6 +92,11 @@ TEST_F(AssetSuite, AssetMetadata)
 
     std::future<bool> wait = manager->loadProject(g_TestProjectPath);
     EXPECT_NO_THROW(wait.get());
+
+    manager->loadAsset(2);
+    manager->loadAsset(3);
+    manager->loadAsset(4);
+
     ASSERT_TRUE(true);
 }
 

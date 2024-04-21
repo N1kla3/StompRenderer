@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <future>
 #include "Rendering/TextureSrc.h"
+#include "Core/CoreLib.h"
 #include "Scene.h"
 #include "Rendering/Model.h"
 
@@ -85,9 +86,15 @@ void omp::AssetManager::deleteAsset(AssetHandle assetHandle)
 omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass)
 {
     omp::MetaData init_metadata;
-    // TODO: unique id
-    static uint64_t id = 1;
-    AssetHandle handle(++id);
+    uint64_t id = omp::CoreLib::generateId64();
+
+    while (m_AssetRegistry.value_for(id, nullptr))
+    {
+        ERROR(LogAssetManager, "Trying to create asset with existing id!! ID: {}", id);
+        id = omp::CoreLib::generateId64();
+    } 
+
+    AssetHandle handle(id);
     init_metadata.asset_id = id;
     init_metadata.asset_name = inName;
     init_metadata.path_on_disk = inPath;
@@ -103,8 +110,6 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
     {
         ERROR(LogAssetManager, "Asset failed to create, class: {}", inClass);
     }
-
-    // TODO: check collision
     m_AssetRegistry.add_or_update_mapping(init_metadata.asset_id, new_asset);
 
     return handle;

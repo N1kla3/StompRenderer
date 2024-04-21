@@ -19,6 +19,11 @@ omp::SerializableObject::SerializationId omp::SerializableObject::serializeDepen
 
 std::shared_ptr<omp::SerializableObject> omp::SerializableObject::getDependency(omp::SerializableObject::SerializationId id)
 {
+    if (!m_Asset)
+    {
+        ERROR(LogAssetManager, "Asset not specialized in serializable object");
+        return nullptr;
+    }
     std::shared_ptr<omp::Asset> asset = m_Asset->getChild(id);
     if (asset)
     {
