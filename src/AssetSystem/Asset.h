@@ -102,6 +102,8 @@ namespace omp
         std::shared_ptr<SerializableObject> m_Object = nullptr;
         mutable std::mutex m_Access;
 
+        bool m_IsLoaded = false;
+
     // Methods //
     // ======= //
     private:
@@ -138,6 +140,8 @@ namespace omp
             return shared_from_this();
         }
         void addDependency(AssetHandle::handle_type handle);
+
+        bool isLoaded() const { return m_IsLoaded; }
 
     // Constructors/operators //
     // ====================== //

@@ -18,11 +18,12 @@ bool omp::Asset::loadMetadata()
 bool omp::Asset::loadAsset(ObjectFactory* factory)
 {
     std::lock_guard<std::mutex> lock(m_Access);
-    if (m_Metadata)
+    if (m_Metadata && !m_IsLoaded)
     {
         m_Object = factory->createSerializableObject(m_Metadata.class_id);
         JsonParser<> main_parser = m_Parser.readObject(MAIN_DATA_KEY);
         m_Object->deserialize(main_parser);
+        m_IsLoaded = true;
         return true;
     }
     return false;
@@ -33,6 +34,10 @@ void omp::Asset::createObject(ObjectFactory* factory)
     if (m_Metadata)
     {
         m_Object = factory->createSerializableObject(m_Metadata.class_id);
+        if (m_Object)
+        {
+            m_IsLoaded = true;
+        }
     }
     else
     {
@@ -43,8 +48,13 @@ void omp::Asset::createObject(ObjectFactory* factory)
 bool omp::Asset::unloadAsset()
 {
     std::lock_guard<std::mutex> lock(m_Access);
-    m_Object.reset();
-    return true;
+    if (m_Object)
+    {
+        m_Object.reset();
+        m_IsLoaded = false;
+        return true;
+    }
+    return false;
 }
 
 bool omp::Asset::saveMetadata()

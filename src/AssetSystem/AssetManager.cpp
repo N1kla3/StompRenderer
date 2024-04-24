@@ -53,6 +53,11 @@ void omp::AssetManager::saveAsset(AssetHandle assetHandle)
     std::shared_ptr<omp::Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
     if (found_asset)
     {
+        if (!found_asset->isLoaded())
+        {
+            WARN(LogAssetManager, "Cant save unloaded asset with id: {}", assetHandle.id);
+            return;
+        }
         // TODO: saving multithreading handling, conflicts
         m_ThreadPool->submit([found_asset]()
         {
@@ -185,6 +190,18 @@ std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAssetAsync(AssetHa
     }
     ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);
     return result;
+}
+
+std::future<bool> omp::AssetManager::loadAllAssets()
+{
+    return m_ThreadPool->submit([this]() -> bool
+    {
+        m_AssetRegistry.foreach([this](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
+        {
+            asset.second->loadAsset(m_Factory);
+        });
+        return true;
+    });
 }
 
 std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(AssetHandle assetHandle)

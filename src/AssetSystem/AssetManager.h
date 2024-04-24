@@ -29,6 +29,10 @@ namespace omp
         std::future<bool> loadProject(const std::string& inPath = ASSET_FOLDER);
         std::future<bool> saveProject();
         std::future<std::weak_ptr<Asset>> loadAssetAsync(AssetHandle assetId);
+        std::future<bool> loadAllAssets();
+        /* 
+         * Try to load asset, if already loaded, will return asset
+         * */
         std::weak_ptr<Asset> loadAsset(AssetHandle assetId);
         void saveAsset(AssetHandle assetId);
         void deleteAsset(AssetHandle assetId);

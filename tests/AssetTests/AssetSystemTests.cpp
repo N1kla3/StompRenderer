@@ -93,9 +93,8 @@ TEST_F(AssetSuite, AssetMetadata)
     std::future<bool> wait = manager->loadProject(g_TestProjectPath);
     EXPECT_NO_THROW(wait.get());
 
-    manager->loadAsset(2);
-    manager->loadAsset(3);
-    manager->loadAsset(4);
+    std::future<bool> result = manager->loadAllAssets();
+    EXPECT_NO_THROW(result.get());
 
     ASSERT_TRUE(true);
 }
@@ -108,5 +107,8 @@ TEST_F(AssetSuite, AssetFirst)
 
     std::future<bool> wait = manager->loadProject(g_TestProjectPath);
     EXPECT_NO_THROW(wait.get());
+
+    std::future<bool> res = manager->saveProject();
+    EXPECT_NO_THROW(res.get());
     ASSERT_TRUE(true);
 }
