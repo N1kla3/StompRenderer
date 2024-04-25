@@ -1,0 +1,12 @@
+{
+    "MainData": {
+        "PathToTexture": "../textures/viking.png"
+    },
+    "Metadata": {
+        "AssetName": "viking_texture",
+        "ClassName": "TextureSrc",
+        "Dependencies": [],
+        "DiscPath": "../assets/viking_texture.json",
+        "ObjectID": 963798874606
+    }
+}

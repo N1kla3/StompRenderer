@@ -1,0 +1,12 @@
+{
+    "MainData": {
+        "PathToTexture": "../textures/default.png"
+    },
+    "Metadata": {
+        "AssetName": "plane_texture",
+        "ClassName": "TextureSrc",
+        "Dependencies": [],
+        "DiscPath": "../assets/plane_texture.json",
+        "ObjectID": 1062584236526
+    }
+}

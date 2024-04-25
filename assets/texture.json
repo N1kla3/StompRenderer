@@ -1,0 +1,12 @@
+{
+    "MainData": {
+        "PathToTexture": "../textures/container.png"
+    },
+    "Metadata": {
+        "AssetName": "container",
+        "ClassName": "TextureSrc",
+        "Dependencies": [],
+        "DiscPath": "../assets/texture.json",
+        "ObjectID": 10844668879391734254
+    }
+}

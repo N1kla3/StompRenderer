@@ -1,0 +1,16 @@
+{
+    "MainData": {
+        "diffuse_map": 1019634170350,
+        "specular_map": 1019634170350,
+        "texture": 1019634170350
+    },
+    "Metadata": {
+        "AssetName": "grass_mat",
+        "ClassName": "Material",
+        "Dependencies": [
+            1019634170350
+        ],
+        "DiscPath": "../assets/grass_material.json",
+        "ObjectID": 1011043842542
+    }
+}

@@ -18,6 +18,21 @@ omp::SceneEntity::SceneEntity(const std::string& inName, const std::shared_ptr<o
     m_Id = id++;
 }
 
+void omp::SceneEntity::setTranslation(const glm::vec3& trans)
+{
+    m_ModelInstance->getPosition() = trans;
+}
+
+void omp::SceneEntity::setRotation(const glm::vec3& rot)
+{
+    m_ModelInstance->getRotation() = rot;
+}
+
+void omp::SceneEntity::setScale(const glm::vec3& scale)
+{
+    m_ModelInstance->getScale() = scale;
+}
+
 void omp::SceneEntity::draw()
 {
     if (m_ModelInstance)

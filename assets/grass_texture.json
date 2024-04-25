@@ -1,0 +1,12 @@
+{
+    "MainData": {
+        "PathToTexture": "../textures/grass.png"
+    },
+    "Metadata": {
+        "AssetName": "grass",
+        "ClassName": "TextureSrc",
+        "Dependencies": [],
+        "DiscPath": "../assets/grass_texture.json",
+        "ObjectID": 1019634170350
+    }
+}

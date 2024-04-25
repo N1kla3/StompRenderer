@@ -1,0 +1,12 @@
+{
+    "MainData": {
+        "ContentPath": "../models/vikingroom.obj"
+    },
+    "Metadata": {
+        "AssetName": "viking_model",
+        "ClassName": "Model",
+        "Dependencies": [],
+        "DiscPath": "../assets/viking_model.json",
+        "ObjectID": 1023929072110
+    }
+}

@@ -53,6 +53,8 @@ void omp::Application::preInit()
         m_ThreadPool = std::make_unique<omp::ThreadPool>();
     }
 
+    m_Factory = std::make_unique<omp::ObjectFactory>();
+
     fillInFactoryClasses();
     m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get(), m_Factory.get());
     std::future<bool> wait_assets = m_AssetManager->loadProject();
@@ -76,6 +78,7 @@ void omp::Application::preInit()
 
 void omp::Application::init()
 {
+    debug_createSceneManually();
     // TODO: then load scene from asset manager
     m_Renderer->initResources(m_CurrentScene.get());
 }
@@ -121,5 +124,174 @@ void omp::Application::windowResizeCallback(GLFWwindow* window, int width, int h
     omp::Application* app = reinterpret_cast<omp::Application*>(glfwGetWindowUserPointer(window));
 
     app->m_Renderer->onWindowResize(width, height);
+}
+
+void omp::Application::debug_createSceneManually()
+{
+    const std::string g_ModelPath = "../models/cube2.obj";
+    const std::string g_TexturePath = "../textures/container.png";
+
+    omp::MaterialManager::getMaterialManager().loadCubeMapTexture({
+              "../textures/skybox/back.jpg",
+              "../textures/skybox/bottom.jpg",
+              "../textures/skybox/front.jpg",
+              "../textures/skybox/left.jpg",
+              "../textures/skybox/right.jpg",
+              "../textures/skybox/top.jpg",
+    });
+
+    { // START BLOCK TO REUSE NAME
+    omp::AssetHandle texture_handle = m_AssetManager->createAsset("container", "../assets/texture.json", "TextureSrc");
+    auto texture = m_AssetManager->getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
+    if (texture)
+    {
+        texture->setPath(g_TexturePath);
+    }
+
+    omp::AssetHandle model_handle = m_AssetManager->createAsset("cube_model", "../assets/cube_model.json", "Model");
+    auto model = m_AssetManager->getAsset(model_handle).lock()->getObjectAs<omp::Model>();
+    if (model)
+    {
+        model->setPath(g_ModelPath);
+    }
+
+    omp::AssetHandle material_handle = m_AssetManager->createAsset("def_mat", "../assets/def_material.json", "Material");
+    auto material = m_AssetManager->getAsset(material_handle).lock()->getObjectAs<omp::Material>();
+    material->addSpecularTexture(texture);
+    material->addTexture(texture);
+    material->addDiffusiveTexture(texture);
+    
+    std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
+    
+
+    glm::vec3 def_pos = {10.f, 3.f, 4.f};
+
+    for (size_t i = 0; i < 6; i++)
+    {
+        def_pos.z += 10.f;
+        float temp_x = def_pos.x;
+        for (size_t j = 0; j < 6; j++)
+        {
+            temp_x += 10.f;
+            def_pos.x = temp_x;
+            std::string name = std::to_string(i) + "-" + std::to_string(j);
+            std::unique_ptr<omp::SceneEntity> entity = std::make_unique<omp::SceneEntity>(name, inst);
+            entity->setTranslation(def_pos);
+            m_CurrentScene->addEntityToScene(std::move(entity)); 
+        }
+    }
+    }// END BLOCK TO REUSE NAMES
+    
+    omp::AssetHandle vik_texture_handle = m_AssetManager->createAsset("viking_texture", "../assets/viking_texture.json", "TextureSrc");
+    auto vik_texture = m_AssetManager->getAsset(vik_texture_handle).lock()->getObjectAs<omp::TextureSrc>();
+    if (vik_texture)
+    {
+        vik_texture->setPath("../textures/viking.png");
+    }
+
+    omp::AssetHandle vik_material_handle = m_AssetManager->createAsset("vik_mat", "../assets/vik_material.json", "Material");
+    auto viking_material = m_AssetManager->getAsset(vik_material_handle).lock()->getObjectAs<omp::Material>();
+    viking_material->addSpecularTexture(vik_texture);
+    viking_material->addTexture(vik_texture);
+    viking_material->addDiffusiveTexture(vik_texture);
+
+    omp::AssetHandle vik_model_handle = m_AssetManager->createAsset("viking_model", "../assets/viking_model.json", "Model");
+    auto viking_model = m_AssetManager->getAsset(vik_model_handle).lock()->getObjectAs<omp::Model>();
+    if (viking_model)
+    {
+        viking_model->setPath("../models/vikingroom.obj");
+    }
+    std::shared_ptr<omp::ModelInstance> viking_inst = std::make_shared<omp::ModelInstance>(viking_model, viking_material);
+
+    std::unique_ptr<omp::SceneEntity> vik_entity = std::make_unique<omp::SceneEntity>("viking_house", viking_inst);
+    m_CurrentScene->addEntityToScene(std::move(vik_entity));
+
+    // GRASS
+    {
+        omp::AssetHandle texture_handle = m_AssetManager->createAsset("grass", "../assets/grass_texture.json", "TextureSrc");
+        auto texture = m_AssetManager->getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
+        if (texture)
+        {
+            texture->setPath("../textures/grass.png");
+        }
+
+        omp::AssetHandle model_handle = m_AssetManager->createAsset("quad_model", "../assets/quad_model.json", "Model");
+        auto model = m_AssetManager->getAsset(model_handle).lock()->getObjectAs<omp::Model>();
+        if (model)
+        {
+            model->setPath("../models/quad.obj");
+        }
+
+        omp::AssetHandle material_handle = m_AssetManager->createAsset("grass_mat", "../assets/grass_material.json", "Material");
+        auto material = m_AssetManager->getAsset(material_handle).lock()->getObjectAs<omp::Material>();
+        material->addSpecularTexture(texture);
+        material->addTexture(texture);
+        material->addDiffusiveTexture(texture);
+        
+        std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
+
+        std::unique_ptr<omp::SceneEntity> entity = std::make_unique<omp::SceneEntity>("grass", inst);
+        m_CurrentScene->addEntityToScene(std::move(entity)); 
+    }
+    // WINDOW
+    {
+        omp::AssetHandle texture_handle = m_AssetManager->createAsset("window_texture", "../assets/window_texture.json", "TextureSrc");
+        auto texture = m_AssetManager->getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
+        if (texture)
+        {
+            texture->setPath("../textures/window.png");
+        }
+
+        omp::AssetHandle model_handle = m_AssetManager->createAsset("window_model", "../assets/window_model.json", "Model");
+        auto model = m_AssetManager->getAsset(model_handle).lock()->getObjectAs<omp::Model>();
+        if (model)
+        {
+            model->setPath("../models/quad.obj");
+        }
+
+        omp::AssetHandle material_handle = m_AssetManager->createAsset("window_mat", "../assets/window_material.json", "Material");
+        auto material = m_AssetManager->getAsset(material_handle).lock()->getObjectAs<omp::Material>();
+        material->addSpecularTexture(texture);
+        material->addTexture(texture);
+        material->addDiffusiveTexture(texture);
+        
+        std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
+
+        std::unique_ptr<omp::SceneEntity> entity = std::make_unique<omp::SceneEntity>("window", inst);
+        m_CurrentScene->addEntityToScene(std::move(entity)); 
+        //grass_mat->setShaderName("Grass");
+        //grass_mat->enableBlending(true);
+    }
+    // PLANE
+    {
+        omp::AssetHandle texture_handle = m_AssetManager->createAsset("plane_texture", "../assets/plane_texture.json", "TextureSrc");
+        auto texture = m_AssetManager->getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
+        if (texture)
+        {
+            texture->setPath("../textures/default.png");
+        }
+
+        omp::AssetHandle model_handle = m_AssetManager->createAsset("plane_model", "../assets/plane_model.json", "Model");
+        auto model = m_AssetManager->getAsset(model_handle).lock()->getObjectAs<omp::Model>();
+        if (model)
+        {
+            model->setPath("../models/plane.obj");
+        }
+
+        omp::AssetHandle material_handle = m_AssetManager->createAsset("plane_mat", "../assets/plane_material.json", "Material");
+        auto material = m_AssetManager->getAsset(material_handle).lock()->getObjectAs<omp::Material>();
+        material->addSpecularTexture(texture);
+        material->addTexture(texture);
+        material->addDiffusiveTexture(texture);
+        
+        std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
+
+        std::unique_ptr<omp::SceneEntity> entity = std::make_unique<omp::SceneEntity>("Plane", inst);
+        m_CurrentScene->addEntityToScene(std::move(entity)); 
+        //plane_mat->setShaderName("Light");
+    }
+
+    std::future<bool> future = m_AssetManager->saveProject();
+    future.get();
 }
 

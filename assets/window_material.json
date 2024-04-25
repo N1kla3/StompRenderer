@@ -1,0 +1,16 @@
+{
+    "MainData": {
+        "diffuse_map": 1006748940782,
+        "specular_map": 1006748940782,
+        "texture": 1006748940782
+    },
+    "Metadata": {
+        "AssetName": "window_mat",
+        "ClassName": "Material",
+        "Dependencies": [
+            1006748940782
+        ],
+        "DiscPath": "../assets/window_material.json",
+        "ObjectID": 998159137262
+    }
+}

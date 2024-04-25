@@ -29,6 +29,10 @@ namespace omp
         std::shared_ptr<omp::ModelInstance> getModelInstance() const { return m_ModelInstance; }
         void setModelInstance(const std::shared_ptr<omp::ModelInstance>& instance) { m_ModelInstance = instance; }
 
+        void setTranslation(const glm::vec3& trans);
+        void setRotation(const glm::vec3& rot);
+        void setScale(const glm::vec3& scale);
+
         virtual void draw() override;
 
         virtual void onSceneSave(JsonParser<>& parser, omp::Scene* scene);

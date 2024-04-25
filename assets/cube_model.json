@@ -1,0 +1,12 @@
+{
+    "MainData": {
+        "ContentPath": "../models/cube2.obj"
+    },
+    "Metadata": {
+        "AssetName": "cube_model",
+        "ClassName": "Model",
+        "Dependencies": [],
+        "DiscPath": "../assets/cube_model.json",
+        "ObjectID": 972388678126
+    }
+}

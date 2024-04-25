@@ -1,0 +1,16 @@
+{
+    "MainData": {
+        "diffuse_map": 1062584236526,
+        "specular_map": 1062584236526,
+        "texture": 1062584236526
+    },
+    "Metadata": {
+        "AssetName": "plane_mat",
+        "ClassName": "Material",
+        "Dependencies": [
+            1062584236526
+        ],
+        "DiscPath": "../assets/plane_material.json",
+        "ObjectID": 1053994433006
+    }
+}
