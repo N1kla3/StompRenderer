@@ -5,6 +5,7 @@
 #include <future>
 #include "Rendering/TextureSrc.h"
 #include "Core/CoreLib.h"
+#include "Rendering/Shader.h"
 #include "Scene.h"
 #include "Rendering/Model.h"
 
@@ -23,6 +24,7 @@ omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory*
     m_Factory->registerClass<omp::Model>("Model");
     m_Factory->registerClass<omp::Scene>("Scene");
     m_Factory->registerClass<omp::Material>("Material");
+    m_Factory->registerClass<omp::Shader>("Shader");
 }
 
 omp::AssetManager::~AssetManager()
