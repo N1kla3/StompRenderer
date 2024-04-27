@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "Logs.h"
+#include "Core/CoreLib.h"
 #include "SceneEntityFactory.h"
 
 std::vector<std::unique_ptr<omp::SceneEntity>>& omp::Scene::getEntities()
@@ -119,10 +120,7 @@ void omp::Scene::setCurrentCamera(uint16_t id)
     if (id < m_Cameras.size())
     {
         m_CurrentCamera = dynamic_cast<omp::Camera*>(m_Cameras.at(id).get());
-        if (!m_CurrentCamera)
-        {
-            // assert
-        }
+        //OMP_ASSERT(m_CurrentCamera, "Ivalid camera!");
     }
     else
     {

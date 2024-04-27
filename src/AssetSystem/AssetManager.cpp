@@ -125,8 +125,15 @@ void omp::AssetManager::saveAssetsToDrive()
     m_AssetRegistry.foreach([](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
     {
         INFO(LogAssetManager, "Starting to Save asset: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
-        asset.second->saveAsset();
-        INFO(LogAssetManager, "AssetSaved: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
+        bool suc = asset.second->saveAsset();
+        if (suc)
+        {
+            INFO(LogAssetManager, "Asset Saved: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
+        }
+        else
+        {
+            WARN(LogAssetManager, "Asset cant be Saved: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
+        }
     });
 }
 

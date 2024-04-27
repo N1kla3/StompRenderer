@@ -1,16 +1,13 @@
 {
-    "MainData": {
-        "diffuse_map": 10844668879391734254,
-        "specular_map": 10844668879391734254,
-        "texture": 10844668879391734254
-    },
     "Metadata": {
         "AssetName": "def_mat",
         "ClassName": "Material",
-        "Dependencies": [
-            10844668879391734254
-        ],
+        "Dependencies": [],
         "DiscPath": "../assets/def_material.json",
-        "ObjectID": 968093776366
+        "ObjectID": 963798830646
+    },
+    "PlainData": {
+        "enable_blending": false,
+        "shader_name": ""
     }
 }

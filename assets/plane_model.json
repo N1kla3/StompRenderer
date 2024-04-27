@@ -1,12 +1,12 @@
 {
-    "MainData": {
-        "ContentPath": "../models/plane.obj"
-    },
     "Metadata": {
         "AssetName": "plane_model",
         "ClassName": "Model",
         "Dependencies": [],
         "DiscPath": "../assets/plane_model.json",
-        "ObjectID": 1058289334766
+        "ObjectID": 1053994389046
+    },
+    "PlainData": {
+        "ContentPath": "../models/plane.obj"
     }
 }

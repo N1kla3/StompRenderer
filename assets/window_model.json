@@ -1,12 +1,12 @@
 {
-    "MainData": {
-        "ContentPath": "../models/quad.obj"
-    },
     "Metadata": {
         "AssetName": "window_model",
         "ClassName": "Model",
         "Dependencies": [],
         "DiscPath": "../assets/window_model.json",
-        "ObjectID": 1002454039022
+        "ObjectID": 998159093302
+    },
+    "PlainData": {
+        "ContentPath": "../models/quad.obj"
     }
 }

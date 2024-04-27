@@ -4,7 +4,7 @@
 
 #define OMP_ASSERT(condition, message) \
 if (!condition)\
-{ VERROR(LogCore, message); std::assert(condition); }
+{ VERROR(LogCore, message); std::assert(condition); }\
 
 namespace omp
 {

@@ -40,7 +40,14 @@ void omp::LightSystem::recreate()
 
 void omp::LightSystem::update()
 {
-    m_GlobalLight->updateLightObject();
+    if (m_GlobalLight)
+    {
+        m_GlobalLight->updateLightObject();
+    }
+    else
+    {
+        WARN(LogRendering, "Global light is null in light system");
+    }
     for (auto& light : m_PointLights)
     {
         light->updateLightObject();
@@ -53,7 +60,14 @@ void omp::LightSystem::update()
 
 void omp::LightSystem::mapMemory(uint32_t khrImage)
 {
-    m_GlobalBuffer->mapMemory(m_GlobalLight->getLight(), khrImage);
+    if (m_GlobalBuffer)
+    {
+        m_GlobalBuffer->mapMemory(m_GlobalLight->getLight(), khrImage);
+    }
+    else
+    {
+        WARN(LogRendering, "Buffer for global light is null");
+    }
 
     int offset = 0;
     for (size_t index = 0; index < m_PointLights.size(); index++)

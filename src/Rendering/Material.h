@@ -13,17 +13,8 @@ namespace omp
     struct TextureData
     {
         uint32_t binding_index;
-        std::shared_ptr<Texture> texture;
+        std::shared_ptr<Texture> texture = nullptr;
         std::string name;
-    };
-
-    struct MaterialRenderInfo
-    {
-        static constexpr int MAX_TEXTURES = 3;
-
-        std::vector<TextureData> textures;
-
-        std::string shader_name;
     };
 
     enum class ETextureType
@@ -34,13 +25,25 @@ namespace omp
         Max
     };
 
+    struct MaterialRenderInfo
+    {
+        static constexpr int MAX_TEXTURES = 3;
+
+        std::vector<TextureData> textures;
+
+        std::string shader_name;
+
+        MaterialRenderInfo()
+            : shader_name("")
+        {
+            textures.resize(static_cast<size_t>(ETextureType::Max));
+        }
+    };
+
     class Material : public SerializableObject
     {
     private:
         std::unique_ptr<omp::MaterialRenderInfo> m_RenderInfo;
-        std::shared_ptr<omp::TextureSrc> m_Texture;
-        std::shared_ptr<omp::TextureSrc> m_DiffusiveMap;
-        std::shared_ptr<omp::TextureSrc> m_SpecularMap;
 
         omp::MaterialManager* m_Manager = nullptr;
 
@@ -60,10 +63,9 @@ namespace omp
         void addTexture(ETextureType type, const std::shared_ptr<Texture>& texture);
         void removeTexture(const TextureData& data);
 
-        // TODO: implement properly
-        void addTexture(const std::shared_ptr<omp::TextureSrc>& texture) { m_Texture = texture; }
-        void addDiffusiveTexture(const std::shared_ptr<omp::TextureSrc>& texture) { m_DiffusiveMap = texture; }
-        void addSpecularTexture(const std::shared_ptr<omp::TextureSrc>& texture) { m_SpecularMap = texture; }
+        void addTexture(const std::shared_ptr<omp::TextureSrc>& texture);
+        void addDiffusiveTexture(const std::shared_ptr<omp::TextureSrc>& texture);
+        void addSpecularTexture(const std::shared_ptr<omp::TextureSrc>& texture);
 
         std::vector<TextureData> getTextureData() const;
 

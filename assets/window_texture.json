@@ -1,12 +1,12 @@
 {
-    "MainData": {
-        "PathToTexture": "../textures/window.png"
-    },
     "Metadata": {
         "AssetName": "window_texture",
         "ClassName": "TextureSrc",
         "Dependencies": [],
         "DiscPath": "../assets/window_texture.json",
-        "ObjectID": 1006748940782
+        "ObjectID": 1002453995062
+    },
+    "PlainData": {
+        "PathToTexture": "../textures/window.png"
     }
 }

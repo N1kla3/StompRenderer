@@ -1,21 +1,20 @@
 #include "Scene.h"
 #include "imgui.h"
 #include <memory>
+#include "Core/CoreLib.h"
 #include "SceneEntity.h"
 
 omp::SceneEntity::SceneEntity()
     : SceneEntity("None", nullptr)
 {
-
+    m_Id = omp::CoreLib::generateId32();
 }
 
 omp::SceneEntity::SceneEntity(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel)
     : m_Name(inName)
     , m_ModelInstance(inModel)
 {
-    // TODO id system
-    static int32_t id = 1;
-    m_Id = id++;
+    m_Id = omp::CoreLib::generateId32();
 }
 
 void omp::SceneEntity::setTranslation(const glm::vec3& trans)

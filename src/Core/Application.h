@@ -37,7 +37,7 @@ namespace omp
         std::unique_ptr<omp::AssetManager> m_AssetManager;
         std::unique_ptr<omp::ThreadPool> m_ThreadPool;
         std::unique_ptr<omp::ObjectFactory> m_Factory;
-        std::unique_ptr<omp::Scene> m_CurrentScene;
+        std::shared_ptr<omp::Scene> m_CurrentScene;
         GLFWwindow* m_Window;
 
         uint32_t m_Width = 1280;

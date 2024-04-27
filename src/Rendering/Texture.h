@@ -56,6 +56,7 @@ namespace omp
         std::weak_ptr<VulkanContext> m_VulkanContext;
 
     public:
+        Texture() = default;
         explicit Texture(const std::string& inPath);
         Texture(const std::string& inPath, const std::shared_ptr<VulkanContext>& helper);
         Texture(const std::shared_ptr<VulkanContext>& inContext, const std::vector<std::string>& inPaths, TextureConfig inConfig);

@@ -79,6 +79,7 @@ void omp::Application::preInit()
 void omp::Application::init()
 {
     debug_createSceneManually();
+    m_CurrentScene->setCurrentCamera(0);
     // TODO: then load scene from asset manager
     m_Renderer->initResources(m_CurrentScene.get());
 }
@@ -128,6 +129,9 @@ void omp::Application::windowResizeCallback(GLFWwindow* window, int width, int h
 
 void omp::Application::debug_createSceneManually()
 {
+    omp::AssetHandle scene_handle = m_AssetManager->createAsset("main_scene", "../assets/main_scene.json", "Scene");
+    m_CurrentScene = m_AssetManager->getAsset(scene_handle).lock()->getObjectAs<omp::Scene>();
+
     const std::string g_ModelPath = "../models/cube2.obj";
     const std::string g_TexturePath = "../textures/container.png";
 
@@ -180,6 +184,12 @@ void omp::Application::debug_createSceneManually()
             m_CurrentScene->addEntityToScene(std::move(entity)); 
         }
     }
+
+    std::unique_ptr<omp::Camera> camera = std::make_unique<omp::Camera>();
+    camera->setModelInstance(inst);
+    camera->setName("camera1");
+    m_CurrentScene->addCameraToScene(std::move(camera));
+
     }// END BLOCK TO REUSE NAMES
     
     omp::AssetHandle vik_texture_handle = m_AssetManager->createAsset("viking_texture", "../assets/viking_texture.json", "TextureSrc");

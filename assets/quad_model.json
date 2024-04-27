@@ -1,12 +1,12 @@
 {
-    "MainData": {
-        "ContentPath": "../models/quad.obj"
-    },
     "Metadata": {
         "AssetName": "quad_model",
         "ClassName": "Model",
         "Dependencies": [],
         "DiscPath": "../assets/quad_model.json",
-        "ObjectID": 1015339268590
+        "ObjectID": 1011043798582
+    },
+    "PlainData": {
+        "ContentPath": "../models/quad.obj"
     }
 }

@@ -1,16 +1,13 @@
 {
-    "MainData": {
-        "diffuse_map": 963798874606,
-        "specular_map": 963798874606,
-        "texture": 963798874606
-    },
     "Metadata": {
         "AssetName": "vik_mat",
         "ClassName": "Material",
-        "Dependencies": [
-            963798874606
-        ],
+        "Dependencies": [],
         "DiscPath": "../assets/vik_material.json",
-        "ObjectID": 1028223973870
+        "ObjectID": 1023929028150
+    },
+    "PlainData": {
+        "enable_blending": false,
+        "shader_name": ""
     }
 }
