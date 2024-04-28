@@ -8,7 +8,15 @@ void omp::TextureSrc::serialize(JsonParser<>& parser)
 void omp::TextureSrc::deserialize(JsonParser<>& parser)
 {
     m_Path = parser.readValue<std::string>("PathToTexture").value_or(""); 
-    loadTextureFromFile();
+    m_IsLoaded = loadTextureFromFile();
+}
+
+omp::TextureSrc::~TextureSrc()
+{
+    if (m_IsLoaded)
+    {
+        stbi_image_free(m_Pixels);
+    }
 }
 
 void omp::TextureSrc::setPath(const std::string& path)
@@ -16,12 +24,21 @@ void omp::TextureSrc::setPath(const std::string& path)
     m_Path = path;
 }
 
-void omp::TextureSrc::loadTextureFromFile()
+void omp::TextureSrc::tryLoad()
+{
+    if (m_Pixels)
+    {
+        stbi_image_free(m_Pixels);
+    }
+    m_IsLoaded = loadTextureFromFile();
+}
+
+bool omp::TextureSrc::loadTextureFromFile()
 {
     if (m_Path.empty())
     {
         VWARN(LogRendering, "Path to load texture is empty");
-        return;
+        return false;
     }
 
     int tex_channels;
@@ -33,6 +50,7 @@ void omp::TextureSrc::loadTextureFromFile()
     if (!m_Pixels[0])
     {
         ERROR(LogRendering, "Failed to load texture image from path: {}", m_Path.c_str());
-        throw std::runtime_error("Failed to load texture image!");
+        return false;
     }
+    return true;
 }

@@ -3,12 +3,25 @@
 #include <string>
 #include "vulkan/vulkan.h"
 #include "IO/stb_image.h"
-#include "TextureSrc.h"
 #include <memory>
 #include "VulkanContext.h"
 
 namespace omp
 {
+    struct TextureConfig
+    {
+        enum
+        {
+            CUBEMAP,
+            TEXTURE2D
+        } type;
+
+        size_t layer_amount = 1;
+
+        // to be added
+    };
+
+
     /**
      * @brief Used to load images from PC, and upload directly to GPU
      */
@@ -17,8 +30,20 @@ namespace omp
         enum
         {
             LOADED_TO_GPU = 1 << 1,
-            LOADED_TO_UI = 1 << 2
+            LOADED_TO_CPU = 1 << 2,
+            LOADED_TO_UI = 1 << 3
         };
+
+        // array since cubemap
+        std::vector<std::string> m_ContentPaths;
+        std::vector<stbi_uc*> m_Pixels{};
+        int m_Size;
+        int m_Width, m_Height;
+        uint32_t m_MipLevels;
+        TextureConfig m_Config{};
+
+        uint16_t m_Flags = 0;
+
         // Vulkan //
         // ====== //
         VkImage m_TextureImage;
@@ -28,18 +53,16 @@ namespace omp
 
         VkDescriptorSet m_Id;
 
-        // Data //
-        // ==== //
-        std::shared_ptr<omp::TextureSrc> m_TextureSource;
         std::weak_ptr<VulkanContext> m_VulkanContext;
-        uint16_t m_Flags = 0;
 
     public:
         Texture() = default;
-        explicit Texture(const std::shared_ptr<omp::TextureSrc>& inTexture);
-        Texture(const std::shared_ptr<omp::TextureSrc>& inTexture, const std::shared_ptr<VulkanContext>& helper);
+        explicit Texture(const std::string& inPath);
+        Texture(const std::string& inPath, const std::shared_ptr<VulkanContext>& helper);
+        Texture(const std::shared_ptr<VulkanContext>& inContext, const std::vector<std::string>& inPaths, TextureConfig inConfig);
 
         void fullLoad();
+        void lazyLoad();
 
         void specifyVulkanContext(const std::shared_ptr<VulkanContext>& inHelper);
         bool hasVulkanContext() const { return !m_VulkanContext.expired(); }
@@ -50,9 +73,12 @@ namespace omp
         VkImage getImage();
         VkSampler getSampler();
 
+        std::vector<std::string> getPaths() const { return m_ContentPaths; }
+
     protected:
         // Subroutines //
         // =========== //
+        void loadTextureToCpu();
         void loadToGpu();
         void loadToUi();
 
