@@ -39,20 +39,19 @@ void omp::Material::removeTexture(const TextureData& data)
 
 void omp::Material::addTexture(const std::shared_ptr<omp::TextureSrc>& texture)
 { 
-    // TODO: refactor texture to suit texture src
-    std::shared_ptr<omp::Texture> texture_inst = std::make_shared<omp::Texture>();
+    std::shared_ptr<omp::Texture> texture_inst = std::make_shared<omp::Texture>(texture);
     addTexture(ETextureType::Texture, texture_inst);
 }
 
 void omp::Material::addDiffusiveTexture(const std::shared_ptr<omp::TextureSrc>& texture) 
 {
-    std::shared_ptr<omp::Texture> texture_inst = std::make_shared<omp::Texture>();
+    std::shared_ptr<omp::Texture> texture_inst = std::make_shared<omp::Texture>(texture);
     addTexture(ETextureType::DiffusiveMap, texture_inst);
 }
 
 void omp::Material::addSpecularTexture(const std::shared_ptr<omp::TextureSrc>& texture) 
 {
-    std::shared_ptr<omp::Texture> texture_inst = std::make_shared<omp::Texture>();
+    std::shared_ptr<omp::Texture> texture_inst = std::make_shared<omp::Texture>(texture);
     addTexture(ETextureType::SpecularMap, texture_inst);
 }
 
@@ -84,9 +83,22 @@ omp::Material::Material(const std::string& /*name*/)
 
 void omp::Material::serialize(JsonParser<> &parser)
 {
-    //parser.writeValue("texture", serializeDependency(m_RenderInfo->textures[static_cast<size_t>(ETextureType::Texture)].get()));
-    //parser.writeValue("diffuse_map", serializeDependency(m_DiffusiveMap.get()));
-    //parser.writeValue("specular_map", serializeDependency(m_SpecularMap.get()));
+    auto texture = m_RenderInfo->textures[static_cast<size_t>(ETextureType::Texture)].texture;
+    if (texture)
+    {
+        parser.writeValue("texture", serializeDependency(texture->getTextureSrc()));
+    }
+    auto diffus = m_RenderInfo->textures[static_cast<size_t>(ETextureType::DiffusiveMap)].texture;
+    if (diffus)
+    {
+        parser.writeValue("diffuse_map", serializeDependency(diffus->getTextureSrc()));
+    }
+    auto spec = m_RenderInfo->textures[static_cast<size_t>(ETextureType::SpecularMap)].texture;
+    if (spec)
+    {
+        parser.writeValue("specular_map", serializeDependency(spec->getTextureSrc()));
+    }
+
     // TODO: maybe try another approach without string
     parser.writeValue("shader_name", m_RenderInfo->shader_name);
     parser.writeValue("enable_blending", m_EnableBlending);
@@ -94,9 +106,22 @@ void omp::Material::serialize(JsonParser<> &parser)
 
 void omp::Material::deserialize(JsonParser<> &parser)
 {
-    //m_Texture = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<omp::SerializableObject::SerializationId>("texture").value()));
-    //m_DiffusiveMap = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<omp::SerializableObject::SerializationId>("diffuse_map").value()));
-    //m_SpecularMap = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<omp::SerializableObject::SerializationId>("specular_map").value()));
+    using id_type = omp::SerializableObject::SerializationId;
+    auto texture = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<id_type>("texture").value()));
+    if (texture)
+    {
+        addTexture(texture);
+    }
+    auto diffusive_map = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<id_type>("diffuse_map").value()));
+    if (diffusive_map)
+    {
+        addDiffusiveTexture(diffusive_map);
+    }
+    auto specular_map = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<id_type>("specular_map").value()));
+    if (specular_map)
+    {
+        addSpecularTexture(specular_map);
+    }
 
     m_RenderInfo->shader_name = parser.readValue<std::string>("shader_name").value();
     m_EnableBlending = parser.readValue<bool>("enable_blending").value();

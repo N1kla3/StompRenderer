@@ -49,6 +49,7 @@ namespace omp
         VkImageView getImageView();
         VkImage getImage();
         VkSampler getSampler();
+        TextureSrc* getTextureSrc() const { return m_TextureSource.get(); }
 
     protected:
         // Subroutines //

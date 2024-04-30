@@ -164,6 +164,7 @@ void omp::Application::debug_createSceneManually()
     material->addSpecularTexture(texture);
     material->addTexture(texture);
     material->addDiffusiveTexture(texture);
+    material->setShaderName("Light");
     
     std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
     
@@ -204,6 +205,7 @@ void omp::Application::debug_createSceneManually()
     viking_material->addSpecularTexture(vik_texture);
     viking_material->addTexture(vik_texture);
     viking_material->addDiffusiveTexture(vik_texture);
+    viking_material->setShaderName("Light");
 
     omp::AssetHandle vik_model_handle = m_AssetManager->createAsset("viking_model", "../assets/viking_model.json", "Model");
     auto viking_model = m_AssetManager->getAsset(vik_model_handle).lock()->getObjectAs<omp::Model>();
@@ -237,6 +239,8 @@ void omp::Application::debug_createSceneManually()
         material->addSpecularTexture(texture);
         material->addTexture(texture);
         material->addDiffusiveTexture(texture);
+        material->setShaderName("Grass");
+        material->enableBlending(true);
         
         std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
 
@@ -264,6 +268,8 @@ void omp::Application::debug_createSceneManually()
         material->addSpecularTexture(texture);
         material->addTexture(texture);
         material->addDiffusiveTexture(texture);
+        material->setShaderName("Grass");
+        material->enableBlending(true);
         
         std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
 
@@ -293,6 +299,7 @@ void omp::Application::debug_createSceneManually()
         material->addSpecularTexture(texture);
         material->addTexture(texture);
         material->addDiffusiveTexture(texture);
+        material->setShaderName("Light");
         
         std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
 

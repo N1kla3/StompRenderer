@@ -43,7 +43,7 @@ namespace omp
         uint32_t m_Width = 1280;
         uint32_t m_Height = 720;
         int m_FrameLimit = -1;
-        int m_ThreadCount = -1;
+        int m_ThreadCount = 5;//-1;
         bool m_RequestExit = false;
         
 
