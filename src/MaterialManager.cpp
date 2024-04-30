@@ -98,7 +98,7 @@ void omp::MaterialManager::specifyVulkanContext(const std::shared_ptr<omp::Vulka
     m_VulkanContext = inContext;
     for (auto& [name, texture] : m_Textures)
     {
-        texture->specifyVulkanContext(inContext);
+        if (texture) texture->specifyVulkanContext(inContext);
     }
 }
 

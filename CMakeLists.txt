@@ -54,6 +54,8 @@ set(SOURCE
         Rendering/VulkanContext.cpp
         Rendering/Shader.h
         Rendering/Shader.cpp
+        Rendering/Cubemap.h
+        Rendering/Cubemap.cpp
         FileDialog.h
         FileDialog.cpp
         IO/SerializableObject.h

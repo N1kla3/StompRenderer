@@ -1,36 +1,23 @@
-#include <cmath>
-#include <stdexcept>
+#include "Cubemap.h"
 #include <memory>
-#include "Texture.h"
 #include "Logs.h"
 #include "imgui_impl_vulkan.h"
 #include "IO/stb_image.h"
 
-omp::Texture::Texture(const std::string& inPath)
+omp::Cubemap::Cubemap(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures)
+    : m_Textures(inTextures)
 {
-    m_ContentPaths.reserve(1);
-    m_ContentPaths.push_back(inPath);
-    // assume 2d texture, because 1 path only
-    m_Config.type = TextureConfig::TEXTURE2D;
-    m_Config.layer_amount = 1;
-    lazyLoad();
+    m_LayerAmount = m_Textures.size();
 }
 
-omp::Texture::Texture(const std::string& inPath, const std::shared_ptr<VulkanContext>& helper)
-        : Texture(inPath)
+omp::Cubemap::Cubemap(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures, const std::shared_ptr<VulkanContext>& helper)
+    : m_Textures(inTextures)
+    , m_VulkanContext(helper)
 {
-    m_VulkanContext = helper;
+    m_LayerAmount = m_Textures.size();
 }
 
-omp::Texture::Texture(const std::shared_ptr<VulkanContext>& inContext, const std::vector<std::string>& inPaths, TextureConfig inConfig)
-    : m_VulkanContext(inContext)
-{
-    m_Config = inConfig;
-    m_ContentPaths = inPaths;
-    lazyLoad();
-}
-
-void omp::Texture::destroyVkObjects()
+void omp::Cubemap::destroyVkObjects()
 {
     if (hasVulkanContext() && hasFlags(LOADED_TO_GPU))
     {
@@ -41,7 +28,7 @@ void omp::Texture::destroyVkObjects()
     }
 }
 
-VkDescriptorSet omp::Texture::getTextureId()
+VkDescriptorSet omp::Cubemap::getTextureId()
 {
     if (!hasFlags(LOADED_TO_UI))
     {
@@ -50,57 +37,17 @@ VkDescriptorSet omp::Texture::getTextureId()
     return m_Id;
 }
 
-void omp::Texture::loadTextureToCpu()
-{
-    removeFlags(LOADED_TO_GPU | LOADED_TO_CPU | LOADED_TO_UI);
-
-    // leak, should not be called twice
-    m_Pixels.clear();
-
-    if (m_ContentPaths.empty())
-    {
-        VWARN(LogRendering, "Incorrect path to load texture");
-        return;
-    }
-
-    int tex_channels;
-    if (m_Config.type == TextureConfig::TEXTURE2D)
-    {
-        m_Pixels.push_back(stbi_load(m_ContentPaths[0].c_str(), &m_Width, &m_Height, &tex_channels, STBI_rgb_alpha));
-    }
-    else if (m_Config.type == TextureConfig::CUBEMAP)
-    {
-        for (const std::string& path : m_ContentPaths)
-        {
-            m_Pixels.reserve(m_Config.layer_amount);
-            m_Pixels.push_back(stbi_load(path.c_str(), &m_Width, &m_Height, &tex_channels, STBI_rgb_alpha));
-        }
-    }
-
-    // all sizes for cubemap should be identical
-    m_Size = m_Width * m_Height * 4;
-    m_MipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(m_Width, m_Height)))) + 1;
-
-    if (!m_Pixels[0])
-    {
-        ERROR(LogRendering, "Failed to load texture image from path: {}", m_ContentPaths[0].c_str());
-        throw std::runtime_error("Failed to load texture image!");
-    }
-
-    addFlags(LOADED_TO_CPU);
-}
-
-void omp::Texture::loadToGpu()
+void omp::Cubemap::loadToGpu()
 {
     if (hasFlags(LOADED_TO_GPU) || !hasVulkanContext())
     {
-        VERROR(LogRendering, "Texture cant be loaded to GPU");
+        VERROR(LogRendering, "Cubemap cant be loaded to GPU");
         return;
     }
 
-    if (!hasFlags(LOADED_TO_CPU))
+    if (isLoadedToMemory())
     {
-        VERROR(LogRendering, "Texture not loaded to CPU {1} ", m_ContentPaths[0]);
+        VERROR(LogRendering, "Cubemap not loaded to Memory ");
         return;
     }
 
@@ -111,7 +58,7 @@ void omp::Texture::loadToGpu()
     addFlags(LOADED_TO_GPU);
 }
 
-void omp::Texture::createSampler()
+void omp::Cubemap::createSampler()
 {
     VkSamplerCreateInfo sampler_info{};
     sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -135,7 +82,7 @@ void omp::Texture::createSampler()
     sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     sampler_info.mipLodBias = 0.f;
     sampler_info.minLod = 0;
-    sampler_info.maxLod = static_cast<float>(m_MipLevels);
+    sampler_info.maxLod = static_cast<float>(getFirstTextureMipMap());
 
     if (vkCreateSampler(m_VulkanContext.lock()->logical_device, &sampler_info, nullptr, &m_TextureSampler) !=
         VK_SUCCESS)
@@ -144,11 +91,16 @@ void omp::Texture::createSampler()
     }
 }
 
-void omp::Texture::createImage()
+void omp::Cubemap::createImage()
 {
     VkBuffer staging_buffer;
     VkDeviceMemory staging_buffer_memory;
-    size_t size_to_alloc = m_Size * m_Config.layer_amount;
+    size_t size = getFirstTextureSize();
+    size_t mip_level = getFirstTextureMipMap();
+    size_t width = getFirstTextureWidth();
+    size_t height = getFirstTextureHeight();
+
+    size_t size_to_alloc = getFirstTextureSize() * m_LayerAmount;
     m_VulkanContext.lock()->createBuffer(size_to_alloc, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                          staging_buffer, staging_buffer_memory);
@@ -157,24 +109,21 @@ void omp::Texture::createImage()
     vkMapMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory, 0, size_to_alloc, 0,
                 reinterpret_cast<void**>(&data));
     size_t offset = 0;
-    for (auto* pixels : m_Pixels)
+    for (auto& texture : m_Textures)
     {
-        memcpy(data + offset, pixels, static_cast<size_t>(m_Size));
-        offset += m_Size;
+        memcpy(data + offset, texture->getPixels(), size);
+        offset += size;
     }
     vkUnmapMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory);
 
-    for(auto* pix : m_Pixels) stbi_image_free(pix);
-
     VkImageCreateFlags flags = 0;
     uint32_t array_layers = 1;
-    if (m_Config.type == TextureConfig::CUBEMAP)
-    {
-        flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-        // faces of cubemap
-        array_layers = m_Config.layer_amount;
-    }
-    m_VulkanContext.lock()->createImage(m_Width, m_Height, m_MipLevels, VK_FORMAT_R8G8B8A8_SRGB,
+
+    flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+    // faces of cubemap
+    array_layers = m_LayerAmount;
+
+    m_VulkanContext.lock()->createImage(width, height, mip_level, VK_FORMAT_R8G8B8A8_SRGB,
                                         VK_IMAGE_TILING_OPTIMAL,
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                         VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -183,79 +132,145 @@ void omp::Texture::createImage()
                                         flags, array_layers);
 
     m_VulkanContext.lock()->transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
+                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_level);
 
-    if (m_Config.type == TextureConfig::CUBEMAP)
+    offset = 0;
+    std::vector<VkBufferImageCopy> buffer_copy_regions{};
+    buffer_copy_regions.reserve(m_LayerAmount);
+    for (size_t layer = 0; layer < m_LayerAmount; layer++)
     {
-        offset = 0;
-        std::vector<VkBufferImageCopy> buffer_copy_regions{};
-        buffer_copy_regions.reserve(m_Config.layer_amount);
-        for (size_t layer = 0; layer < m_Config.layer_amount; layer++)
-        {
-            VkBufferImageCopy buffer_copy_region = {};
-            buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-            buffer_copy_region.imageSubresource.mipLevel = m_MipLevels;
-            buffer_copy_region.imageSubresource.baseArrayLayer = layer;
-            buffer_copy_region.imageSubresource.layerCount = 1;
-            buffer_copy_region.imageExtent.width = m_Width;
-            buffer_copy_region.imageExtent.height = m_Height;
-            buffer_copy_region.imageExtent.depth = 1;
-            buffer_copy_region.bufferOffset = offset;
-            buffer_copy_regions.push_back(buffer_copy_region);
-            offset += m_Size;
-        }
-        m_VulkanContext.lock()->copyBufferToImage(staging_buffer, m_TextureImage, buffer_copy_regions);
+        VkBufferImageCopy buffer_copy_region = {};
+        buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        buffer_copy_region.imageSubresource.mipLevel = mip_level;
+        buffer_copy_region.imageSubresource.baseArrayLayer = layer;
+        buffer_copy_region.imageSubresource.layerCount = 1;
+        buffer_copy_region.imageExtent.width = width;
+        buffer_copy_region.imageExtent.height = height;
+        buffer_copy_region.imageExtent.depth = 1;
+        buffer_copy_region.bufferOffset = offset;
+        buffer_copy_regions.push_back(buffer_copy_region);
+        offset += size;
     }
-    else
-    {
-        m_VulkanContext.lock()->copyBufferToImage(staging_buffer, m_TextureImage, static_cast<uint32_t>(m_Width),
-                                                  static_cast<uint32_t>(m_Height));
-    }
+    m_VulkanContext.lock()->copyBufferToImage(staging_buffer, m_TextureImage, buffer_copy_regions);
+
     //transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
     //                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, m_MipLevels);
-    m_VulkanContext.lock()->generateMipmaps(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, m_Width, m_Height, m_MipLevels);
+    m_VulkanContext.lock()->generateMipmaps(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, width, height, mip_level);
 
     vkDestroyBuffer(m_VulkanContext.lock()->logical_device, staging_buffer, nullptr);
     vkFreeMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory, nullptr);
 }
 
-void omp::Texture::createImageView()
+void omp::Cubemap::createImageView()
 {
     m_TextureImageView = m_VulkanContext.lock()->createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                                                                 VK_IMAGE_ASPECT_COLOR_BIT, m_MipLevels);
+                                                                 VK_IMAGE_ASPECT_COLOR_BIT, getFirstTextureMipMap());
 }
 
-void omp::Texture::fullLoad()
+void omp::Cubemap::serialize(JsonParser<>& parser)
+{
+    using id_type = omp::SerializableObject::SerializationId;
+
+    std::vector<id_type> textures_ids;
+    textures_ids.reserve(m_Textures.size());
+
+    for (auto& texture : m_Textures)
+    {
+        textures_ids.push_back(serializeDependency(texture.get()));
+    }
+    parser.writeValue("textures", textures_ids);
+}
+
+void omp::Cubemap::deserialize(JsonParser<>& parser)
+{
+    using id_type = omp::SerializableObject::SerializationId;
+
+    std::vector<omp::SerializableObject::SerializationId> textures_ids;
+    textures_ids = parser.readValue<std::vector<id_type>>("textures").value();
+
+    for (id_type id : textures_ids)
+    {
+        m_Textures.push_back(std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(id)));
+    }
+}
+
+void omp::Cubemap::fullLoad()
 {
     if (hasFlags(LOADED_TO_GPU))
     {
         destroyVkObjects();
     }
-    loadTextureToCpu();
     loadToGpu();
 }
 
-void omp::Texture::lazyLoad()
+bool omp::Cubemap::isLoadedToMemory() const
 {
-    loadTextureToCpu();
+    if (!m_Textures.empty())
+    {
+        for (auto& texture : m_Textures)
+        {
+            if (!texture->isLoaded())
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
 }
 
-void omp::Texture::removeFlags(uint16_t flags)
+size_t omp::Cubemap::getFirstTextureSize() const
+{
+    if (!m_Textures.empty())
+    {
+        return m_Textures[0]->getSize();
+    }
+    return 0;
+}
+
+size_t omp::Cubemap::getFirstTextureMipMap() const
+{
+    if (!m_Textures.empty())
+    {
+        return m_Textures[0]->getMipLevels();
+    }
+    return 0;
+}
+
+size_t omp::Cubemap::getFirstTextureWidth() const
+{
+    if (!m_Textures.empty())
+    {
+        return m_Textures[0]->getWidth();
+    }
+    return 0;
+}
+
+size_t omp::Cubemap::getFirstTextureHeight() const
+{
+    if (!m_Textures.empty())
+    {
+        return m_Textures[0]->getHeight();
+    }
+    return 0;
+}
+
+void omp::Cubemap::removeFlags(uint16_t flags)
 {
     m_Flags = (m_Flags & flags) ^ m_Flags;
 }
 
-void omp::Texture::addFlags(uint16_t flags)
+void omp::Cubemap::addFlags(uint16_t flags)
 {
     m_Flags = m_Flags | flags;
 }
 
-bool omp::Texture::hasFlags(uint16_t flags) const
+bool omp::Cubemap::hasFlags(uint16_t flags) const
 {
     return m_Flags & flags;
 }
 
-void omp::Texture::loadToUi()
+void omp::Cubemap::loadToUi()
 {
     if (!hasFlags(LOADED_TO_GPU))
     {
@@ -265,7 +280,7 @@ void omp::Texture::loadToUi()
     addFlags(LOADED_TO_UI);
 }
 
-VkImageView omp::Texture::getImageView()
+VkImageView omp::Cubemap::getImageView()
 {
     if (!hasFlags(LOADED_TO_GPU))
     {
@@ -274,7 +289,7 @@ VkImageView omp::Texture::getImageView()
     return m_TextureImageView;
 }
 
-VkImage omp::Texture::getImage()
+VkImage omp::Cubemap::getImage()
 {
     if (!hasFlags(LOADED_TO_GPU))
     {
@@ -283,7 +298,7 @@ VkImage omp::Texture::getImage()
     return m_TextureImage;
 }
 
-VkSampler omp::Texture::getSampler()
+VkSampler omp::Cubemap::getSampler()
 {
     if (!hasFlags(LOADED_TO_GPU))
     {
@@ -292,7 +307,13 @@ VkSampler omp::Texture::getSampler()
     return m_TextureSampler;
 }
 
-void omp::Texture::specifyVulkanContext(const std::shared_ptr<VulkanContext>& inHelper)
+void omp::Cubemap::specifyVulkanContext(const std::shared_ptr<VulkanContext>& inHelper)
 {
     m_VulkanContext = inHelper;
 }
+void omp::Cubemap::setTextures(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures)
+{
+    m_Textures = inTextures;
+    m_LayerAmount = m_Textures.size();
+}
+
