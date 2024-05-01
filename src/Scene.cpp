@@ -128,6 +128,19 @@ void omp::Scene::setCurrentCamera(uint16_t id)
     }
 }
 
+omp::Camera* omp::Scene::getCurrentCamera() const
+{
+    if (m_CurrentCamera)
+    {
+        return m_CurrentCamera;
+    }
+    if (!m_Cameras.empty())
+    {
+        return dynamic_cast<omp::Camera*>(m_Cameras[0].get());
+    }
+    return nullptr;
+}
+
 void omp::Scene::addCameraToScene()
 {
     m_Cameras.push_back(std::make_unique<omp::Camera>());

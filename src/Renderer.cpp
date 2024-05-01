@@ -74,7 +74,6 @@ void omp::Renderer::initResources(omp::Scene* scene)
     createPickingResources();
     createDepthResources();
     createFramebuffers();
-    createTextureImage();
     // TODO: need window, maybe separate imguie resources
     initializeImgui(m_Window);
 
@@ -637,6 +636,18 @@ void omp::Renderer::postSwapChainInitialize()
                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                   m_PixelReadBuffer, m_PixelReadMemory);
+}
+
+void omp::Renderer::prepareSceneForRendering()
+{
+    if (m_CurrentScene)
+    {
+
+    }
+    else
+    {
+        WARN(LogRendering, "Cant prepare scene for rendering, scene is empty");
+    }
 }
 
 void omp::Renderer::createImageViews()
@@ -1842,34 +1853,6 @@ void omp::Renderer::retrieveMaterialRenderState(
     m_MaterialSets.insert(m_MaterialSets.begin(), ds.begin(), ds.end());
 
     material->setDescriptorSet(ds);
-}
-
-void omp::Renderer::createTextureImage()
-{
-    // TODO: Asset manager
-    omp::MaterialManager::getMaterialManager().loadTextureLazily(
-            "../textures/viking.png");
-    omp::MaterialManager::getMaterialManager().loadTextureLazily(
-            "../textures/container.png");
-    omp::MaterialManager::getMaterialManager().loadTextureLazily(
-            "../textures/container_specular.png");
-
-    m_DefaultMaterial =
-            omp::MaterialManager::getMaterialManager().createOrGetMaterial("default");
-    // TODO: remove hardcoding
-    m_DefaultMaterial->addTexture(
-            omp::ETextureType::Texture,
-            omp::MaterialManager::getMaterialManager().getTexture(
-                    "../textures/container.png"));
-    m_DefaultMaterial->addTexture(
-            omp::ETextureType::DiffusiveMap,
-            omp::MaterialManager::getMaterialManager().getTexture(
-                    "../textures/container_specular.png"));
-    m_DefaultMaterial->addTexture(
-            omp::ETextureType::SpecularMap,
-            omp::MaterialManager::getMaterialManager().getTexture(
-                    "../textures/container_specular.png"));
-    m_DefaultMaterial->setShaderName("Light");
 }
 
 VkCommandBuffer omp::Renderer::beginSingleTimeCommands()

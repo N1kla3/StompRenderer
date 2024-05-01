@@ -95,6 +95,11 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
     omp::MetaData init_metadata;
     uint64_t id = omp::CoreLib::generateId64();
 
+    if (m_PathRegistry.find(inPath) != m_PathRegistry.end())
+    {
+        ERROR(LogAssetManager, "Cant create asset while asset with same path exists. Path: {}", inPath);
+    }
+
     while (m_AssetRegistry.value_for(id, nullptr))
     {
         ERROR(LogAssetManager, "Trying to create asset with existing id!! ID: {}", id);
@@ -201,6 +206,16 @@ std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAssetAsync(AssetHa
     return result;
 }
 
+std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAssetAsync(const std::string& inPath)
+{
+    std::future<std::weak_ptr<Asset>> result;
+    if (m_PathRegistry.find(inPath) != m_PathRegistry.end())
+    {
+        return loadAssetAsync(m_PathRegistry[inPath]);
+    }
+    return result;
+}
+
 std::future<bool> omp::AssetManager::loadAllAssets()
 {
     return m_ThreadPool->submit([this]() -> bool
@@ -232,6 +247,16 @@ std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(AssetHandle assetHandle)
         return std::weak_ptr<omp::Asset>(found_asset);
     }
     ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);
+    return result;
+}
+
+std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(const std::string& inPath)
+{
+    std::weak_ptr<Asset> result;
+    if (m_PathRegistry.find(inPath) != m_PathRegistry.end())
+    {
+        result = loadAsset(m_PathRegistry[inPath]);
+    }
     return result;
 }
 

@@ -1,4 +1,4 @@
-#pragma once
+/* #pragma once
 
 #include <memory>
 #include <string>
@@ -85,5 +85,5 @@ namespace omp
 
         friend class Renderer;
     };
-} // omp
+} // omp */
 

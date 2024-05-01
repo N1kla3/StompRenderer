@@ -184,6 +184,8 @@ namespace omp
         void createSwapChain();
 
         void postSwapChainInitialize();
+        
+        void prepareSceneForRendering();
 
         void createImageViews();
 
@@ -215,8 +217,6 @@ namespace omp
         void createCommandPool();
 
         void createDepthResources();
-
-        void createTextureImage();
 
         void createColorResources();
         void createViewportResources();

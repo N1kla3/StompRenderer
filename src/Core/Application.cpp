@@ -71,15 +71,17 @@ void omp::Application::preInit()
     m_Renderer->initVulkan(m_Window);
 
     // TODO: maybe other stuff while assets loading
-    m_CurrentScene = std::make_unique<omp::Scene>();
+    //m_CurrentScene = std::make_unique<omp::Scene>();
 
     wait_assets.wait();
 }
 
 void omp::Application::init()
 {
-    debug_createSceneManually();
-    m_CurrentScene->setCurrentCamera(0);
+    // debug_createSceneManually();
+    //m_CurrentScene->setCurrentCamera(0);
+    m_CurrentScene = m_AssetManager->loadAsset("../assets/main_scene.json").lock();
+    //
     // TODO: then load scene from asset manager
     m_Renderer->initResources(m_CurrentScene.get());
 }
@@ -134,15 +136,7 @@ void omp::Application::debug_createSceneManually()
 
     const std::string g_ModelPath = "../models/cube2.obj";
     const std::string g_TexturePath = "../textures/container.png";
-
-    omp::MaterialManager::getMaterialManager().loadCubeMapTexture({
-              "../textures/skybox/back.jpg",
-              "../textures/skybox/bottom.jpg",
-              "../textures/skybox/front.jpg",
-              "../textures/skybox/left.jpg",
-              "../textures/skybox/right.jpg",
-              "../textures/skybox/top.jpg",
-    });
+    const std::string g_TextureSpecular = "../textures/container_specular.png";
 
     { // START BLOCK TO REUSE NAME
     omp::AssetHandle texture_handle = m_AssetManager->createAsset("container", "../assets/texture.json", "TextureSrc");
@@ -150,6 +144,12 @@ void omp::Application::debug_createSceneManually()
     if (texture)
     {
         texture->setPath(g_TexturePath);
+    }
+    omp::AssetHandle spec_texture_handle = m_AssetManager->createAsset("container_specular", "../assets/texture_specular.json", "TextureSrc");
+    auto spec_texture = m_AssetManager->getAsset(spec_texture_handle).lock()->getObjectAs<omp::TextureSrc>();
+    if (spec_texture)
+    {
+        spec_texture->setPath(g_TextureSpecular);
     }
 
     omp::AssetHandle model_handle = m_AssetManager->createAsset("cube_model", "../assets/cube_model.json", "Model");
@@ -162,8 +162,8 @@ void omp::Application::debug_createSceneManually()
     omp::AssetHandle material_handle = m_AssetManager->createAsset("def_mat", "../assets/def_material.json", "Material");
     auto material = m_AssetManager->getAsset(material_handle).lock()->getObjectAs<omp::Material>();
     material->addSpecularTexture(texture);
-    material->addTexture(texture);
-    material->addDiffusiveTexture(texture);
+    material->addTexture(spec_texture);
+    material->addDiffusiveTexture(spec_texture);
     material->setShaderName("Light");
     
     std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);

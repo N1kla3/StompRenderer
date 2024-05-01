@@ -40,7 +40,7 @@ namespace omp
         std::vector<std::unique_ptr<omp::SceneEntity>>& getEntities();
 
         void setCurrentCamera(uint16_t id);
-        omp::Camera* getCurrentCamera() const { return m_CurrentCamera; }
+        omp::Camera* getCurrentCamera() const;
         void addCameraToScene();
         void addCameraToScene(std::unique_ptr<omp::Camera>&& camera);
 

@@ -14,6 +14,8 @@ namespace omp
     {
     private:
         omp::threadsafe_map<AssetHandle, std::shared_ptr<Asset>> m_AssetRegistry;
+        std::unordered_map<std::string, omp::AssetHandle::handle_type> m_PathRegistry;
+
         // TODO: Get from Application, should not have own thread pool 
         omp::ThreadPool* m_ThreadPool;
         omp::ObjectFactory* m_Factory;
@@ -29,11 +31,13 @@ namespace omp
         std::future<bool> loadProject(const std::string& inPath = ASSET_FOLDER);
         std::future<bool> saveProject();
         std::future<std::weak_ptr<Asset>> loadAssetAsync(AssetHandle assetId);
+        std::future<std::weak_ptr<Asset>> loadAssetAsync(const std::string& inPath);
         std::future<bool> loadAllAssets();
         /* 
          * Try to load asset, if already loaded, will return asset
          * */
         std::weak_ptr<Asset> loadAsset(AssetHandle assetId);
+        std::weak_ptr<Asset> loadAsset(const std::string& inPath);
         void saveAsset(AssetHandle assetId);
         void deleteAsset(AssetHandle assetId);
         AssetHandle createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass);
