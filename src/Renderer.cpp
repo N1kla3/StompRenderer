@@ -130,7 +130,7 @@ void omp::Renderer::cleanup()
                                  nullptr);
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
 
-    omp::MaterialManager::getMaterialManager().clearGpuState();
+    //omp::MaterialManager::getMaterialManager().clearGpuState();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
@@ -429,8 +429,8 @@ void omp::Renderer::createLogicalDevice()
     createCommandPool();
     m_VulkanContext = std::make_shared<omp::VulkanContext>(
             m_LogicalDevice, m_PhysDevice, m_CommandPool, m_GraphicsQueue);
-    omp::MaterialManager::getMaterialManager().specifyVulkanContext(
-            m_VulkanContext);
+    //omp::MaterialManager::getMaterialManager().specifyVulkanContext(
+    //        m_VulkanContext);
     m_RenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
     m_ImguiRenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
 }
@@ -1377,11 +1377,11 @@ void omp::Renderer::cleanupSwapChain()
     vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_MaterialSets.size(),
                          m_MaterialSets.data());
     m_MaterialSets.clear();
-    for (auto& [u, material]:
+    /* for (auto& [u, material]:
             omp::MaterialManager::getMaterialManager().getMaterials())
     {
         material->clearDescriptorSets();
-    }
+    } */
 
     vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool,
                          m_UboDescriptorSets.size(), m_UboDescriptorSets.data());
@@ -2191,7 +2191,7 @@ void omp::Renderer::renderAllUi()
     }
 
     // TODO remove
-    ImGui::Begin("Imagessss");
+    /* ImGui::Begin("Imagessss");
     if (omp::MaterialManager::getMaterialManager().getTexture(
             "../textures/viking.png"))
     {
@@ -2199,7 +2199,7 @@ void omp::Renderer::renderAllUi()
                              .getTexture("../textures/viking.png")
                              ->getTextureId()),
                      {100, 100});
-    }
+    } */
 
     ImGui::End();
 
@@ -2393,7 +2393,7 @@ void omp::Renderer::destroyAllCommandBuffers()
 void omp::Renderer::initializeScene()
 {
     // TODO: should go to asset initialization
-    auto lambda = [this](ImVec2 pos)
+    /* auto lambda = [this](ImVec2 pos)
     { m_MousePickingData.push(pos); };
     m_RenderViewport->setMouseClickCallback(lambda);
 
@@ -2420,15 +2420,6 @@ void omp::Renderer::initializeScene()
              m_CurrentScene->getCurrentEntity()->getModelInstance()->getScale() =
                      glm::vec3(inVec[0], inVec[1], inVec[2]);
          }
-    });
-
-    omp::MaterialManager::getMaterialManager().loadCubeMapTexture({
-              "../textures/skybox/back.jpg",
-              "../textures/skybox/bottom.jpg",
-              "../textures/skybox/front.jpg",
-              "../textures/skybox/left.jpg",
-              "../textures/skybox/right.jpg",
-              "../textures/skybox/top.jpg",
     });
 
     // TODO: model split
@@ -2504,7 +2495,7 @@ void omp::Renderer::initializeScene()
     plane_mat->addTexture(omp::ETextureType::SpecularMap, plane_texture);
     plane_mat->setShaderName("Light");
     plane->setMaterialInstance(
-            std::make_shared<omp::MaterialInstance>(plane_mat));
+            std::make_shared<omp::MaterialInstance>(plane_mat)); */
 }
 
 void omp::Renderer::postFrame()

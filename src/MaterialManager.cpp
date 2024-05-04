@@ -1,9 +1,10 @@
 #include "MaterialManager.h"
 #include "Logs.h"
 
+/*
 std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureInstantly(const std::string& path)
 {
-    /* if (m_Textures.find(path) != m_Textures.end())
+     if (m_Textures.find(path) != m_Textures.end())
     {
         return m_Textures.at(path);
     }
@@ -15,14 +16,14 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureInstantly(const s
     }
     texture_ptr->fullLoad();
     m_Textures.insert({path, texture_ptr});
-    return texture_ptr; */
+    return texture_ptr;
     return nullptr;
 
 }
 
 std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureLazily(const std::string& path)
 {
-    /* if (m_Textures.find(path) != m_Textures.end())
+     if (m_Textures.find(path) != m_Textures.end())
     {
         return m_Textures.at(path);
     }
@@ -34,14 +35,14 @@ std::shared_ptr<omp::Texture> omp::MaterialManager::loadTextureLazily(const std:
     }
     texture_ptr->lazyLoad();
     m_Textures.insert({path, texture_ptr});
-    return texture_ptr; */
+    return texture_ptr;
     // TODO: maybe we dont need this
     return nullptr;
 }
 
 omp::CubeMapHandle omp::MaterialManager::loadCubeMapTexture(const std::vector<std::string>& inPaths)
 {
-    /* TextureConfig config;
+     TextureConfig config;
     config.type = TextureConfig::CUBEMAP;
     config.layer_amount = inPaths.size();
     auto texture_ptr = std::make_shared<Texture>(m_VulkanContext.lock(), inPaths, config);
@@ -54,7 +55,7 @@ omp::CubeMapHandle omp::MaterialManager::loadCubeMapTexture(const std::vector<st
         texture_ptr->specifyVulkanContext(m_VulkanContext.lock());
     }
     texture_ptr->lazyLoad();
-    return handle; */
+    return handle;
     // TODO: look into aftern refactor cubemaps
     return CubeMapHandle();
 }
@@ -109,3 +110,4 @@ void omp::MaterialManager::clearGpuState() const
         texture_pair.second->destroyVkObjects();
     }
 }
+*/

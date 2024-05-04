@@ -24,8 +24,8 @@ add_subdirectory(json)
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-include_directories(imgui)
-include_directories(imgui/backends)
+include_directories(SYSTEM imgui)
+include_directories(SYSTEM imgui/backends)
 
 set(SOURCE
         Core/Application.h
@@ -121,6 +121,7 @@ set(SOURCE
         Math/GlmHash.h
         )
 
+#include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
 
 set(IMGUI
         imgui/backends/imgui_impl_vulkan.h
@@ -146,10 +147,10 @@ add_library(imgui
 target_compile_definitions(imgui PUBLIC -DIMGUI_USER_CONFIG="stomp_imconfig.h")
 
 add_library(imguihelp ${IMGUI})
-target_link_libraries(imguihelp PUBLIC Vulkan::Vulkan imgui glfw)
+target_link_libraries(imguihelp PRIVATE Vulkan::Vulkan imgui glfw)
 
 add_library(imguizmo src/ImGuizmo/ImGuizmo.cpp src/ImGuizmo/ImGuizmo.h)
-target_link_libraries(imguizmo PUBLIC imgui)
+target_link_libraries(imguizmo PRIVATE imgui)
 
 add_library(stbimage src/IO/stb_image.cpp src/IO/stb_image.h)
 
@@ -158,15 +159,8 @@ list(TRANSFORM SOURCE PREPEND "src/")
 include(CMake/SystemLink.cmake)
 
 add_library(stomp_renderer ${SOURCE})
-#target_link_libraries(stomp_renderer PUBLIC renderer::renderer_options renderer::renderer_warnings)
+target_link_libraries(stomp_renderer PRIVATE renderer::renderer_options renderer::renderer_warnings)
 target_link_system_libraries(stomp_renderer PUBLIC Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json imguizmo imguihelp stbimage)
-renderer_set_project_warnings(
-        stomp_renderer
-        ${renderer_WARNINGS_AS_ERRORS}
-        ""
-        ""
-        ""
-        "")
 
 add_executable(renderer src/main.cpp)
 target_link_libraries(renderer stomp_renderer "-static-libgcc -static-libstdc++")

@@ -16,7 +16,7 @@ void omp::Application::start()
     while (!m_RequestExit)
     {
         time_point current_time = steady_clock::now();
-        float delta = duration_cast<milliseconds>(current_time - previous).count();
+        float delta = static_cast<float>(duration_cast<milliseconds>(current_time - previous).count());
         current_time = previous;
 
         float delta_seconds = delta / 1000.f;
@@ -80,7 +80,7 @@ void omp::Application::init()
 {
     // debug_createSceneManually();
     //m_CurrentScene->setCurrentCamera(0);
-    m_CurrentScene = m_AssetManager->loadAsset("../assets/main_scene.json").lock();
+    m_CurrentScene = std::dynamic_pointer_cast<omp::Scene>(m_AssetManager->loadAsset("../assets/main_scene.json").lock());
     //
     // TODO: then load scene from asset manager
     m_Renderer->initResources(m_CurrentScene.get());
@@ -112,7 +112,7 @@ void omp::Application::tick(float delta)
 
 }
 
-void omp::Application::parseFlags(const std::string& commands)
+void omp::Application::parseFlags(const std::string& /*commands*/)
 {
 
 }
@@ -134,29 +134,29 @@ void omp::Application::debug_createSceneManually()
     omp::AssetHandle scene_handle = m_AssetManager->createAsset("main_scene", "../assets/main_scene.json", "Scene");
     m_CurrentScene = m_AssetManager->getAsset(scene_handle).lock()->getObjectAs<omp::Scene>();
 
-    const std::string g_ModelPath = "../models/cube2.obj";
-    const std::string g_TexturePath = "../textures/container.png";
-    const std::string g_TextureSpecular = "../textures/container_specular.png";
+    const std::string ModelPath = "../models/cube2.obj";
+    const std::string TexturePath = "../textures/container.png";
+    const std::string TextureSpecular = "../textures/container_specular.png";
 
     { // START BLOCK TO REUSE NAME
     omp::AssetHandle texture_handle = m_AssetManager->createAsset("container", "../assets/texture.json", "TextureSrc");
     auto texture = m_AssetManager->getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
     if (texture)
     {
-        texture->setPath(g_TexturePath);
+        texture->setPath(TexturePath);
     }
     omp::AssetHandle spec_texture_handle = m_AssetManager->createAsset("container_specular", "../assets/texture_specular.json", "TextureSrc");
     auto spec_texture = m_AssetManager->getAsset(spec_texture_handle).lock()->getObjectAs<omp::TextureSrc>();
     if (spec_texture)
     {
-        spec_texture->setPath(g_TextureSpecular);
+        spec_texture->setPath(TextureSpecular);
     }
 
     omp::AssetHandle model_handle = m_AssetManager->createAsset("cube_model", "../assets/cube_model.json", "Model");
     auto model = m_AssetManager->getAsset(model_handle).lock()->getObjectAs<omp::Model>();
     if (model)
     {
-        model->setPath(g_ModelPath);
+        model->setPath(ModelPath);
     }
 
     omp::AssetHandle material_handle = m_AssetManager->createAsset("def_mat", "../assets/def_material.json", "Material");
