@@ -20,6 +20,11 @@ void omp::Scene::addEntityToScene(std::unique_ptr<omp::SceneEntity>&& modelToAdd
     m_Entities.push_back(std::move(modelToAdd));
 }
 
+void omp::Scene::loadToGPU(const std::shared_ptr<omp::VulkanContext>& context)
+{
+
+}
+
 void omp::Scene::serialize(JsonParser<>& parser)
 {
     std::vector<std::string> names;

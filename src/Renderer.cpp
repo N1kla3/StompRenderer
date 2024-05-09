@@ -57,10 +57,8 @@ void omp::Renderer::initVulkan(GLFWwindow* window)
     createSwapChain();
 }
 
-void omp::Renderer::initResources(omp::Scene* scene)
+void omp::Renderer::initResources()
 {
-    m_CurrentScene = scene;
-
     createImguiWidgets();
     postSwapChainInitialize();
     createLights();
@@ -68,7 +66,7 @@ void omp::Renderer::initResources(omp::Scene* scene)
     createRenderPass();
     createDescriptorSetLayout();
     createGraphicsPipeline();
-    createMaterialManager();
+    m_VulkanContext->setCommandPool(m_CommandPool);
     createColorResources();
     createViewportResources();
     createPickingResources();
@@ -76,7 +74,6 @@ void omp::Renderer::initResources(omp::Scene* scene)
     createFramebuffers();
     // TODO: need window, maybe separate imguie resources
     initializeImgui(m_Window);
-
     createUniformBuffers();
     createDescriptorPool();
     createDescriptorSets();
@@ -84,6 +81,13 @@ void omp::Renderer::initResources(omp::Scene* scene)
     m_ImguiCommandBuffers.resize(m_PresentKHRImagesNum);
     createSyncObjects();
 
+}
+
+void omp::Renderer::loadScene(omp::Scene* scene)
+{
+    m_CurrentScene = scene;
+
+    m_CurrentScene->loadToGPU(m_VulkanContext);
 }
 
 void omp::Renderer::requestDrawFrame(float deltaTime)
@@ -1565,7 +1569,7 @@ void omp::Renderer::createUniformBuffers()
             m_VulkanContext, m_PresentKHRImagesNum, sizeof(OutlineUniformBuffer),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
-    m_LightSystem->recreate();
+    m_LightSystem->tryRecreateBuffers();
 }
 
 void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
@@ -2295,12 +2299,6 @@ void omp::Renderer::onViewportResize(size_t /*imageIndex*/)
     }
 }
 
-void omp::Renderer::createMaterialManager()
-{
-    // TODO: whats happening here
-    m_VulkanContext->setCommandPool(m_CommandPool);
-}
-
 omp::GraphicsPipeline* omp::Renderer::findGraphicsPipeline(const std::string& name)
 {
     if (m_Pipelines.find(name) != m_Pipelines.end())
@@ -2553,6 +2551,7 @@ void omp::Renderer::postFrame()
 
 void omp::Renderer::tick(float deltaTime)
 {
+    if (!m_CurrentScene) return;
     glm::mat4 projection = glm::perspective(
             glm::radians(m_CurrentScene->getCurrentCamera()->getViewAngle()),
             (float) m_RenderViewport->getSize().x /

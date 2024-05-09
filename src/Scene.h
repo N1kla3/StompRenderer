@@ -18,6 +18,7 @@ namespace omp
         // ===== //
         std::vector<std::unique_ptr<omp::SceneEntity>> m_Entities;
         std::vector<std::unique_ptr<omp::SceneEntity>> m_Cameras;
+        std::weak_ptr<omp::VulkanContext> m_VulkanContext;
 
         omp::Camera* m_CurrentCamera;
 
@@ -32,6 +33,7 @@ namespace omp
         omp::SceneEntity* getEntity(const std::string& entity) const;
         omp::SceneEntity* getEntity(int32_t entity) const;
         omp::SceneEntity* getCurrentEntity() const;
+        void loadToGPU(const std::shared_ptr<omp::VulkanContext>& context);
 
         virtual void serialize(JsonParser<>& parser) override;
         virtual void deserialize(JsonParser<>& parser) override;

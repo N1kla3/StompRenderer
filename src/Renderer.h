@@ -150,7 +150,8 @@ namespace omp
         Renderer();
 
         void initVulkan(GLFWwindow* window);
-        void initResources(omp::Scene* scene);
+        void initResources();
+        void loadScene(omp::Scene* scene);
         // TODO: void initNewScene(omp::Scene* scene);
         
         void requestDrawFrame(float deltaTime);

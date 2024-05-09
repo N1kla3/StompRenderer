@@ -44,7 +44,7 @@ namespace omp
         void addPointLight(const std::shared_ptr<LightObject<PointLight>>& inLight);
         void addSpotLight(const std::shared_ptr<LightObject<SpotLight>>& inLight);
 
-        void recreate();
+        void tryRecreateBuffers();
         void update();
         void mapMemory(uint32_t khrImage);
     };

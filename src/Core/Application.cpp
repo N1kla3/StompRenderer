@@ -69,6 +69,7 @@ void omp::Application::preInit()
 
     m_Renderer = std::make_unique<omp::Renderer>();
     m_Renderer->initVulkan(m_Window);
+    m_Renderer->initResources();
 
     // TODO: maybe other stuff while assets loading
     //m_CurrentScene = std::make_unique<omp::Scene>();
@@ -81,9 +82,8 @@ void omp::Application::init()
     // debug_createSceneManually();
     //m_CurrentScene->setCurrentCamera(0);
     m_CurrentScene = std::dynamic_pointer_cast<omp::Scene>(m_AssetManager->loadAsset("../assets/main_scene.json").lock());
-    //
-    // TODO: then load scene from asset manager
-    m_Renderer->initResources(m_CurrentScene.get());
+
+    m_Renderer->loadScene(m_CurrentScene.get());
 }
 
 void omp::Application::preDestroy()

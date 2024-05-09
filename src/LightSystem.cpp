@@ -4,10 +4,10 @@ omp::LightSystem::LightSystem(const std::shared_ptr<omp::VulkanContext>& inVulka
     : m_VulkanContext(inVulkanContext)
     , m_KHRnum(khrNum)
 {
-    recreate();
+    tryRecreateBuffers();
 }
 
-void omp::LightSystem::recreate()
+void omp::LightSystem::tryRecreateBuffers()
 {
     if (m_GlobalLight)
     {
