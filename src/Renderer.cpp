@@ -2609,8 +2609,8 @@ omp::Renderer::addModelToScene(
 
 void omp::Renderer::loadModelInMemory(const std::shared_ptr<omp::Model>& inModel)
 {
-    inModel->loadIndexToMemory(m_VulkanContext);
-    inModel->loadVertexToMemory(m_VulkanContext);
+    /* inModel->loadIndexToMemory(m_VulkanContext);
+    inModel->loadVertexToMemory(m_VulkanContext); */
 }
 
 void omp::Renderer::createLights()

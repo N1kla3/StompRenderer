@@ -20,13 +20,15 @@ namespace omp
         glm::vec3 m_Scale = glm::vec3(1.f);
 
         std::shared_ptr<MaterialInstance> m_MaterialInstance = nullptr;
-        std::weak_ptr<Model> m_Model;
+        std::shared_ptr<Model> m_Model;
     public:
         ModelInstance();
         ModelInstance(const std::shared_ptr<omp::Model>& inModel);
         ModelInstance(const std::shared_ptr<omp::MaterialInstance>& inInstance);
         ModelInstance(const std::shared_ptr<omp::Model>& inModel, const std::shared_ptr<omp::MaterialInstance>& inInstance);
         ModelInstance(const std::shared_ptr<omp::Model>& inModel, const std::shared_ptr<omp::Material>& inMat);
+
+        void tryLoad(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate);
 
         std::string getName() const { return m_Name; }
         void setName(const std::string& inName) { m_Name = inName; }

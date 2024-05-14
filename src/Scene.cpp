@@ -22,7 +22,17 @@ void omp::Scene::addEntityToScene(std::unique_ptr<omp::SceneEntity>&& modelToAdd
 
 void omp::Scene::loadToGPU(const std::shared_ptr<omp::VulkanContext>& context)
 {
+    m_VulkanContext = context;
 
+    for (auto& entity : m_Entities)
+    {
+        entity->TryLoadToGpu(context);
+    }
+
+    for (auto& camera : m_Cameras)
+    {
+        camera->TryLoadToGpu(context);
+    }
 }
 
 void omp::Scene::serialize(JsonParser<>& parser)

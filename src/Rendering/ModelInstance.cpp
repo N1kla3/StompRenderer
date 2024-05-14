@@ -59,6 +59,14 @@ omp::ModelInstance::ModelInstance(
 
 }
 
+void omp::ModelInstance::tryLoad(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate)
+{
+    if (!m_Model)
+    {
+        m_Model->loadToMemory(context, forceUpdate);
+    }
+}
+
 void omp::ModelInstance::setMaterialInstance(const std::shared_ptr<MaterialInstance>& inInstance)
 {
     m_MaterialInstance = inInstance;

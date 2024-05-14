@@ -11,7 +11,7 @@ namespace omp
     class MaterialInstance
     {
     private:
-        std::weak_ptr<Material> m_StaticMaterial;
+        std::shared_ptr<Material> m_StaticMaterial;
 
         // vec4 because of glsl alignment, 4th element used for color strength
         glm::vec4 m_Ambient = {1.0f, 1.0f, 1.0f, 0};

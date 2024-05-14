@@ -14,7 +14,6 @@ namespace omp
         int32_t m_Id;
     protected:
         std::string m_Name;
-        // TODO: rename to instance, and divide with material
         std::shared_ptr<omp::ModelInstance> m_ModelInstance;
 
     public:
@@ -22,6 +21,7 @@ namespace omp
         SceneEntity(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel);
         virtual ~SceneEntity() = default;
         int32_t getId() const { return m_Id; }
+        void TryLoadToGpu(const std::shared_ptr<omp::VulkanContext>& context);
 
         std::string getName() const { return m_Name; }
         void setName(const std::string& inName) { m_Name = inName; }

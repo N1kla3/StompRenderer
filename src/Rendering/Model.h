@@ -115,14 +115,24 @@ public:
     virtual void deserialize(JsonParser<>& parser) override;
 
 private:
+    void loadVertexToMemory();
+    void loadIndexToMemory();
+    void tryClear();
+
+    void addVertex(const omp::Vertex& inVertex);
+    void addVertices(const std::vector<Vertex>& inVertices);
+    void addIndex(uint32_t inIndex);
+    void addIndices(const std::vector<uint32_t>& inIndices);
+
     // State //
     // ===== //
+    std::vector<Vertex> m_Vertices;
+    std::vector<uint32_t> m_Indices;
+
     std::string m_Name;
     std::string m_Path;
 
-    std::vector<Vertex> m_Vertices;
-
-    std::vector<uint32_t> m_Indices;
+    std::weak_ptr<omp::VulkanContext> m_Context{};
 
     VkBuffer m_IndexBuffer;
     VkDeviceMemory m_IndexMemory;
@@ -130,21 +140,13 @@ private:
     VkBuffer m_VertexBuffer;
     VkDeviceMemory m_VertexMemory;
 
-    std::shared_ptr<omp::VulkanContext> m_Context = nullptr;
-
 public:
     // Methods //
     // ======= //
     void setName(const std::string& inName) { m_Name = inName; }
     void setPath(const std::string& inPath) { m_Path = inPath; }
 
-    void loadVertexToMemory(const std::shared_ptr<omp::VulkanContext>& inContext);
-    void loadIndexToMemory(const std::shared_ptr<omp::VulkanContext>& inContext);
-
-    void addVertex(const omp::Vertex& inVertex);
-    void addVertices(const std::vector<Vertex>& inVertices);
-    void addIndex(uint32_t inIndex);
-    void addIndices(const std::vector<uint32_t>& inIndices);
+    void loadToMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate);
 
     const std::string& getName() const { return m_Name; }
 
