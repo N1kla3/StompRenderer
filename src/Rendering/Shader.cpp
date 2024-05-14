@@ -25,7 +25,7 @@ std::vector<char> omp::Shader::readFile(const std::string& filename)
         throw std::runtime_error("Failed to open file");
     }
 
-    size_t file_size = (size_t) file.tellg();
+    std::ifstream::pos_type file_size = file.tellg();
     std::vector<char> buffer(file_size);
     file.seekg(0);
     file.read(buffer.data(), file_size);

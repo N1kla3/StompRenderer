@@ -73,7 +73,7 @@ namespace omp
 
         std::string getShaderName() const { return m_RenderInfo->shader_name; }
 
-        const omp::MaterialRenderInfo* const getRenderInfo() const { return m_RenderInfo.get(); }
+        const omp::MaterialRenderInfo* getRenderInfo() const { return m_RenderInfo.get(); }
 
         void setDescriptorSet(const std::vector<VkDescriptorSet>& ds);
         std::vector<VkDescriptorSet>& getDescriptorSet();

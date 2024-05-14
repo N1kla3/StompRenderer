@@ -42,8 +42,7 @@ namespace
             const VkAllocationCallbacks* pAllocator,
             VkDebugUtilsMessengerEXT* pDebugMessenger)
     {
-        auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance,
-                                                                               "vkCreateDebugUtilsMessengerEXT");
+        auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
         if (func != nullptr)
         {
             return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
@@ -59,8 +58,7 @@ namespace
             VkDebugUtilsMessengerEXT debugMessenger,
             const VkAllocationCallbacks* pAllocator)
     {
-        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance,
-                                                                                "vkDestroyDebugUtilsMessengerEXT");
+        auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
         if (func != nullptr)
         {
             func(instance, debugMessenger, pAllocator);
@@ -80,9 +78,10 @@ namespace omp
         glm::mat4 proj;
         glm::vec3 view_position;
 
-        int global_light_enabled;
-        int point_light_size;
-        int spot_light_size;
+        // TODO: check shaders to have same type
+        uint32_t global_light_enabled;
+        uint32_t point_light_size;
+        uint32_t spot_light_size;
     };
 
     struct OutlineUniformBuffer
@@ -320,10 +319,10 @@ namespace omp
                 throw std::runtime_error("Failed to open file");
             }
 
-            size_t file_size = (size_t) file.tellg();
+            size_t file_size = static_cast<size_t>(file.tellg());
             std::vector<char> buffer(file_size);
             file.seekg(0);
-            file.read(buffer.data(), file_size);
+            file.read(buffer.data(), static_cast<int32_t>(file_size));
 
             file.close();
             return buffer;

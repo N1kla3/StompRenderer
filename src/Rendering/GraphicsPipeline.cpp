@@ -141,7 +141,7 @@ void omp::GraphicsPipeline::createColorBlending()
     color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     color_blending.logicOpEnable = VK_FALSE;
     color_blending.logicOp = VK_LOGIC_OP_COPY;
-    color_blending.attachmentCount = m_ColorBlendAttachments.size();
+    color_blending.attachmentCount = static_cast<uint32_t>(m_ColorBlendAttachments.size());
     color_blending.pAttachments = m_ColorBlendAttachments.data();
     color_blending.blendConstants[0] = 0.0f;
     color_blending.blendConstants[1] = 0.0f;
@@ -159,7 +159,7 @@ void omp::GraphicsPipeline::addColorBlendingAttachment(VkPipelineColorBlendAttac
     color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     color_blending.logicOpEnable = VK_FALSE;
     color_blending.logicOp = VK_LOGIC_OP_COPY;
-    color_blending.attachmentCount = m_ColorBlendAttachments.size();
+    color_blending.attachmentCount = static_cast<uint32_t>(m_ColorBlendAttachments.size());
     color_blending.pAttachments = m_ColorBlendAttachments.data();
     color_blending.blendConstants[0] = 0.0f;
     color_blending.blendConstants[1] = 0.0f;
@@ -174,7 +174,7 @@ void omp::GraphicsPipeline::addPipelineSetLayout(VkDescriptorSetLayout descripto
     m_SetLayoutsHandles.push_back(descriptorSetLayout);
 
     m_PipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    m_PipelineLayoutInfo.setLayoutCount = m_SetLayoutsHandles.size();
+    m_PipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(m_SetLayoutsHandles.size());
     m_PipelineLayoutInfo.pSetLayouts = m_SetLayoutsHandles.data();
 }
 

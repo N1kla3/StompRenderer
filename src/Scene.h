@@ -31,7 +31,7 @@ namespace omp
         void addEntityToScene(const omp::SceneEntity& modelToAdd);
         void addEntityToScene(std::unique_ptr<omp::SceneEntity>&& modelToAdd);
         omp::SceneEntity* getEntity(const std::string& entity) const;
-        omp::SceneEntity* getEntity(int32_t entity) const;
+        omp::SceneEntity* getEntity(uint32_t entity) const;
         omp::SceneEntity* getCurrentEntity() const;
         void loadToGPU(const std::shared_ptr<omp::VulkanContext>& context);
 

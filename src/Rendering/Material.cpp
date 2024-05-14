@@ -30,7 +30,7 @@ void omp::Material::removeTexture(const TextureData& data)
     {
         if (m_RenderInfo->textures[index].binding_index == data.binding_index)
         {
-            m_RenderInfo->textures.erase(m_RenderInfo->textures.cbegin() + index);
+            m_RenderInfo->textures.erase(m_RenderInfo->textures.cbegin() + static_cast<int>(index));
             break;
         }
     }

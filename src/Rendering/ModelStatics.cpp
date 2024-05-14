@@ -23,25 +23,28 @@ void omp::ModelImporter::loadModel(omp::Model* model, const std::string& inPath)
         {
             omp::Vertex vertex{};
 
+            size_t vertex_index = index.vertex_index;
+            size_t texcoord_index = index.texcoord_index;
+            size_t normal_index = index.normal_index;
             vertex.pos = {
-                    attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2]
+                    attrib.vertices[3U * vertex_index + 0U],
+                    attrib.vertices[3U * vertex_index + 1U],
+                    attrib.vertices[3U * vertex_index + 2U]
             };
             vertex.tex_coord = {
-                    attrib.texcoords[2 * index.texcoord_index + 0],
-                    1 - attrib.texcoords[2 * index.texcoord_index + 1]
+                    attrib.texcoords[2U * texcoord_index + 0U],
+                    1 - attrib.texcoords[2U * texcoord_index + 1U]
             };
             vertex.color = {
-                    attrib.colors[3 * index.vertex_index + 0],
-                    attrib.colors[3 * index.vertex_index + 1],
-                    attrib.colors[3 * index.vertex_index + 2]
+                    attrib.colors[3U * vertex_index + 0U],
+                    attrib.colors[3U * vertex_index + 1U],
+                    attrib.colors[3U * vertex_index + 2U]
             };
 
             vertex.normal = {
-                    attrib.normals[3 * index.normal_index + 0],
-                    attrib.normals[3 * index.normal_index + 1],
-                    attrib.normals[3 * index.normal_index + 2]
+                    attrib.normals[3U * normal_index + 0U],
+                    attrib.normals[3U * normal_index + 1U],
+                    attrib.normals[3U * normal_index + 2U]
             };
             // TODO incorrect amount
 

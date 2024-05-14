@@ -11,7 +11,7 @@ namespace omp
     class SceneEntity : public IDrawable
     {
     private:
-        int32_t m_Id;
+        uint32_t m_Id;
     protected:
         std::string m_Name;
         std::shared_ptr<omp::ModelInstance> m_ModelInstance;
@@ -20,7 +20,7 @@ namespace omp
         SceneEntity();
         SceneEntity(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel);
         virtual ~SceneEntity() = default;
-        int32_t getId() const { return m_Id; }
+        uint32_t getId() const { return m_Id; }
         void TryLoadToGpu(const std::shared_ptr<omp::VulkanContext>& context);
 
         std::string getName() const { return m_Name; }

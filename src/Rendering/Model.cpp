@@ -71,7 +71,7 @@ void omp::Model::loadVertexToMemory()
 
     void* data;
     vkMapMemory(context->logical_device, staging_memory, 0, buffer_size, 0, &data);
-    memcpy(data, getVertices().data(), (size_t) buffer_size);
+    memcpy(data, getVertices().data(), static_cast<size_t>(buffer_size));
     vkUnmapMemory(context->logical_device, staging_memory);
 
     context->createBuffer(
@@ -104,7 +104,7 @@ void omp::Model::loadIndexToMemory()
 
     void* data;
     vkMapMemory(context->logical_device, staging_memory, 0, buffer_size, 0, &data);
-    memcpy(data, getIndices().data(), (size_t) buffer_size);
+    memcpy(data, getIndices().data(), static_cast<size_t>(buffer_size));
     vkUnmapMemory(context->logical_device, staging_memory);
 
     context->createBuffer(

@@ -69,7 +69,7 @@ void omp::LightSystem::mapMemory(uint32_t khrImage)
         WARN(LogRendering, "Buffer for global light is null");
     }
 
-    int offset = 0;
+    size_t offset = 0;
     for (size_t index = 0; index < m_PointLights.size(); index++)
     {
         m_PointBuffer->mapMemory(m_PointLights[index]->getLight(), khrImage, offset);

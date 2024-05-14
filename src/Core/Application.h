@@ -40,8 +40,8 @@ namespace omp
         std::shared_ptr<omp::Scene> m_CurrentScene;
         GLFWwindow* m_Window;
 
-        uint32_t m_Width = 1280;
-        uint32_t m_Height = 720;
+        int m_Width = 1280;
+        int m_Height = 720;
         int m_FrameLimit = -1;
         int m_ThreadCount = 5;//-1;
         bool m_RequestExit = false;

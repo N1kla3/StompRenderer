@@ -72,8 +72,8 @@ void omp::Scene::deserialize(JsonParser<>& parser)
     for (size_t i = 0; i < entities_num; i++)
     {
         JsonParser<> local_entity = parser.readObject(names[i]);
-        std::string class_name = local_entity.readValue<std::string>("ClassName").value();
-        std::unique_ptr<SceneEntity> entity = std::move(omp::SceneEntityFactory::createSceneEntity(class_name));
+        std::string class_name = std::move(local_entity.readValue<std::string>("ClassName").value());
+        std::unique_ptr<SceneEntity> entity = omp::SceneEntityFactory::createSceneEntity(class_name);
         entity->onSceneLoad(local_entity, this);
         m_Entities.push_back(std::move(entity));
     }
@@ -83,8 +83,8 @@ void omp::Scene::deserialize(JsonParser<>& parser)
     for (size_t i = 0; i < camera_num; i++)
     {
         JsonParser<> local_entity = parser.readObject(names[i]);
-        std::string class_name = local_entity.readValue<std::string>("ClassName").value();
-        std::unique_ptr<SceneEntity> camera = std::move(omp::SceneEntityFactory::createSceneEntity(class_name));
+        std::string class_name = std::move(local_entity.readValue<std::string>("ClassName").value());
+        std::unique_ptr<SceneEntity> camera = omp::SceneEntityFactory::createSceneEntity(class_name);
         camera->onSceneLoad(local_entity, this);
         m_Cameras.push_back(std::move(camera));
     }
@@ -104,7 +104,7 @@ omp::SceneEntity* omp::Scene::getEntity(const std::string& inName) const
     return result;
 }
 
-omp::SceneEntity* omp::Scene::getEntity(int32_t inId) const
+omp::SceneEntity* omp::Scene::getEntity(uint32_t inId) const
 {
     omp::SceneEntity* result = nullptr;
     for (const std::unique_ptr<omp::SceneEntity>& ptr : m_Entities)

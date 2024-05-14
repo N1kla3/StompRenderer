@@ -66,10 +66,10 @@ namespace omp
 
     private:
         bool isLoadedToMemory() const;
-        size_t getFirstTextureSize() const;
-        size_t getFirstTextureMipMap() const;
-        size_t getFirstTextureWidth() const;
-        size_t getFirstTextureHeight() const;
+        uint32_t getFirstTextureSize() const;
+        uint32_t getFirstTextureMipMap() const;
+        uint32_t getFirstTextureWidth() const;
+        uint32_t getFirstTextureHeight() const;
         void removeFlags(uint16_t flags);
         void addFlags(uint16_t flags);
         bool hasFlags(uint16_t flags) const;

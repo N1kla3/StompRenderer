@@ -109,7 +109,7 @@ void omp::SceneEntity::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
 
 void omp::SceneEntity::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
 {
-    m_Id = parser.readValue<int32_t>("Id").value_or(0);
+    m_Id = parser.readValue<uint32_t>("Id").value_or(0);
     m_Name = parser.readValue<std::string>("Name").value_or("");
 
     glm::vec3 pos;

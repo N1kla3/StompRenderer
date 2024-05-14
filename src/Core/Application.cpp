@@ -10,7 +10,7 @@ void omp::Application::start()
     preInit();
     init();
 
-    float ms_limit = 1.f / m_FrameLimit;
+    float ms_limit = static_cast<float>(1.f / m_FrameLimit);
 
     time_point previous = steady_clock::now();
     while (!m_RequestExit)

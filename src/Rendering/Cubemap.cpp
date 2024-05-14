@@ -95,10 +95,10 @@ void omp::Cubemap::createImage()
 {
     VkBuffer staging_buffer;
     VkDeviceMemory staging_buffer_memory;
-    size_t size = getFirstTextureSize();
-    size_t mip_level = getFirstTextureMipMap();
-    size_t width = getFirstTextureWidth();
-    size_t height = getFirstTextureHeight();
+    uint32_t size = getFirstTextureSize();
+    uint32_t mip_level = getFirstTextureMipMap();
+    uint32_t width = getFirstTextureWidth();
+    uint32_t height = getFirstTextureHeight();
 
     size_t size_to_alloc = getFirstTextureSize() * m_LayerAmount;
     m_VulkanContext.lock()->createBuffer(size_to_alloc, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -219,38 +219,38 @@ bool omp::Cubemap::isLoadedToMemory() const
     return false;
 }
 
-size_t omp::Cubemap::getFirstTextureSize() const
+uint32_t omp::Cubemap::getFirstTextureSize() const
 {
     if (!m_Textures.empty())
     {
-        return m_Textures[0]->getSize();
+        return static_cast<uint32_t>(m_Textures[0]->getSize());
+    }
+    return 0U;
+}
+
+uint32_t omp::Cubemap::getFirstTextureMipMap() const
+{
+    if (!m_Textures.empty())
+    {
+        return static_cast<uint32_t>(m_Textures[0]->getMipLevels());
+    }
+    return 0U;
+}
+
+uint32_t omp::Cubemap::getFirstTextureWidth() const
+{
+    if (!m_Textures.empty())
+    {
+        return static_cast<uint32_t>(m_Textures[0]->getWidth());
     }
     return 0;
 }
 
-size_t omp::Cubemap::getFirstTextureMipMap() const
+uint32_t omp::Cubemap::getFirstTextureHeight() const
 {
     if (!m_Textures.empty())
     {
-        return m_Textures[0]->getMipLevels();
-    }
-    return 0;
-}
-
-size_t omp::Cubemap::getFirstTextureWidth() const
-{
-    if (!m_Textures.empty())
-    {
-        return m_Textures[0]->getWidth();
-    }
-    return 0;
-}
-
-size_t omp::Cubemap::getFirstTextureHeight() const
-{
-    if (!m_Textures.empty())
-    {
-        return m_Textures[0]->getHeight();
+        return static_cast<uint32_t>(m_Textures[0]->getHeight());
     }
     return 0;
 }

@@ -169,8 +169,7 @@ void omp::Renderer::createInstance()
                 static_cast<uint32_t>(g_ValidationLayers.size());
         create_info.ppEnabledLayerNames = g_ValidationLayers.data();
         populateDebugMessengerCreateInfo(debug_create_info);
-        create_info.pNext =
-                (VkDebugUtilsMessengerCreateInfoEXT*) &debug_create_info;
+        create_info.pNext = &debug_create_info;
     }
     else
     {
@@ -351,7 +350,7 @@ omp::Renderer::findQueueFamilies(VkPhysicalDevice device)
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count,
                                              queue_families.data());
 
-    int i = 0;
+    uint32_t i = 0;
     for (const auto& queue: queue_families)
     {
         if (queue.queueFlags & VK_QUEUE_GRAPHICS_BIT)
@@ -359,8 +358,7 @@ omp::Renderer::findQueueFamilies(VkPhysicalDevice device)
             indices.graphics_family = i;
         }
         VkBool32 present_support = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_Surface,
-                                             &present_support);
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_Surface, &present_support);
         if (present_support)
         {
             indices.present_family = i;
@@ -1337,7 +1335,7 @@ void omp::Renderer::recreateSwapChain()
     m_ViewportDescriptor =
             ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView,
                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    m_RenderViewport->setImageId((ImTextureID) m_ViewportDescriptor);
+    m_RenderViewport->setImageId(reinterpret_cast<ImTextureID>(m_ViewportDescriptor));
 
     createImguiRenderPass();
     createImguiFramebuffers();
@@ -1578,8 +1576,8 @@ void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
     ubo.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
     ubo.proj = glm::perspective(
             glm::radians(m_CurrentScene->getCurrentCamera()->getViewAngle()),
-            (float) m_RenderViewport->getSize().x /
-            (float) m_RenderViewport->getSize().y,
+            static_cast<float>(m_RenderViewport->getSize().x) /
+            static_cast<float>(m_RenderViewport->getSize().y),
             m_CurrentScene->getCurrentCamera()->getNearClipping(),
             m_CurrentScene->getCurrentCamera()->getFarClipping());
     ubo.proj[1][1] *= -1;
@@ -1647,7 +1645,7 @@ void omp::Renderer::createDescriptorSets()
         {
             throw std::runtime_error("Failed to allocate descriptor sets!");
         }
-        for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
+        for (uint32_t i = 0; i < m_PresentKHRImagesNum; i++)
         {
             // Same ubo for outline, so use the same
             VkDescriptorBufferInfo buffer_info{};
@@ -1687,7 +1685,7 @@ void omp::Renderer::createDescriptorSets()
         {
             throw std::runtime_error("Failed to allocate descriptor sets!");
         }
-        for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
+        for (uint32_t i = 0; i < m_PresentKHRImagesNum; i++)
         {
             VkDescriptorBufferInfo buffer_info{};
             buffer_info.buffer = m_OutlineBuffer->getBuffer(i);
@@ -1724,7 +1722,7 @@ void omp::Renderer::createDescriptorSets()
         throw std::runtime_error("Failed to allocate descriptor sets!");
     }
 
-    for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
+    for (uint32_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         VkDescriptorBufferInfo buffer_info{};
         buffer_info.buffer = m_UboBuffer->getBuffer(i);
@@ -2266,8 +2264,8 @@ void omp::Renderer::onViewportResize(size_t /*imageIndex*/)
 {
     if (m_RenderViewport->isResized())
     {
-        auto x = m_RenderViewport->getSize().x;
-        auto y = m_RenderViewport->getSize().y;
+        uint32_t x = static_cast<uint32_t>(m_RenderViewport->getSize().x);
+        uint32_t y = static_cast<uint32_t>(m_RenderViewport->getSize().y);
         if (x <= 0 || x >= m_DeviceLimits.maxFramebufferWidth)
         {
             return;
@@ -2295,7 +2293,7 @@ void omp::Renderer::onViewportResize(size_t /*imageIndex*/)
         m_ViewportDescriptor =
                 ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView,
                                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        m_RenderViewport->setImageId((ImTextureID) m_ViewportDescriptor);
+        m_RenderViewport->setImageId(reinterpret_cast<ImTextureID>(m_ViewportDescriptor));
     }
 }
 
@@ -2514,8 +2512,8 @@ void omp::Renderer::postFrame()
         region.bufferImageHeight = 1;
         region.imageSubresource = subres;
         VkOffset3D offset{};
-        offset.x = static_cast<uint32_t>(m_RenderViewport->getLocalCursorPos().x);
-        offset.y = static_cast<uint32_t>(m_RenderViewport->getLocalCursorPos().y);
+        offset.x = static_cast<int32_t>(m_RenderViewport->getLocalCursorPos().x);
+        offset.y = static_cast<int32_t>(m_RenderViewport->getLocalCursorPos().y);
         offset.z = 0;
         region.imageOffset = offset;
         VkExtent3D extent{};

@@ -41,6 +41,6 @@ namespace omp
     public:
         // Configuration //
         // ============= //
-        int layers = 1;
+        size_t layers = 1;
     };
 }
