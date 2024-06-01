@@ -150,7 +150,7 @@ void omp::SceneEntity::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
     std::shared_ptr<omp::Model> model_casted = std::dynamic_pointer_cast<omp::Model>(scene->getDependency(model_id));
     if (model_casted)
     {
-        m_ModelInstance->setModel(model_casted);
+        m_ModelInstance = std::make_shared<omp::ModelInstance>(model_casted);
         glm::vec3& old_pos = m_ModelInstance->getPosition();
         old_pos = pos;
         glm::vec3& old_rot = m_ModelInstance->getRotation();

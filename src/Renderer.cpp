@@ -2219,7 +2219,7 @@ void omp::Renderer::createImguiWidgets()
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity, material_panel);
     // TODO: remake ui m_ScenePanel->setScene(m_CurrentScene);
     auto camera_panel =
-            std::make_shared<omp::CameraPanel>(m_CurrentScene->getCurrentCamera());
+            std::make_shared<omp::CameraPanel>(nullptr);//m_CurrentScene->getCurrentCamera());
     // auto light_panel = std::make_shared<omp::GlobalLightPanel>(m_GlobalLight);
 
     m_Widgets.push_back(std::make_shared<omp::MainLayer>());

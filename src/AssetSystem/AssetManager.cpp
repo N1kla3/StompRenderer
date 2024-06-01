@@ -7,6 +7,8 @@
 #include "Core/CoreLib.h"
 #include "Rendering/Shader.h"
 #include "Scene.h"
+#include "SceneEntityFactory.h"
+#include "LightSystem.h"
 #include "Rendering/Model.h"
 
 using namespace std::filesystem;
@@ -25,6 +27,12 @@ omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory*
     m_Factory->registerClass<omp::Scene>("Scene");
     m_Factory->registerClass<omp::Material>("Material");
     m_Factory->registerClass<omp::Shader>("Shader");
+
+    omp::SceneEntityFactory::registerClass<omp::SceneEntity>("SceneEntity");
+    omp::SceneEntityFactory::registerClass<omp::Camera>("Camera");
+    omp::SceneEntityFactory::registerClass<omp::LightObject<omp::GlobalLight>>("GlobalLight");
+    omp::SceneEntityFactory::registerClass<omp::LightObject<omp::PointLight>>("PointLight");
+    omp::SceneEntityFactory::registerClass<omp::LightObject<omp::SpotLight>>("SpotLight");
 }
 
 omp::AssetManager::~AssetManager()
@@ -116,7 +124,6 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
     {
         new_asset->specifyMetaData(std::move(init_metadata));
         new_asset->createObject(m_Factory);
-        new_asset->addMetadataToObject(new_asset.get(), id);
     }
     else
     {
@@ -170,6 +177,7 @@ void omp::AssetManager::loadAsset_internal(const std::string& inPath)
         if (asset->loadMetadata())
         {
             m_AssetRegistry.add_or_update_mapping(asset->getMetaData().asset_id, asset);
+            m_PathRegistry.emplace(inPath, asset->getMetaData().asset_id);
             INFO(LogAssetManager, "Asset loaded successfully: {0}", inPath);
         }
         else
@@ -197,8 +205,8 @@ std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAssetAsync(AssetHa
                 std::weak_ptr<omp::Asset> child = loadAsset(dependency_id);
                 found_asset->addChild(child.lock());
             }
-            
-            found_asset->loadAsset(m_Factory);
+
+            found_asset->tryLoadObject(m_Factory);
             return std::weak_ptr<omp::Asset>(found_asset);
         });
     }
@@ -222,7 +230,7 @@ std::future<bool> omp::AssetManager::loadAllAssets()
     {
         m_AssetRegistry.foreach([this](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
         {
-            asset.second->loadAsset(m_Factory);
+            asset.second->tryLoadObject(m_Factory);
         });
         return true;
     });
@@ -242,8 +250,8 @@ std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(AssetHandle assetHandle)
             std::weak_ptr<omp::Asset> child = loadAsset(dependency_id);
             found_asset->addChild(child.lock());
         }
-        
-        found_asset->loadAsset(m_Factory);
+
+        found_asset->tryLoadObject(m_Factory);
         return std::weak_ptr<omp::Asset>(found_asset);
     }
     ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);

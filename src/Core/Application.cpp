@@ -81,7 +81,15 @@ void omp::Application::init()
 {
     // debug_createSceneManually();
     //m_CurrentScene->setCurrentCamera(0);
-    m_CurrentScene = std::dynamic_pointer_cast<omp::Scene>(m_AssetManager->loadAsset("../assets/main_scene.json").lock());
+    std::weak_ptr<omp::Asset> scene_weak_ptr = m_AssetManager->loadAsset("../assets/main_scene.json");
+    if (!scene_weak_ptr.expired())
+    {
+        m_CurrentScene = scene_weak_ptr.lock()->getObjectAs<omp::Scene>();
+    }
+    else
+    {
+        WARN(LogAssetManager, "Application cant load default scene!");
+    }
 
     m_Renderer->loadScene(m_CurrentScene.get());
 }
