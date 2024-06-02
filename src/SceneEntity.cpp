@@ -17,7 +17,7 @@ omp::SceneEntity::SceneEntity(const std::string& inName, const std::shared_ptr<o
     m_Id = omp::CoreLib::generateId32();
 }
 
-void omp::SceneEntity::TryLoadToGpu(const std::shared_ptr<omp::VulkanContext>& context)
+void omp::SceneEntity::tryLoadToGpu(const std::shared_ptr<omp::VulkanContext>& context)
 {
     m_ModelInstance->tryLoad(context, false);
 }

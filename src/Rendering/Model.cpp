@@ -139,7 +139,7 @@ omp::Model::~Model()
 
 void omp::Model::loadToMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate)
 {
-    if (m_Context.expired() && !forceUpdate)
+    if (!m_Context.expired() && !forceUpdate)
     {
         return;
     }

@@ -21,7 +21,7 @@ namespace omp
         SceneEntity(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel);
         virtual ~SceneEntity() = default;
         uint32_t getId() const { return m_Id; }
-        void TryLoadToGpu(const std::shared_ptr<omp::VulkanContext>& context);
+        void tryLoadToGpu(const std::shared_ptr<omp::VulkanContext>& context);
 
         std::string getName() const { return m_Name; }
         void setName(const std::string& inName) { m_Name = inName; }

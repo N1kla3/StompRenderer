@@ -26,12 +26,12 @@ void omp::Scene::loadToGPU(const std::shared_ptr<omp::VulkanContext>& context)
 
     for (auto& entity : m_Entities)
     {
-        entity->TryLoadToGpu(context);
+        entity->tryLoadToGpu(context);
     }
 
     for (auto& camera : m_Cameras)
     {
-        camera->TryLoadToGpu(context);
+        camera->tryLoadToGpu(context);
     }
 }
 

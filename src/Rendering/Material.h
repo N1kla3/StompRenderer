@@ -45,8 +45,6 @@ namespace omp
     private:
         std::unique_ptr<omp::MaterialRenderInfo> m_RenderInfo;
 
-        omp::MaterialManager* m_Manager = nullptr;
-
         std::vector<VkDescriptorSet> m_DescriptorSets;
 
         void addTextureInternal(TextureData&& data);
@@ -59,6 +57,8 @@ namespace omp
 
         virtual void serialize(JsonParser<> &parser) override;
         virtual void deserialize(JsonParser<> &parser) override;
+
+        void loadToGpu(const std::shared_ptr<omp::VulkanContext>& context);
 
         void addTexture(ETextureType type, const std::shared_ptr<Texture>& texture);
         void removeTexture(const TextureData& data);

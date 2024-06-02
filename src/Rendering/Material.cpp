@@ -10,6 +10,25 @@ void omp::Material::addTextureInternal(TextureData&& data)
     m_RenderInfo->textures[data.binding_index] = std::move(data);
 }
 
+void omp::Material::loadToGpu(const std::shared_ptr<omp::VulkanContext>& context)
+{
+    if (!m_RenderInfo)
+    {
+        WARN(LogRendering, "Cant load material to GPU, no render data available");
+        return;
+    }
+
+    for (auto& texture_data: m_RenderInfo->textures)
+    {
+        auto& texture_ref = texture_data.texture;
+        if (texture_ref)
+        {
+            texture_ref->specifyVulkanContext(context);
+            texture_ref->fullLoad();
+        }
+    }
+}
+
 void omp::Material::addTexture(ETextureType type, const std::shared_ptr<Texture>& texture)
 {
     const static std::array<std::string, static_cast<size_t>(ETextureType::Max)> names
