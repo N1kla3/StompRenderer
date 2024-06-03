@@ -984,6 +984,9 @@ void omp::Renderer::createFramebufferAtImage(size_t index)
             static_cast<uint32_t>(m_RenderViewport->getSize().x),
             static_cast<uint32_t>(m_RenderViewport->getSize().y));
     m_SwapChainFramebuffers[index] = frame_buffer;
+
+    // test
+    INFO(LogRendering, "Framebuffer created with size {} {}", m_RenderViewport->getSize().x, m_RenderViewport->getSize().y);
 }
 
 void omp::Renderer::createCommandPool()

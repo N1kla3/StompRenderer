@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include "Logs.h"
 #include "FrameBuffer.h"
 
 omp::FrameBuffer::FrameBuffer(VkDevice device)
@@ -55,6 +56,7 @@ void omp::FrameBuffer::setSizes(uint32_t width, uint32_t height)
 
 void omp::FrameBuffer::finishCreation()
 {
+    INFO(LogRendering, "DEBUG: framebuffer size is: {}{}", m_CreateInfo.height, m_CreateInfo.width);
     m_CreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     if (vkCreateFramebuffer(m_LogicalDevice, &m_CreateInfo, nullptr, &m_VulkanBuffer)
         != VK_SUCCESS)
