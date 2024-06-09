@@ -54,7 +54,7 @@ namespace omp
     protected:
         // Subroutines //
         // =========== //
-        void loadToGpu();
+        bool tryLoadToGpu();
         void loadToUi();
 
         void createSampler();

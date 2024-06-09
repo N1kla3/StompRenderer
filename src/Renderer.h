@@ -30,6 +30,8 @@
 #include "Rendering/RenderPass.h"
 #include "Rendering/FrameBuffer.h"
 #include "UI/ImguiUnit.h"
+#include "UI/GlobalLightPanel.h"
+#include "UI/CameraPanel.h"
 #include "Logs.h"
 #include "LightSystem.h"
 #include "Rendering/ModelStatics.h"
@@ -230,8 +232,6 @@ namespace omp
         void createDescriptorSets();
 
         void addModelToScene(std::unique_ptr<omp::SceneEntity>&& inModel);
-        std::shared_ptr<omp::ModelInstance> addModelToScene(const std::string& inName, const std::string& inPath);
-        void loadModelInMemory(const std::shared_ptr<omp::Model>& inModel);
 
         void retrieveMaterialRenderState(const std::shared_ptr<omp::Material>& material);
 
@@ -246,6 +246,7 @@ namespace omp
         void createImguiCommandPools();
         void renderAllUi();
         void createImguiWidgets();
+        void updateImguiWidgets();
         void createImguiFramebuffers();
 
         void createMaterialManager();
@@ -408,9 +409,13 @@ namespace omp
         VkDeviceMemory m_DepthImageMemory;
         VkImageView m_DepthImageView;
 
-        omp::Scene* m_CurrentScene;
+        omp::Scene* m_CurrentScene = nullptr;
+        // TODO: ui should not live here
         std::shared_ptr<omp::ViewPort> m_RenderViewport;
         std::shared_ptr<omp::ScenePanel> m_ScenePanel;
+        std::shared_ptr<omp::CameraPanel> m_CameraPanel;
+        std::shared_ptr<omp::GlobalLightPanel> m_LightPanel;
+        
 
         GLFWwindow* m_Window;
 

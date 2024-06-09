@@ -26,6 +26,7 @@ void omp::Texture::destroyVkObjects()
         vkDestroyImage(m_VulkanContext.lock()->logical_device, m_TextureImage, nullptr);
         vkFreeMemory(m_VulkanContext.lock()->logical_device, m_TextureImageMemory, nullptr);
     }
+    removeFlags(LOADED_TO_GPU | LOADED_TO_UI);
 }
 
 VkDescriptorSet omp::Texture::getTextureId()
@@ -37,18 +38,17 @@ VkDescriptorSet omp::Texture::getTextureId()
     return m_Id;
 }
 
-void omp::Texture::loadToGpu()
+bool omp::Texture::tryLoadToGpu()
 {
     if (hasFlags(LOADED_TO_GPU) || !hasVulkanContext())
     {
-        VERROR(LogRendering, "Texture cant be loaded to GPU");
-        return;
+        return false;
     }
 
     if (!m_TextureSource || !m_TextureSource->isLoaded())
     {
         VERROR(LogRendering, "Texture not loaded to CPU ");
-        return;
+        return false;
     }
 
     createSampler();
@@ -56,6 +56,7 @@ void omp::Texture::loadToGpu()
     createImageView();
 
     addFlags(LOADED_TO_GPU);
+    return true;
 }
 
 void omp::Texture::createSampler()
@@ -149,11 +150,7 @@ void omp::Texture::createImageView()
 
 void omp::Texture::fullLoad()
 {
-    if (hasFlags(LOADED_TO_GPU))
-    {
-        destroyVkObjects();
-    }
-    loadToGpu();
+    tryLoadToGpu();
 }
 
 void omp::Texture::removeFlags(uint16_t flags)
@@ -175,7 +172,7 @@ void omp::Texture::loadToUi()
 {
     if (!hasFlags(LOADED_TO_GPU))
     {
-        loadToGpu();
+        tryLoadToGpu();
     }
     m_Id = ImGui_ImplVulkan_AddTexture(m_TextureSampler, m_TextureImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     addFlags(LOADED_TO_UI);
@@ -185,7 +182,7 @@ VkImageView omp::Texture::getImageView()
 {
     if (!hasFlags(LOADED_TO_GPU))
     {
-        loadToGpu();
+        tryLoadToGpu();
     }
     return m_TextureImageView;
 }
@@ -194,7 +191,7 @@ VkImage omp::Texture::getImage()
 {
     if (!hasFlags(LOADED_TO_GPU))
     {
-        loadToGpu();
+        tryLoadToGpu();
     }
     return m_TextureImage;
 }
@@ -203,12 +200,16 @@ VkSampler omp::Texture::getSampler()
 {
     if (!hasFlags(LOADED_TO_GPU))
     {
-        loadToGpu();
+        tryLoadToGpu();
     }
     return m_TextureSampler;
 }
 
 void omp::Texture::specifyVulkanContext(const std::shared_ptr<VulkanContext>& inHelper)
 {
-    m_VulkanContext = inHelper;
+    if (m_VulkanContext.lock() != inHelper)
+    {
+        destroyVkObjects();
+        m_VulkanContext = inHelper;
+    }
 }

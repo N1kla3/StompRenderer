@@ -41,7 +41,10 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
     viewport_cursor.x = viewport_cursor.x - window_pos.x - content_min.x;
     viewport_cursor.y = viewport_cursor.y - window_pos.y - content_min.y;
 
-    ImGui::Image(m_ImageId, m_Size);
+    if (m_Camera)
+    {
+        ImGui::Image(m_ImageId, m_Size);
+    }
 
     if (m_Info.id != -1)
     {

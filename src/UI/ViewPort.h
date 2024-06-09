@@ -1,6 +1,4 @@
 #pragma once
-
-#include <memory>
 #include <functional>
 #include "ImguiUnit.h"
 #include "imgui.h"
@@ -35,7 +33,7 @@ namespace omp
         std::function<void(float[3])> m_RotationChange;
         std::function<void(float[3])> m_ScaleChange;
 
-        std::shared_ptr<omp::Camera> m_Camera;
+        omp::Camera* m_Camera;
 
     public:
         virtual void renderUi(float deltaTime) override;
@@ -45,7 +43,7 @@ namespace omp
 
         bool isResized() const { return m_Resized; }
 
-        void setCamera(const std::shared_ptr<omp::Camera>& camera) { m_Camera = camera; };
+        void setCamera(omp::Camera* camera) { m_Camera = camera; };
         void sendPickingData(PickingInfo info);
         void setImageId(ImTextureID id) { m_ImageId = id; };
         void setMouseClickCallback(const std::function<void(ImVec2)> inFunc);

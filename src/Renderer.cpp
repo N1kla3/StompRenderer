@@ -15,7 +15,6 @@
 #include "IO/stb_image.h"
 #include "UI/CameraPanel.h"
 #include "UI/EntityPanel.h"
-#include "UI/GlobalLightPanel.h"
 #include "UI/MainLayer.h"
 #include "UI/ScenePanel.h"
 #include "UI/ViewPort.h"
@@ -88,6 +87,8 @@ void omp::Renderer::loadScene(omp::Scene* scene)
     m_CurrentScene = scene;
 
     m_CurrentScene->loadToGPU(m_VulkanContext);
+
+    updateImguiWidgets();
 }
 
 void omp::Renderer::requestDrawFrame(float deltaTime)
@@ -2204,9 +2205,8 @@ void omp::Renderer::renderAllUi()
                              .getTexture("../textures/viking.png")
                              ->getTextureId()),
                      {100, 100});
-    } */
-
-    ImGui::End();
+    }
+    ImGui::End();*/
 
     ImGui::ShowDemoWindow();
 }
@@ -2216,24 +2216,42 @@ void omp::Renderer::createImguiWidgets()
     // ORDER IS IMPORTANT DOCK NODES GO FIRST
 
     m_RenderViewport = std::make_shared<omp::ViewPort>();
-    // TODO: camera ui m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
+
     auto material_panel = std::make_shared<omp::MaterialPanel>();
     auto entity = std::make_shared<omp::EntityPanel>();
     m_ScenePanel = std::make_shared<omp::ScenePanel>(entity, material_panel);
-    // TODO: remake ui m_ScenePanel->setScene(m_CurrentScene);
-    auto camera_panel =
-            std::make_shared<omp::CameraPanel>(nullptr);//m_CurrentScene->getCurrentCamera());
-    // auto light_panel = std::make_shared<omp::GlobalLightPanel>(m_GlobalLight);
+    m_CameraPanel = std::make_shared<omp::CameraPanel>();
+    m_LightPanel = std::make_shared<omp::GlobalLightPanel>();
 
     m_Widgets.push_back(std::make_shared<omp::MainLayer>());
     m_Widgets.push_back(m_RenderViewport);
     m_Widgets.push_back(std::move(entity));
     m_Widgets.push_back(std::move(material_panel));
     m_Widgets.push_back(m_ScenePanel);
-    m_Widgets.push_back(std::move(camera_panel));
-    // TODO: light ui
-    // m_Widgets.push_back(std::move(light_panel));
+    m_Widgets.push_back(m_CameraPanel);
+    m_Widgets.push_back(m_LightPanel);
+
+    updateImguiWidgets();
 }
+
+void omp::Renderer::updateImguiWidgets()
+{
+    if (m_CurrentScene)
+    {
+        m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
+        m_ScenePanel->setScene(m_CurrentScene);
+        m_CameraPanel->setCamera(m_CurrentScene->getCurrentCamera());
+        m_LightPanel->setLightRef(m_LightSystem->getGlobalLight());
+    }
+    else
+    {
+        m_RenderViewport->setCamera(nullptr);
+        m_ScenePanel->setScene(nullptr);
+        m_CameraPanel->setCamera(nullptr);
+        m_LightPanel->setLightRef(nullptr);
+    }
+}
+
 
 void omp::Renderer::destroyMainRenderPassResources()
 {
@@ -2585,33 +2603,6 @@ void omp::Renderer::addModelToScene(std::unique_ptr<omp::SceneEntity>&& inEntity
                 std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
     }
     m_CurrentScene->addEntityToScene(std::move(inEntity));
-}
-
-std::shared_ptr<omp::ModelInstance>
-omp::Renderer::addModelToScene(
-        const std::string& inName,
-        const std::string& inPath)
-{
-    // TODO: move it to scene and replace with asset manager
-    /* if (!m_ModelManager->getModel(inPath))
-    {
-        m_ModelManager->loadModel(inPath);
-        loadModelInMemory(m_ModelManager->getModel(inPath));
-    }
-    auto model_inst = m_ModelManager->createInstanceFrom(inPath);
-    model_inst->setMaterialInstance(
-            std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
-    model_inst->setName(inName);
-    m_CurrentScene->addEntityToScene(
-            std::make_shared<omp::SceneEntity>(inName, model_inst));
-    return model_inst; */
-    return nullptr;
-}
-
-void omp::Renderer::loadModelInMemory(const std::shared_ptr<omp::Model>& inModel)
-{
-    /* inModel->loadIndexToMemory(m_VulkanContext);
-    inModel->loadVertexToMemory(m_VulkanContext); */
 }
 
 void omp::Renderer::createLights()

@@ -33,3 +33,9 @@ void omp::CameraPanel::renderUi(float /*deltaTime*/)
 
     ImGui::End();
 }
+
+void omp::CameraPanel::setCamera(Camera* inCamera)
+{
+    m_Camera = inCamera;
+}
+

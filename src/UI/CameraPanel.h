@@ -8,10 +8,12 @@ namespace omp
     class CameraPanel : public ImguiUnit
     {
     public:
+        CameraPanel() = default;
         CameraPanel(Camera* camera);
         virtual void renderUi(float deltaTime) override;
+        void setCamera(Camera* inCamera);
 
     private:
-        Camera* m_Camera;
+        Camera* m_Camera = nullptr;
     };
 }
