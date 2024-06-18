@@ -91,6 +91,7 @@ TEST_F(SafeMapSuite, SafeMap_one)
     EXPECT_NO_THROW(res3.get());
 
     auto st = registry.value_for("df");
+    // TODO: sometimes not true!!
     EXPECT_STREQ(st.name.c_str(), "test");
     registry.remove_mapping("sdf");
     registry.add_or_update_mapping("dfsdf", test_value{});

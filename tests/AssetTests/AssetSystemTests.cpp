@@ -11,6 +11,11 @@
 
 class AssetSuite : public ::testing::Test
 {
+public:
+    inline static std::unique_ptr<omp::ThreadPool> pool;
+    std::unique_ptr<omp::ObjectFactory> factory;
+    std::unique_ptr<omp::AssetManager> manager;
+
 protected:
 
     static void SetUpTestSuite()
@@ -21,7 +26,28 @@ protected:
         omp::SceneEntityFactory::registerClass<omp::LightObject<omp::GlobalLight>>("GlobalLight");
         omp::SceneEntityFactory::registerClass<omp::LightObject<omp::PointLight>>("PointLight");
         omp::SceneEntityFactory::registerClass<omp::LightObject<omp::SpotLight>>("SpotLight");
+
+        pool = std::make_unique<omp::ThreadPool>(4);
     }
+    static void TearDownTestSuite()
+    {
+        pool.reset(nullptr);
+    }
+
+    virtual void SetUp() override
+    {
+        INFO(LogTesting, "Setup");
+        factory = std::make_unique<omp::ObjectFactory>();
+        manager = std::make_unique<omp::AssetManager>(pool.get(), factory.get());
+    }
+
+    virtual void TearDown() override
+    {
+        manager.reset();
+        factory.reset();
+        INFO(LogTesting, "Teardown");
+    }
+
 };
 
 const std::string g_TestProjectPath = "../../../tests/assets";
@@ -29,13 +55,9 @@ const std::string g_TestProjectPath = "../../../tests/assets";
 TEST_F(AssetSuite, AssetLoaderTest)
 {
     INFO(LogTesting, "Start first asset test");
-    std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
-    std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
-    omp::AssetManager manager(pool.get(), factory.get());
-    INFO(LogTesting, "Init manager");
 
-    omp::AssetHandle texture_handle = manager.createAsset("cube", g_TestProjectPath + "/texture.json", "TextureSrc");
-    auto texture = manager.getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
+    omp::AssetHandle texture_handle = manager->createAsset("cube", g_TestProjectPath + "/texture.json", "TextureSrc");
+    auto texture = manager->getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
     EXPECT_TRUE(texture);
     if (texture)
     {
@@ -43,16 +65,16 @@ TEST_F(AssetSuite, AssetLoaderTest)
     }
 
     // TODO: project root automatically added
-    omp::AssetHandle model_handle = manager.createAsset("cube_model", g_TestProjectPath + "/cube_model.json", "Model");
-    auto model = manager.getAsset(model_handle).lock()->getObjectAs<omp::Model>();
+    omp::AssetHandle model_handle = manager->createAsset("cube_model", g_TestProjectPath + "/cube_model.json", "Model");
+    auto model = manager->getAsset(model_handle).lock()->getObjectAs<omp::Model>();
     EXPECT_TRUE(model);
     if (model)
     {
         model->setPath("../../../models/cube2.obj");
     }
 
-    omp::AssetHandle material_handle = manager.createAsset("def_mat", g_TestProjectPath + "/def_material.json", "Material");
-    auto material = manager.getAsset(material_handle).lock()->getObjectAs<omp::Material>();
+    omp::AssetHandle material_handle = manager->createAsset("def_mat", g_TestProjectPath + "/def_material.json", "Material");
+    auto material = manager->getAsset(material_handle).lock()->getObjectAs<omp::Material>();
     material->addSpecularTexture(texture);
     material->addTexture(texture);
     material->addDiffusiveTexture(texture);
@@ -66,8 +88,8 @@ TEST_F(AssetSuite, AssetLoaderTest)
     std::unique_ptr<omp::SceneEntity> light = std::make_unique<omp::LightObject<omp::GlobalLight>>("globallig", inst);
     std::unique_ptr<omp::SceneEntity> lighttwo = std::make_unique<omp::LightObject<omp::SpotLight>>("lightspot", inst);
 
-    omp::AssetHandle scene_handle = manager.createAsset("main_scene", g_TestProjectPath + "/main_scene.json", "Scene");
-    auto scene = manager.getAsset(scene_handle).lock()->getObjectAs<omp::Scene>();
+    omp::AssetHandle scene_handle = manager->createAsset("main_scene", g_TestProjectPath + "/main_scene.json", "Scene");
+    auto scene = manager->getAsset(scene_handle).lock()->getObjectAs<omp::Scene>();
     EXPECT_TRUE(scene);
     if (scene)
     {
@@ -77,7 +99,7 @@ TEST_F(AssetSuite, AssetLoaderTest)
         scene->addEntityToScene(std::move(lighttwo));
     }
 
-    std::future<bool> wait = manager.saveProject();
+    std::future<bool> wait = manager->saveProject();
     EXPECT_NO_THROW(wait.get());
     INFO(LogTesting, "Finished");
     ASSERT_TRUE(true);
@@ -85,10 +107,7 @@ TEST_F(AssetSuite, AssetLoaderTest)
 
 TEST_F(AssetSuite, AssetMetadata)
 {
-    std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
-    std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
     INFO(LogTesting, "Start loading test");
-    std::unique_ptr<omp::AssetManager> manager = std::make_unique<omp::AssetManager>(pool.get(), factory.get());
 
     std::future<bool> wait = manager->loadProject(g_TestProjectPath);
     EXPECT_NO_THROW(wait.get());
@@ -101,10 +120,6 @@ TEST_F(AssetSuite, AssetMetadata)
 
 TEST_F(AssetSuite, AssetFirst)
 {
-    std::unique_ptr<omp::ThreadPool> pool(std::make_unique<omp::ThreadPool>(4));
-    std::unique_ptr<omp::ObjectFactory> factory(std::make_unique<omp::ObjectFactory>());
-    std::unique_ptr<omp::AssetManager> manager = std::make_unique<omp::AssetManager>(pool.get(), factory.get());
-
     std::future<bool> wait = manager->loadProject(g_TestProjectPath);
     EXPECT_NO_THROW(wait.get());
 

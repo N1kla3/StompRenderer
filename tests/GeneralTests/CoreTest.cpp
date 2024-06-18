@@ -19,7 +19,7 @@ TEST_F(CoreTestSuite, Id64Test)
     for (size_t i = 0; i < size; i++)
     {
         auto id = omp::CoreLib::generateId64();
-        INFO(LogTesting, "New id64: {}", id);
+        //INFO(LogTesting, "New id64: {}", id);
         set.insert(id);
     }
     EXPECT_TRUE(set.size() == size);
@@ -30,7 +30,7 @@ TEST_F(CoreTestSuite, Id64Test)
     for (size_t i = 0; i < size; i++)
     {
         auto id = omp::CoreLib::generateId64();
-        INFO(LogTesting, "New id64: {}", id);
+        //INFO(LogTesting, "New id64: {}", id);
         set_two.insert(id);
     }
     ASSERT_TRUE(set_two.size() == size);
@@ -44,7 +44,7 @@ TEST_F(CoreTestSuite, Id32Test)
     for (size_t i = 0; i < size; i++)
     {
         auto id = omp::CoreLib::generateId32();
-        INFO(LogTesting, "New id32: {}", id);
+        //INFO(LogTesting, "New id32: {}", id);
         set.insert(id);
     }
     EXPECT_TRUE(set.size() == size);
@@ -55,7 +55,7 @@ TEST_F(CoreTestSuite, Id32Test)
     for (size_t i = 0; i < size; i++)
     {
         auto id = omp::CoreLib::generateId32();
-        INFO(LogTesting, "New id32: {}", id);
+        //INFO(LogTesting, "New id32: {}", id);
         set_two.insert(id);
     }
     ASSERT_TRUE(set_two.size() == size);
