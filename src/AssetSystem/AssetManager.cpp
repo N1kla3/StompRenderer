@@ -14,9 +14,9 @@
 using namespace std::filesystem;
 
 omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory* factory)
-    : m_ThreadPool(threadPool)
+    : m_AssetRegistry()
+    , m_ThreadPool(threadPool)
     , m_Factory(factory)
-    , m_AssetRegistry()
 {
     // TODO: strange
     // loadAssetsFromDrive();
@@ -106,6 +106,7 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
     if (m_PathRegistry.find(inPath) != m_PathRegistry.end())
     {
         ERROR(LogAssetManager, "Cant create asset while asset with same path exists. Path: {}", inPath);
+        return omp::AssetHandle::INVALID_HANDLE;
     }
 
     while (m_AssetRegistry.value_for(id, nullptr))
@@ -122,6 +123,7 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
     std::shared_ptr<omp::Asset> new_asset = std::make_shared<omp::Asset>();
     if (new_asset)
     {
+        m_PathRegistry.emplace(inPath, id);
         new_asset->specifyMetaData(std::move(init_metadata));
         new_asset->createObject(m_Factory);
     }

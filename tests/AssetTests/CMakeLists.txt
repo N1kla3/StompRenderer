@@ -2,6 +2,7 @@
 set(TESTS
         InitializationTests.cpp
         AssetSystemTests.cpp
+        AssetObjectTest.cpp
         MaterialAssetTest.cpp
         ModelAssetTest.cpp
         SceneAssetTest.cpp

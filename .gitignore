@@ -21,3 +21,5 @@ unixlike-clang-release
 compile_commands.json
 src/stb_image.h
 /tests/assets/
+
+Testing/

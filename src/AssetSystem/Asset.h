@@ -25,6 +25,8 @@ namespace omp
             id = other;
             return *this;
         }
+
+        static const AssetHandle INVALID_HANDLE;
     };
 }
 

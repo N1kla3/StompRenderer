@@ -4,6 +4,8 @@
 #include "Logs.h"
 #include "AssetSystem/ObjectFactory.h"
 
+const omp::AssetHandle omp::AssetHandle::INVALID_HANDLE = 0;
+
 bool omp::Asset::loadMetadata()
 {
     JsonParser<> metadata_parser = m_Parser.readObject(METADATA_KEY);
