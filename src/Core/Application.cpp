@@ -68,7 +68,7 @@ void omp::Application::preInit()
     glfwSetFramebufferSizeCallback(m_Window, windowResizeCallback);
 
     m_Renderer = std::make_unique<omp::Renderer>();
-    m_Renderer->initVulkan(m_Window);
+    m_Renderer->initVulkan(m_Window, m_Width, m_Height);
     m_Renderer->initResources();
 
     // TODO: maybe other stuff while assets loading

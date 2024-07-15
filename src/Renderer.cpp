@@ -45,9 +45,11 @@ omp::Renderer::Renderer()
 {
 }
 
-void omp::Renderer::initVulkan(GLFWwindow* window)
+void omp::Renderer::initVulkan(GLFWwindow* window, int initWidth, int initHeight)
 {
     m_Window = window;
+    m_CurrentWidth = initWidth;
+    m_CurrentHeight = initHeight;
     createInstance();
     setupDebugMessenger();
     createSurface(window);

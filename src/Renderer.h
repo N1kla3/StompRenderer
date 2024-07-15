@@ -150,7 +150,7 @@ namespace omp
     public:
         Renderer();
 
-        void initVulkan(GLFWwindow* window);
+        void initVulkan(GLFWwindow* window, int initWidth, int initHeight);
         void initResources();
         void loadScene(omp::Scene* scene);
         // TODO: void initNewScene(omp::Scene* scene);
