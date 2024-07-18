@@ -115,6 +115,10 @@ void omp::Renderer::cleanup()
     }
 
     cleanupSwapChain();
+    
+    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_MaterialSets.size(),
+                         m_MaterialSets.data());
+    m_MaterialSets.clear();
 
     destroyAllCommandBuffers();
     vkDestroyCommandPool(m_LogicalDevice, m_CommandPool, nullptr);
@@ -1218,6 +1222,7 @@ void omp::Renderer::drawFrame()
     if (result == VK_ERROR_OUT_OF_DATE_KHR || m_FramebufferResized)
     {
         recreateSwapChain();
+        onViewportResize(image_index);
         m_FramebufferResized = false;
         return;
     }
@@ -1381,10 +1386,6 @@ void omp::Renderer::cleanupSwapChain()
         framebuffer.destroyInnerState();
     }
 
-    // sus, why reset materials?
-    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_MaterialSets.size(),
-                         m_MaterialSets.data());
-    m_MaterialSets.clear();
     /* for (auto& [u, material]:
             omp::MaterialManager::getMaterialManager().getMaterials())
     {
@@ -2285,7 +2286,7 @@ void omp::Renderer::destroyMainRenderPassResources()
 
 void omp::Renderer::onViewportResize(size_t /*imageIndex*/)
 {
-    if (m_RenderViewport->isResized())
+    if (m_RenderViewport->isResized() || m_FramebufferResized)
     {
         uint32_t x = static_cast<uint32_t>(m_RenderViewport->getSize().x);
         uint32_t y = static_cast<uint32_t>(m_RenderViewport->getSize().y);

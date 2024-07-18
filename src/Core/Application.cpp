@@ -99,6 +99,8 @@ void omp::Application::preDestroy()
 {
     m_ThreadPool.reset();
 
+    m_Renderer->cleanup();
+
     glfwDestroyWindow(m_Window);
     glfwTerminate();
 }

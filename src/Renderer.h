@@ -164,6 +164,7 @@ namespace omp
             //cleanup();
 
         void onWindowResize(int width, int height);
+        void cleanup();
 
     private:
 
@@ -174,7 +175,6 @@ namespace omp
         void postFrame();
         void tick(float deltaTime);
 
-        void cleanup();
         void destroyAllCommandBuffers();
 
         void createInstance();
@@ -362,6 +362,7 @@ namespace omp
         VkCommandPool m_CommandPool;
         VkDescriptorPool m_DescriptorPool;
         std::vector<VkDescriptorSet> m_UboDescriptorSets;
+        // TODO: reconsider approach of materials
         std::vector<VkDescriptorSet> m_MaterialSets;
         std::vector<VkDescriptorSet> m_OutlineDescriptorSets;
         std::vector<VkDescriptorSet> m_SkyboxDescriptorSets;
