@@ -13,6 +13,7 @@ void omp::Application::start()
     float ms_limit = static_cast<float>(1.f / m_FrameLimit);
 
     time_point previous = steady_clock::now();
+
     while (!m_RequestExit)
     {
         time_point current_time = steady_clock::now();
@@ -105,6 +106,7 @@ void omp::Application::preDestroy()
 void omp::Application::tick(float delta)
 {
     glfwPollEvents();
+    m_RequestExit = m_RequestExit || glfwWindowShouldClose(m_Window);
 
     // Renderer only when not minimized
     int width, height;
