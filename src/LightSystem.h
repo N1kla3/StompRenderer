@@ -29,8 +29,8 @@ namespace omp
         size_t getSpotLightSize() const { return m_SpotLights.size(); }
 
         size_t getGlobalLightBufferSize() const { return sizeof(GlobalLight); }
-        size_t getPointLightBufferSize() const { return m_PointLights.size() * sizeof(PointLight); }
-        size_t getSpotLightBufferSize() const { return m_SpotLights.size() * sizeof(SpotLight); }
+        size_t getPointLightBufferSize() const { return std::max(sizeof(PointLight), sizeof(PointLight) * m_PointLights.size()); }
+        size_t getSpotLightBufferSize() const { return std::max(sizeof(SpotLight), sizeof(SpotLight) * m_SpotLights.size()); }
 
         VkBuffer getGlobalLightBuffer(uint32_t khr);
         VkBuffer getPointLightBuffer(uint32_t khr);

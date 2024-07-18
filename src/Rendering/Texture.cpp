@@ -115,7 +115,7 @@ void omp::Texture::createImage()
     uint32_t width = static_cast<uint32_t>(m_TextureSource->getWidth());
     uint32_t mip_levels = m_TextureSource->getMipLevels();
 
-    WARN(LogRendering, "Creating image with mipmaps: {}", mip_levels);
+    //WARN(LogRendering, "Creating image with mipmaps: {}", mip_levels);
     m_VulkanContext.lock()->createImage(width,
                                         height,
                                         mip_levels, VK_FORMAT_R8G8B8A8_SRGB,

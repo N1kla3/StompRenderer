@@ -9,33 +9,26 @@ omp::LightSystem::LightSystem(const std::shared_ptr<omp::VulkanContext>& inVulka
 
 void omp::LightSystem::tryRecreateBuffers()
 {
-    if (m_GlobalLight)
-    {
-        m_GlobalBuffer = std::make_unique<omp::UniformBuffer>(
-                m_VulkanContext,
-                m_KHRnum,
-                sizeof(GlobalLight),
-                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
-                );
-    }
-    if (!m_PointLights.empty())
-    {
-        m_PointBuffer = std::make_unique<omp::UniformBuffer>(
-                m_VulkanContext,
-                m_KHRnum,
-                sizeof(PointLight) * m_PointLights.size(),
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-                );
-    }
-    if (!m_SpotLights.empty())
-    {
-        m_SpotBuffer = std::make_unique<omp::UniformBuffer>(
-                m_VulkanContext,
-                m_KHRnum,
-                sizeof(SpotLight) * m_SpotLights.size(),
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-                );
-    }
+    m_GlobalBuffer = std::make_unique<omp::UniformBuffer>(
+            m_VulkanContext,
+            m_KHRnum,
+            sizeof(GlobalLight),
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+            );
+
+    m_PointBuffer = std::make_unique<omp::UniformBuffer>(
+            m_VulkanContext,
+            m_KHRnum,
+            getPointLightBufferSize(),
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+            );
+
+    m_SpotBuffer = std::make_unique<omp::UniformBuffer>(
+            m_VulkanContext,
+            m_KHRnum,
+            getSpotLightBufferSize(),
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
+            );
 }
 
 void omp::LightSystem::update()
@@ -43,10 +36,6 @@ void omp::LightSystem::update()
     if (m_GlobalLight)
     {
         m_GlobalLight->updateLightObject();
-    }
-    else
-    {
-        WARN(LogRendering, "Global light is null in light system");
     }
     for (auto& light : m_PointLights)
     {
@@ -60,16 +49,12 @@ void omp::LightSystem::update()
 
 void omp::LightSystem::mapMemory(uint32_t khrImage)
 {
-    if (m_GlobalBuffer)
+    if (m_GlobalBuffer && m_GlobalLight)
     {
         m_GlobalBuffer->mapMemory(m_GlobalLight->getLight(), khrImage);
     }
-    else
-    {
-        WARN(LogRendering, "Buffer for global light is null");
-    }
 
-    size_t offset = 0;
+    uint32_t offset = 0;
     for (size_t index = 0; index < m_PointLights.size(); index++)
     {
         m_PointBuffer->mapMemory(m_PointLights[index]->getLight(), khrImage, offset);

@@ -143,7 +143,8 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
         && !ImGuizmo::IsUsing() && !ImGuizmo::IsOver())
     {
         m_CursorPos = viewport_cursor;
-        m_MouseClick(m_CursorPos);
+        // TODO: fix later
+        //m_MouseClick(m_CursorPos);
     }
 
     ImGui::End();

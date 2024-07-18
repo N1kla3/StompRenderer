@@ -13,15 +13,15 @@ int main()
     INFO(LogRendering, "=================Create Application=================");
     omp::Application application{ "EMPTY FLAGS" };
 
-    try
+    //try
     {
         application.start();
     }
-    catch (const std::exception& e)
-    {
-        ERROR(LogRendering, e.what());
-        return EXIT_FAILURE;
-    }
+    //catch (const std::exception& e)
+    //{
+    //    ERROR(LogRendering, e.what());
+    //    return EXIT_FAILURE;
+    //}
     INFO(LogRendering, "================Destroy Application=================");
     return EXIT_SUCCESS;
 }
