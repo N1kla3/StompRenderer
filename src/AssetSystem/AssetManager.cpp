@@ -37,7 +37,10 @@ omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory*
 
 omp::AssetManager::~AssetManager()
 {
-    //m_ThreadPool.reset();
+    m_AssetRegistry.foreach([](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& pair)
+    {
+        pair.second->resetHierarchy();
+    });
 }
 
 std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)

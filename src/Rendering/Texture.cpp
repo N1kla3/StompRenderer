@@ -17,6 +17,11 @@ omp::Texture::Texture(const std::shared_ptr<omp::TextureSrc>& inTexture, const s
     m_VulkanContext = helper;
 }
 
+omp::Texture::~Texture()
+{
+    destroyVkObjects();
+}
+
 void omp::Texture::destroyVkObjects()
 {
     if (hasVulkanContext() && hasFlags(LOADED_TO_GPU))

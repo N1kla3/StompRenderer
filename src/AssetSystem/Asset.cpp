@@ -182,6 +182,12 @@ std::shared_ptr<omp::Asset> omp::Asset::getParent(AssetHandle handle)
     return nullptr;
 }
 
+void omp::Asset::resetHierarchy()
+{
+    m_Children.clear();
+    m_Parents.clear();
+}
+
 void omp::Asset::addDependency(AssetHandle::handle_type handle)
 {
     m_Metadata.dependencies.insert(handle);

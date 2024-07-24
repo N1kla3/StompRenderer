@@ -18,7 +18,7 @@ void omp::Application::start()
     {
         time_point current_time = steady_clock::now();
         float delta = static_cast<float>(duration_cast<milliseconds>(current_time - previous).count());
-        current_time = previous;
+        previous = current_time;
 
         float delta_seconds = delta / 1000.f;
         
@@ -98,6 +98,9 @@ void omp::Application::init()
 void omp::Application::preDestroy()
 {
     m_ThreadPool.reset();
+
+    m_CurrentScene.reset();
+    m_AssetManager.reset();
 
     m_Renderer->cleanup();
 

@@ -130,6 +130,7 @@ namespace omp
 
         std::shared_ptr<omp::Asset> getChild(AssetHandle handle);
         std::shared_ptr<omp::Asset> getParent(AssetHandle handle);
+        void resetHierarchy();
 
         std::shared_ptr<SerializableObject> getObject() const;
         template< typename T >

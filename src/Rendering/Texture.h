@@ -38,6 +38,7 @@ namespace omp
         Texture() = default;
         explicit Texture(const std::shared_ptr<omp::TextureSrc>& inTexture);
         Texture(const std::shared_ptr<omp::TextureSrc>& inTexture, const std::shared_ptr<VulkanContext>& helper);
+        ~Texture();
 
         void fullLoad();
 
