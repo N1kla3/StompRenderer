@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "Logs.h"
+#include "Core/ICommand.h"
 #include "Core/CoreLib.h"
 
 class CoreTestSuite : public ::testing::Test
@@ -59,4 +60,13 @@ TEST_F(CoreTestSuite, Id32Test)
         set_two.insert(id);
     }
     ASSERT_TRUE(set_two.size() == size);
+}
+
+TEST_F(CoreTestSuite, CommandTest)
+{
+
+}
+
+TEST_F(CoreTestSuite, UndoCommandTest)
+{
 }

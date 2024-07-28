@@ -32,6 +32,8 @@ set(SOURCE
         Core/Application.cpp
         Core/CoreLib.h
         Core/CoreLib.cpp
+        Core/MemoryPool.h
+        Core/ICommand.h
         Renderer.cpp
         Renderer.h
         Rendering/Model.h
