@@ -14,6 +14,11 @@ add_library(renderer::renderer_warnings ALIAS renderer_warnings)
 
 find_package(Vulkan REQUIRED)
 
+set(GLFW_BUILD_DOCS OFF)
+set(GLFW_BUILD_EXAMPLES OFF)
+set(GLFW_BUILD_TESTS OFF)
+set(GLFW_INSTALL OFF)
+
 add_subdirectory(glfw)
 add_subdirectory(glm)
 add_subdirectory(tinyobjloader)
@@ -163,10 +168,16 @@ target_link_libraries(stomp_renderer PRIVATE renderer::renderer_options renderer
 target_link_system_libraries(stomp_renderer PUBLIC Vulkan::Vulkan glfw glm::glm tinyobjloader imgui spdlog::spdlog nlohmann_json::nlohmann_json imguizmo imguihelp stbimage)
 
 add_executable(renderer src/main.cpp)
-target_link_libraries(renderer stomp_renderer "-static-libgcc -static-libstdc++")
+if (MINGW)
+  target_link_libraries(renderer stomp_renderer "-static-libgcc -static-libstdc++ -g")
+else()
+  target_link_libraries(renderer stomp_renderer)
+endif()
 
-include(CTest)
-enable_testing()
+if (renderer_ENABLE_TESTS)
+  include(CTest)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
 
-add_subdirectory(tests)
 #TODO CPack

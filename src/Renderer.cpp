@@ -2597,17 +2597,6 @@ void omp::Renderer::tick(float deltaTime)
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
 
-void omp::Renderer::addModelToScene(std::unique_ptr<omp::SceneEntity>&& inEntity)
-{
-    // TODO: do not handle default mat here
-    if (!inEntity->getModelInstance()->getMaterialInstance())
-    {
-        inEntity->getModelInstance()->setMaterialInstance(
-                std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
-    }
-    m_CurrentScene->addEntityToScene(std::move(inEntity));
-}
-
 void omp::Renderer::createLights()
 {
     /* // LIGHTS

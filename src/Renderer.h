@@ -231,8 +231,6 @@ namespace omp
 
         void createDescriptorSets();
 
-        void addModelToScene(std::unique_ptr<omp::SceneEntity>&& inModel);
-
         void retrieveMaterialRenderState(const std::shared_ptr<omp::Material>& material);
 
         void recreateSwapChain();
@@ -249,7 +247,6 @@ namespace omp
         void updateImguiWidgets();
         void createImguiFramebuffers();
 
-        void createMaterialManager();
         void createLights();
 
         void destroyMainRenderPassResources();

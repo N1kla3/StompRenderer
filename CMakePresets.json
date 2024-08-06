@@ -103,6 +103,24 @@
             }
         },
         {
+            "name": "windows-default-debug",
+            "displayName": "mingw Debug",
+            "description": "Target Windows with the mingw compiler, debug build type",
+            "inherits": "conf-windows-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "windows-default-release",
+            "displayName": "mingw Release",
+            "description": "Target Windows with the mingw compiler, release build type",
+            "inherits": "conf-windows-common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
             "name": "windows-clang-debug",
             "displayName": "clang Debug",
             "description": "Target Windows with the clang compiler, debug build type",
