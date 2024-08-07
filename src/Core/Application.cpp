@@ -80,7 +80,7 @@ void omp::Application::preInit()
 
 void omp::Application::init()
 {
-    // debug_createSceneManually();
+    //debug_createSceneManually();
     //m_CurrentScene->setCurrentCamera(0);
     std::weak_ptr<omp::Asset> scene_weak_ptr = m_AssetManager->loadAsset("../assets/main_scene.json");
     if (!scene_weak_ptr.expired())
@@ -181,17 +181,15 @@ void omp::Application::debug_createSceneManually()
     material->addDiffusiveTexture(spec_texture);
     material->setShaderName("Light");
     
-    std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
-    
-
     glm::vec3 def_pos = {10.f, 3.f, 4.f};
 
     for (size_t i = 0; i < 6; i++)
     {
         def_pos.z += 10.f;
-        float temp_x = def_pos.x;
+        float temp_x = 10.f;
         for (size_t j = 0; j < 6; j++)
         {
+            std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
             temp_x += 10.f;
             def_pos.x = temp_x;
             std::string name = std::to_string(i) + "-" + std::to_string(j);
@@ -201,6 +199,7 @@ void omp::Application::debug_createSceneManually()
         }
     }
 
+    std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
     std::unique_ptr<omp::Camera> camera = std::make_unique<omp::Camera>();
     camera->setModelInstance(inst);
     camera->setName("camera1");

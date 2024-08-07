@@ -2,12 +2,18 @@
     "Metadata": {
         "AssetName": "def_mat",
         "ClassName": "Material",
-        "Dependencies": [],
+        "Dependencies": [
+            48976677724086055,
+            9570176689561383
+        ],
         "DiscPath": "../assets/def_material.json",
-        "ObjectID": 963798830646
+        "ObjectID": 11259017960021799
     },
     "PlainData": {
+        "diffuse_map": 9570176689561383,
         "enable_blending": false,
-        "shader_name": ""
+        "shader_name": "Light",
+        "specular_map": 48976677724086055,
+        "texture": 9570176689561383
     }
 }

@@ -2,12 +2,17 @@
     "Metadata": {
         "AssetName": "window_mat",
         "ClassName": "Material",
-        "Dependencies": [],
+        "Dependencies": [
+            10696106661895975
+        ],
         "DiscPath": "../assets/window_material.json",
-        "ObjectID": 1062584192566
+        "ObjectID": 10977607408541479
     },
     "PlainData": {
-        "enable_blending": false,
-        "shader_name": ""
+        "diffuse_map": 10696106661895975,
+        "enable_blending": true,
+        "shader_name": "Grass",
+        "specular_map": 10696106661895975,
+        "texture": 10696106661895975
     }
 }

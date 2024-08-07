@@ -2,12 +2,17 @@
     "Metadata": {
         "AssetName": "grass_mat",
         "ClassName": "Material",
-        "Dependencies": [],
+        "Dependencies": [
+            10414610210021159
+        ],
         "DiscPath": "../assets/grass_material.json",
-        "ObjectID": 1006748896822
+        "ObjectID": 6473986306006823
     },
     "PlainData": {
-        "enable_blending": false,
-        "shader_name": ""
+        "diffuse_map": 10414610210021159,
+        "enable_blending": true,
+        "shader_name": "Grass",
+        "specular_map": 10414610210021159,
+        "texture": 10414610210021159
     }
 }
