@@ -140,13 +140,15 @@ private:
     VkBuffer m_VertexBuffer;
     VkDeviceMemory m_VertexMemory;
 
+    bool m_Loaded;
+
 public:
     // Methods //
     // ======= //
     void setName(const std::string& inName) { m_Name = inName; }
     void setPath(const std::string& inPath) { m_Path = inPath; }
 
-    void loadToMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate);
+    void loadToGpuMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate);
 
     const std::string& getName() const { return m_Name; }
 

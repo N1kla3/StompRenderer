@@ -1,7 +1,7 @@
 #include "ModelStatics.h"
 #include "tiny_obj_loader.h"
 
-void omp::ModelImporter::loadModel(omp::Model* model, const std::string& inPath)
+bool omp::ModelImporter::loadModel(omp::Model* model, const std::string& inPath)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -10,7 +10,8 @@ void omp::ModelImporter::loadModel(omp::Model* model, const std::string& inPath)
 
     if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, inPath.c_str()))
     {
-        throw std::runtime_error(warn + err);
+        ERROR(LogIO, "tinyobj::LoadObj Failed with output {} {}", warn, err);
+        return false;
     }
 
     std::unordered_map<omp::Vertex, uint32_t> unique_vertices;
@@ -57,4 +58,5 @@ void omp::ModelImporter::loadModel(omp::Model* model, const std::string& inPath)
             model->addIndex(unique_vertices[vertex]);
         }
     }
+    return true;
 }

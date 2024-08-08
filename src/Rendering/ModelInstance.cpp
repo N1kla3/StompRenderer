@@ -63,7 +63,7 @@ void omp::ModelInstance::tryLoad(const std::shared_ptr<omp::VulkanContext>& cont
 {
     if (m_Model)
     {
-        m_Model->loadToMemory(context, forceUpdate);
+        m_Model->loadToGpuMemory(context, forceUpdate);
     }
 
     if (m_MaterialInstance)
