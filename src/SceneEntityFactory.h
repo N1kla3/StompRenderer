@@ -27,8 +27,8 @@ namespace omp
             return nullptr;
         }
 
-        SceneEntityFactory() = default;
-        ~SceneEntityFactory() = default;
+        SceneEntityFactory() = delete;
+        ~SceneEntityFactory() = delete;
         SceneEntityFactory(const SceneEntityFactory&) = delete;
         SceneEntityFactory(SceneEntityFactory&&) = delete;
         SceneEntityFactory& operator=(const SceneEntityFactory&) = delete;

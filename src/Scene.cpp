@@ -122,7 +122,6 @@ omp::SceneEntity* omp::Scene::getEntity(uint32_t inId) const
 omp::Scene::Scene()
     : m_CurrentCamera(nullptr)
 {
-    // TODO: should take first camera from array
 }
 
 omp::SceneEntity* omp::Scene::getCurrentEntity() const

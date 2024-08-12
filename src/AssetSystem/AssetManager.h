@@ -16,12 +16,10 @@ namespace omp
         omp::threadsafe_map<AssetHandle, std::shared_ptr<Asset>> m_AssetRegistry;
         std::unordered_map<std::string, omp::AssetHandle::handle_type> m_PathRegistry;
 
-        // TODO: Get from Application, should not have own thread pool 
         omp::ThreadPool* m_ThreadPool;
-        omp::ObjectFactory* m_Factory;
     public:
 
-        AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory* factory);
+        AssetManager(omp::ThreadPool* threadPool);
         ~AssetManager();
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;

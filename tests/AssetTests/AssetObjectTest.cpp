@@ -11,18 +11,12 @@ class AssetObjectSuite : public ::testing::Test
 {
 public:
     inline static std::unique_ptr<omp::ThreadPool> pool;
-    std::unique_ptr<omp::ObjectFactory> factory;
     std::unique_ptr<omp::AssetManager> manager;
 
 protected:
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
-        omp::SceneEntityFactory::registerClass<omp::SceneEntity>("SceneEntity");
-        omp::SceneEntityFactory::registerClass<omp::Camera>("Camera");
-        omp::SceneEntityFactory::registerClass<omp::LightObject<omp::GlobalLight>>("GlobalLight");
-        omp::SceneEntityFactory::registerClass<omp::LightObject<omp::PointLight>>("PointLight");
-        omp::SceneEntityFactory::registerClass<omp::LightObject<omp::SpotLight>>("SpotLight");
 
         pool = std::make_unique<omp::ThreadPool>(4);
     }
@@ -34,14 +28,12 @@ protected:
     virtual void SetUp() override
     {
         INFO(LogTesting, "Setup");
-        factory = std::make_unique<omp::ObjectFactory>();
-        manager = std::make_unique<omp::AssetManager>(pool.get(), factory.get());
+        manager = std::make_unique<omp::AssetManager>(pool.get());
     }
 
     virtual void TearDown() override
     {
         manager.reset();
-        factory.reset();
         INFO(LogTesting, "Teardown");
     }
 };

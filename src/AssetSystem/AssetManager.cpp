@@ -13,20 +13,15 @@
 
 using namespace std::filesystem;
 
-omp::AssetManager::AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory* factory)
+omp::AssetManager::AssetManager(omp::ThreadPool* threadPool)
     : m_AssetRegistry()
     , m_ThreadPool(threadPool)
-    , m_Factory(factory)
 {
-    // TODO: strange
-    // loadAssetsFromDrive();
-    // TODO: add all classes that should be read
-    
-    m_Factory->registerClass<omp::TextureSrc>("TextureSrc");
-    m_Factory->registerClass<omp::Model>("Model");
-    m_Factory->registerClass<omp::Scene>("Scene");
-    m_Factory->registerClass<omp::Material>("Material");
-    m_Factory->registerClass<omp::Shader>("Shader");
+    omp::ObjectFactory::registerClass<omp::TextureSrc>("TextureSrc");
+    omp::ObjectFactory::registerClass<omp::Model>("Model");
+    omp::ObjectFactory::registerClass<omp::Scene>("Scene");
+    omp::ObjectFactory::registerClass<omp::Material>("Material");
+    omp::ObjectFactory::registerClass<omp::Shader>("Shader");
 
     omp::SceneEntityFactory::registerClass<omp::SceneEntity>("SceneEntity");
     omp::SceneEntityFactory::registerClass<omp::Camera>("Camera");
@@ -128,7 +123,7 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
     {
         m_PathRegistry.emplace(inPath, id);
         new_asset->specifyMetaData(std::move(init_metadata));
-        new_asset->createObject(m_Factory);
+        new_asset->createObject();
     }
     else
     {
@@ -211,7 +206,7 @@ std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAssetAsync(AssetHa
                 found_asset->addChild(child.lock());
             }
 
-            found_asset->tryLoadObject(m_Factory);
+            found_asset->tryLoadObject();
             return std::weak_ptr<omp::Asset>(found_asset);
         });
     }
@@ -235,7 +230,7 @@ std::future<bool> omp::AssetManager::loadAllAssets()
     {
         m_AssetRegistry.foreach([this](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
         {
-            asset.second->tryLoadObject(m_Factory);
+            asset.second->tryLoadObject();
         });
         return true;
     });
@@ -256,7 +251,7 @@ std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(AssetHandle assetHandle)
             found_asset->addChild(child.lock());
         }
 
-        found_asset->tryLoadObject(m_Factory);
+        found_asset->tryLoadObject();
         return std::weak_ptr<omp::Asset>(found_asset);
     }
     ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);

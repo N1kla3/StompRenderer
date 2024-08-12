@@ -20,7 +20,6 @@ struct omp::ModelPushConstant
 {
     glm::mat4 model;
 
-    // TODO: why we need this
     glm::vec4 ambient{1};
     glm::vec4 diffusive{2};
     glm::vec4 specular{3};

@@ -110,8 +110,8 @@ namespace omp
     // ======= //
     private:
         bool loadMetadata();
-        bool tryLoadObject(ObjectFactory* factory);
-        void createObject(ObjectFactory* factory);
+        bool tryLoadObject();
+        void createObject();
         void addMetadataToObject(omp::Asset* asset, omp::SerializableObject::SerializationId id);
         bool unloadAsset();
         bool saveMetadata();

@@ -54,10 +54,8 @@ void omp::Application::preInit()
         m_ThreadPool = std::make_unique<omp::ThreadPool>();
     }
 
-    m_Factory = std::make_unique<omp::ObjectFactory>();
-
     fillInFactoryClasses();
-    m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get(), m_Factory.get());
+    m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get());
     std::future<bool> wait_assets = m_AssetManager->loadProject();
 
     glfwInit();
@@ -71,9 +69,6 @@ void omp::Application::preInit()
     m_Renderer = std::make_unique<omp::Renderer>();
     m_Renderer->initVulkan(m_Window, m_Width, m_Height);
     m_Renderer->initResources();
-
-    // TODO: maybe other stuff while assets loading
-    //m_CurrentScene = std::make_unique<omp::Scene>();
 
     wait_assets.wait();
 }
@@ -123,7 +118,6 @@ void omp::Application::tick(float delta)
     }
 
     // We can run some systems in minimazed application
-
 
 }
 
