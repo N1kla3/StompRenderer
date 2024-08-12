@@ -23,7 +23,6 @@
 #include "backends/imgui_impl_vulkan.h"
 
 #include "Scene.h"
-#include "MaterialManager.h"
 #include "Rendering/Shader.h"
 #include "Camera.h"
 #include "Rendering/GraphicsPipeline.h"

@@ -49,8 +49,6 @@ set(SOURCE
         SceneEntity.cpp
         Rendering/Texture.h
         Rendering/Texture.cpp
-        MaterialManager.h
-        MaterialManager.cpp
         Rendering/Material.h
         Rendering/Material.cpp
         MaterialInstance.h
