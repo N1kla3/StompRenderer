@@ -91,6 +91,7 @@ void omp::Renderer::loadScene(omp::Scene* scene)
     m_CurrentScene->loadToGPU(m_VulkanContext);
 
     updateImguiWidgets();
+    initializeScene();
 }
 
 void omp::Renderer::requestDrawFrame(float deltaTime)
@@ -2413,7 +2414,7 @@ void omp::Renderer::destroyAllCommandBuffers()
 void omp::Renderer::initializeScene()
 {
     // TODO: should go to asset initialization
-    /* auto lambda = [this](ImVec2 pos)
+     auto lambda = [this](ImVec2 pos)
     { m_MousePickingData.push(pos); };
     m_RenderViewport->setMouseClickCallback(lambda);
 
@@ -2441,81 +2442,6 @@ void omp::Renderer::initializeScene()
                      glm::vec3(inVec[0], inVec[1], inVec[2]);
          }
     });
-
-    // TODO: model split
-    addModelToScene("1-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
-    addModelToScene("1-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
-    addModelToScene("1-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
-    addModelToScene("1-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
-    addModelToScene("2-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f,
-                                                                  14.f};
-    addModelToScene("2-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f,
-                                                                  14.f};
-    addModelToScene("2-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f,
-                                                                  14.f};
-    addModelToScene("2-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f,
-                                                                  14.f};
-    addModelToScene("3-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f,
-                                                                  24.f};
-    addModelToScene("3-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f,
-                                                                  24.f};
-    addModelToScene("3-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f,
-                                                                  24.f};
-    addModelToScene("3-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f,
-                                                                  24.f};
-
-    auto viking = addModelToScene("dfasdf", "../models/vikingroom.obj");
-    auto viking_mat =
-            omp::MaterialManager::getMaterialManager().createOrGetMaterial("viking");
-    auto vik_texture =
-            omp::MaterialManager::getMaterialManager().loadTextureInstantly(
-                    "../textures/viking.png");
-    viking_mat->addTexture(omp::ETextureType::Texture, vik_texture);
-    viking_mat->addTexture(omp::ETextureType::DiffusiveMap, vik_texture);
-    viking_mat->addTexture(omp::ETextureType::SpecularMap, vik_texture);
-    viking_mat->setShaderName("Light");
-    viking->setMaterialInstance(
-            std::make_shared<omp::MaterialInstance>(viking_mat));
-
-    auto quad = addModelToScene("grass", "../models/quad.obj");
-    auto grass_mat =
-            omp::MaterialManager::getMaterialManager().createOrGetMaterial("grass");
-    auto grass_texture =
-            omp::MaterialManager::getMaterialManager().loadTextureInstantly(
-                    "../textures/grass.png");
-    grass_mat->addTexture(omp::ETextureType::Texture, grass_texture);
-    grass_mat->addTexture(omp::ETextureType::DiffusiveMap, grass_texture);
-    grass_mat->addTexture(omp::ETextureType::SpecularMap, grass_texture);
-    grass_mat->setShaderName("Grass");
-    grass_mat->enableBlending(true);
-    quad->setMaterialInstance(std::make_shared<omp::MaterialInstance>(grass_mat));
-
-    auto window = addModelToScene("window", "../models/quad.obj");
-    auto window_mat =
-            omp::MaterialManager::getMaterialManager().createOrGetMaterial("window");
-    auto window_texture =
-            omp::MaterialManager::getMaterialManager().loadTextureInstantly(
-                    "../textures/window.png");
-    window_mat->addTexture(omp::ETextureType::Texture, window_texture);
-    window_mat->addTexture(omp::ETextureType::DiffusiveMap, window_texture);
-    window_mat->addTexture(omp::ETextureType::SpecularMap, window_texture);
-    window_mat->setShaderName("Grass");
-    window_mat->enableBlending(true);
-    window->setMaterialInstance(
-            std::make_shared<omp::MaterialInstance>(window_mat));
-
-    auto plane = addModelToScene("plane", "../models/plane.obj");
-    auto plane_mat =
-            omp::MaterialManager::getMaterialManager().createOrGetMaterial("plane");
-    auto plane_texture =
-            omp::MaterialManager::getMaterialManager().loadTextureInstantly(
-                    "../textures/default.png");
-    plane_mat->addTexture(omp::ETextureType::Texture, plane_texture);
-    plane_mat->addTexture(omp::ETextureType::DiffusiveMap, plane_texture);
-    plane_mat->addTexture(omp::ETextureType::SpecularMap, plane_texture);
-    plane_mat->setShaderName("Light");
-    plane->setMaterialInstance(
-            std::make_shared<omp::MaterialInstance>(plane_mat)); */
 }
 
 void omp::Renderer::postFrame()
@@ -2557,7 +2483,7 @@ void omp::Renderer::postFrame()
                                m_PixelReadBuffer, 1, &region);
         endSingleTimeCommands(buffer);
 
-        int32_t pixel_value = -1;
+        uint32_t pixel_value = 1;
         void* data;
         vkMapMemory(m_VulkanContext->logical_device, m_PixelReadMemory, 0,
                     sizeof(int32_t), 0, &data);
@@ -2581,7 +2507,7 @@ void omp::Renderer::tick(float deltaTime)
             m_CurrentScene->getCurrentCamera()->getNearClipping(),
             m_CurrentScene->getCurrentCamera()->getFarClipping());
     // projection[1][1] *= -1;
-    int32_t id = m_CurrentScene->getCurrentId();
+    uint32_t id = m_CurrentScene->getCurrentId();
     auto ent = m_CurrentScene->getEntity(id);
     glm::mat4 model{};
     if (ent)

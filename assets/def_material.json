@@ -13,7 +13,7 @@
         "diffuse_map": 9570176689561383,
         "enable_blending": false,
         "shader_name": "Light",
-        "specular_map": 48976677724086055,
-        "texture": 9570176689561383
+        "specular_map": 9570176689561383,
+        "texture": 48976677724086055
     }
 }

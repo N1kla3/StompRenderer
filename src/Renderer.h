@@ -156,12 +156,6 @@ namespace omp
         
         void requestDrawFrame(float deltaTime);
 
-            //TODO: initWindow();
-            // TODO: initVulkan();
-            //initializeScene();
-            // TODO: requestDrawFrame();
-            //cleanup();
-
         void onWindowResize(int width, int height);
         void cleanup();
 
