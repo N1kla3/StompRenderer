@@ -121,7 +121,7 @@ void omp::Cubemap::createImage()
 
     flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     // faces of cubemap
-    array_layers = m_LayerAmount;
+    array_layers = static_cast<uint32_t>(m_LayerAmount);
 
     m_VulkanContext.lock()->createImage(width, height, mip_level, VK_FORMAT_R8G8B8A8_SRGB,
                                         VK_IMAGE_TILING_OPTIMAL,
@@ -142,7 +142,7 @@ void omp::Cubemap::createImage()
         VkBufferImageCopy buffer_copy_region = {};
         buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         buffer_copy_region.imageSubresource.mipLevel = mip_level;
-        buffer_copy_region.imageSubresource.baseArrayLayer = layer;
+        buffer_copy_region.imageSubresource.baseArrayLayer = static_cast<uint32_t>(layer);
         buffer_copy_region.imageSubresource.layerCount = 1;
         buffer_copy_region.imageExtent.width = width;
         buffer_copy_region.imageExtent.height = height;

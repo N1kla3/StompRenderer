@@ -206,7 +206,7 @@ void omp::VulkanContext::copyBufferToImage(VkBuffer buffer, VkImage image, const
 {
     VkCommandBuffer command_buffer = beginSingleTimeCommands();
 
-    vkCmdCopyBufferToImage(command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regions.size(), regions.data());
+    vkCmdCopyBufferToImage(command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(regions.size()), regions.data());
 
     endSingleTimeCommands(command_buffer);
 }

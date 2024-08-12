@@ -116,7 +116,7 @@ void omp::Renderer::cleanup()
 
     cleanupSwapChain();
     
-    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_MaterialSets.size(),
+    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, static_cast<uint32_t>(m_MaterialSets.size()),
                          m_MaterialSets.data());
     m_MaterialSets.clear();
 
@@ -535,7 +535,7 @@ VkPresentModeKHR omp::Renderer::chooseSwapPresentMode(
 }
 
 VkExtent2D
-omp::Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+omp::Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR&)
 {
     // TODO: this is strange and possibly incorrect
     
@@ -932,7 +932,7 @@ void omp::Renderer::createRenderPass()
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = refs.size();
+    subpass.colorAttachmentCount = static_cast<uint32_t>(refs.size());
     subpass.pColorAttachments = refs.data();
     subpass.pDepthStencilAttachment = &depth_attach_ref;
     subpass.pResolveAttachments = resolve_refs.data();
@@ -1393,9 +1393,9 @@ void omp::Renderer::cleanupSwapChain()
     } */
 
     vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool,
-                         m_UboDescriptorSets.size(), m_UboDescriptorSets.data());
+                         static_cast<uint32_t>(m_UboDescriptorSets.size()), m_UboDescriptorSets.data());
     vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool,
-                         m_OutlineDescriptorSets.size(),
+                         static_cast<uint32_t>(m_OutlineDescriptorSets.size()),
                          m_OutlineDescriptorSets.data());
 
     m_ImguiRenderPass->destroyInnerState();
@@ -1433,7 +1433,7 @@ void omp::Renderer::createDescriptorSetLayout()
                 skybox_layout_binding, cubemap_layout};
         VkDescriptorSetLayoutCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        info.bindingCount = bindings.size();
+        info.bindingCount = static_cast<uint32_t>(bindings.size());
         info.pBindings = bindings.data();
 
         if (vkCreateDescriptorSetLayout(m_LogicalDevice, &info, nullptr,
@@ -1590,8 +1590,8 @@ void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
     ubo.proj[1][1] *= -1;
     ubo.view_position = m_CurrentScene->getCurrentCamera()->getPosition();
     ubo.global_light_enabled = m_LightSystem->getGlobalLight() ? 1 : 0;
-    ubo.point_light_size = m_LightSystem->getPointLightSize();
-    ubo.spot_light_size = m_LightSystem->getSpotLightSize();
+    ubo.point_light_size = static_cast<uint32_t>(m_LightSystem->getPointLightSize());
+    ubo.spot_light_size = static_cast<uint32_t>(m_LightSystem->getSpotLightSize());
     m_UboBuffer->mapMemory(ubo, currentImage);
 
     OutlineUniformBuffer outline_buffer{};

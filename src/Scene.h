@@ -23,7 +23,7 @@ namespace omp
         omp::Camera* m_CurrentCamera;
 
         bool m_StateDirty = false;
-        int32_t m_CurrentEntityId = -1;
+        uint32_t m_CurrentEntityId = 0;
 
     public:
         // Methods //
@@ -46,8 +46,8 @@ namespace omp
         void addCameraToScene();
         void addCameraToScene(std::unique_ptr<omp::Camera>&& camera);
 
-        void setCurrentId(int32_t inId) { m_CurrentEntityId = inId; }
-        int32_t getCurrentId() const { return m_CurrentEntityId; }
+        void setCurrentId(uint32_t inId) { m_CurrentEntityId = inId; }
+        uint32_t getCurrentId() const { return m_CurrentEntityId; }
 
         bool isDirty() const
         {

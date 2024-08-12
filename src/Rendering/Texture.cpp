@@ -115,7 +115,7 @@ void omp::Texture::createImage()
     VkImageCreateFlags flags = 0;
     uint32_t array_layers = 1;
 
-    uint32_t size = static_cast<uint32_t>(m_TextureSource->getSize());
+    //uint32_t size = static_cast<uint32_t>(m_TextureSource->getSize());
     uint32_t height = static_cast<uint32_t>(m_TextureSource->getHeight());
     uint32_t width = static_cast<uint32_t>(m_TextureSource->getWidth());
     uint32_t mip_levels = m_TextureSource->getMipLevels();

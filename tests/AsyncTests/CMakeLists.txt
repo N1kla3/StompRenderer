@@ -8,5 +8,11 @@ set(TESTS
 
 
 add_executable(async_tests ${TESTS})
-target_link_libraries(async_tests stomp_renderer gtest gtest_main "-static-libgcc -static-libstdc++")
+if (MINGW)
+  target_link_libraries(async_tests stomp_renderer gtest gtest_main "-static-libgcc -static-libstdc++")
+else()
+  target_link_libraries(async_tests stomp_renderer gtest gtest_main)
+endif()
+
 add_test(NAME AsyncTests COMMAND async_tests)
+
