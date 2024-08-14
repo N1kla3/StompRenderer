@@ -4,6 +4,7 @@
 #include <vector>
 #include "IO/SerializableObject.h"
 #include "Camera.h"
+#include "LightObject.h"
 #include "SceneEntity.h"
 
 namespace omp
@@ -17,7 +18,8 @@ namespace omp
         // State //
         // ===== //
         std::vector<std::unique_ptr<omp::SceneEntity>> m_Entities;
-        std::vector<std::unique_ptr<omp::SceneEntity>> m_Cameras;
+        std::vector<std::unique_ptr<omp::Camera>> m_Cameras;
+        std::vector<std::unique_ptr<omp::LightBase>> m_Lights;
         std::weak_ptr<omp::VulkanContext> m_VulkanContext;
 
         omp::Camera* m_CurrentCamera;
@@ -38,13 +40,14 @@ namespace omp
         virtual void serialize(JsonParser<>& parser) override;
         virtual void deserialize(JsonParser<>& parser) override;
 
-        // TODO map, no ref
-        std::vector<std::unique_ptr<omp::SceneEntity>>& getEntities();
+        std::span<std::unique_ptr<omp::SceneEntity>> getEntities();
+        std::span<std::unique_ptr<omp::LightBase>> getLights();
 
         void setCurrentCamera(uint16_t id);
         omp::Camera* getCurrentCamera() const;
         void addCameraToScene();
         void addCameraToScene(std::unique_ptr<omp::Camera>&& camera);
+        void addLightToScene(std::unique_ptr<omp::LightBase>&& light);
 
         void setCurrentId(uint32_t inId) { m_CurrentEntityId = inId; }
         uint32_t getCurrentId() const { return m_CurrentEntityId; }

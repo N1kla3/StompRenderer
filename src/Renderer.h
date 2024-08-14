@@ -240,8 +240,6 @@ namespace omp
         void updateImguiWidgets();
         void createImguiFramebuffers();
 
-        void createLights();
-
         void destroyMainRenderPassResources();
         void onViewportResize(size_t imageIndex);
 

@@ -40,7 +40,8 @@ namespace omp
         void deleteAsset(AssetHandle assetId);
         AssetHandle createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass);
 
-        [[nodiscard]] std::weak_ptr<Asset> getAsset(AssetHandle assetId);
+        [[nodiscard]] std::weak_ptr<Asset> getAsset(AssetHandle assetId) const;
+        [[nodiscard]] std::weak_ptr<Asset> getAsset(const std::string& inPath) const;
 
     private:
         void saveAssetsToDrive();

@@ -1,11 +1,15 @@
 #include "Scene.h"
 #include "Logs.h"
-#include "Core/CoreLib.h"
 #include "SceneEntityFactory.h"
 
-std::vector<std::unique_ptr<omp::SceneEntity>>& omp::Scene::getEntities()
+std::span<std::unique_ptr<omp::SceneEntity>> omp::Scene::getEntities()
 {
-    return m_Entities;
+    return std::span(m_Entities.begin(), m_Entities.end());
+}
+
+std::span<std::unique_ptr<omp::LightBase>> omp::Scene::getLights()
+{
+    return std::span(m_Lights.begin(), m_Lights.end());
 }
 
 void omp::Scene::addEntityToScene(const omp::SceneEntity& modelToAdd)
@@ -52,7 +56,7 @@ void omp::Scene::serialize(JsonParser<>& parser)
     parser.writeValue("EntityNames", names);
 
     names.clear();
-    for (std::unique_ptr<omp::SceneEntity>& camera : m_Cameras)
+    for (std::unique_ptr<omp::Camera>& camera : m_Cameras)
     {
         names.push_back(camera->getName());
 
@@ -84,7 +88,7 @@ void omp::Scene::deserialize(JsonParser<>& parser)
     {
         JsonParser<> local_entity = parser.readObject(names[i]);
         std::string class_name = std::move(local_entity.readValue<std::string>("ClassName").value());
-        std::unique_ptr<SceneEntity> camera = omp::SceneEntityFactory::createSceneEntity(class_name);
+        std::unique_ptr<Camera> camera = omp::SceneEntityFactory::createSceneEntity<omp::Camera>(class_name);
         camera->onSceneLoad(local_entity, this);
         m_Cameras.push_back(std::move(camera));
     }
@@ -133,7 +137,7 @@ void omp::Scene::setCurrentCamera(uint16_t id)
 {
     if (id < m_Cameras.size())
     {
-        m_CurrentCamera = dynamic_cast<omp::Camera*>(m_Cameras.at(id).get());
+        m_CurrentCamera = m_Cameras.at(id).get();
         //OMP_ASSERT(m_CurrentCamera, "Ivalid camera!");
     }
     else
@@ -150,7 +154,7 @@ omp::Camera* omp::Scene::getCurrentCamera() const
     }
     if (!m_Cameras.empty())
     {
-        return dynamic_cast<omp::Camera*>(m_Cameras[0].get());
+        return m_Cameras[0].get();
     }
     return nullptr;
 }
@@ -165,3 +169,7 @@ void omp::Scene::addCameraToScene(std::unique_ptr<omp::Camera>&& camera)
     m_Cameras.push_back(std::move(camera));
 }
 
+void omp::Scene::addLightToScene(std::unique_ptr<omp::LightBase>&& light)
+{
+    m_Lights.push_back(std::move(light));
+}

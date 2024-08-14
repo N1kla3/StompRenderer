@@ -268,7 +268,7 @@ std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(const std::string& inPath
     return result;
 }
 
-std::weak_ptr<omp::Asset> omp::AssetManager::getAsset(AssetHandle assetHandle)
+std::weak_ptr<omp::Asset> omp::AssetManager::getAsset(AssetHandle assetHandle) const
 {
     std::shared_ptr<Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
     if (!found_asset)
@@ -276,5 +276,15 @@ std::weak_ptr<omp::Asset> omp::AssetManager::getAsset(AssetHandle assetHandle)
         ERROR(LogAssetManager, "Cant find asset {0}", assetHandle.id);
     }
     return std::weak_ptr<omp::Asset>(found_asset);
+}
+
+std::weak_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string& inPath) const
+{
+    if (m_PathRegistry.find(inPath) != m_PathRegistry.end())
+    {
+        return getAsset(m_PathRegistry.at(inPath));
+    }
+    ERROR(LogAssetManager, "Cant find registered path in Asset manager {0}", inPath);
+    return std::weak_ptr<omp::Asset>();
 }
 

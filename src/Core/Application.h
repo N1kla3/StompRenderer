@@ -51,5 +51,6 @@ namespace omp
         inline static void windowResizeCallback(GLFWwindow* window, int width, int height);
 
         void debug_createSceneManually();
+        void debug_addLightToScene();
     };
 }

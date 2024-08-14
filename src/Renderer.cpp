@@ -62,7 +62,6 @@ void omp::Renderer::initResources()
 {
     createImguiWidgets();
     postSwapChainInitialize();
-    createLights();
     createImageViews();
     createRenderPass();
     createDescriptorSetLayout();
@@ -92,6 +91,9 @@ void omp::Renderer::loadScene(omp::Scene* scene)
 
     updateImguiWidgets();
     initializeScene();
+    m_LightSystem->onSceneChanged(scene);
+    recreateSwapChain();
+    // TODO: add request to update pipelines and 
 }
 
 void omp::Renderer::requestDrawFrame(float deltaTime)
@@ -1042,7 +1044,7 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
     omp::SceneEntity* outline_entity = nullptr;
     VkDeviceSize offsets[] = {0};
 
-    std::vector<std::unique_ptr<omp::SceneEntity>>& scene_ref =
+    std::span<std::unique_ptr<omp::SceneEntity>> scene_ref =
             m_CurrentScene->getEntities();
     std::sort(
             scene_ref.begin(), scene_ref.end(),
@@ -1590,7 +1592,7 @@ void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
             m_CurrentScene->getCurrentCamera()->getFarClipping());
     ubo.proj[1][1] *= -1;
     ubo.view_position = m_CurrentScene->getCurrentCamera()->getPosition();
-    ubo.global_light_enabled = m_LightSystem->getGlobalLight() ? 1 : 0;
+    ubo.global_light_enabled = m_LightSystem->getGlobalLightSize() > 0;
     ubo.point_light_size = static_cast<uint32_t>(m_LightSystem->getPointLightSize());
     ubo.spot_light_size = static_cast<uint32_t>(m_LightSystem->getSpotLightSize());
     m_UboBuffer->mapMemory(ubo, currentImage);
@@ -2245,7 +2247,7 @@ void omp::Renderer::updateImguiWidgets()
         m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
         m_ScenePanel->setScene(m_CurrentScene);
         m_CameraPanel->setCamera(m_CurrentScene->getCurrentCamera());
-        m_LightPanel->setLightRef(m_LightSystem->getGlobalLight());
+        m_LightPanel->setLightRef(nullptr);
     }
     else
     {
@@ -2523,68 +2525,3 @@ void omp::Renderer::tick(float deltaTime)
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
 
-void omp::Renderer::createLights()
-{
-    /* // LIGHTS
-    const std::string model_path = "../models/sphere.obj";
-
-    // TODO: load model through asset manager
-    std::shared_ptr<omp::Model> light_model = nullptr;
-    auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial(
-            "default_no_light");
-    mat->addTexture(
-            omp::ETextureType::Texture,
-            omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
-    mat->setShaderName("Simple");
-    // need other way to load, and async
-    loadModelInMemory(light_model);
-
-    // TODO: remake light to unique 
-
-    m_CurrentScene->addEntityToScene(m_LightSystem->enableGlobalLight(
-            std::make_shared<omp::ModelInstance>(light_model, mat)));
-
-    auto&& point_one = std::make_shared<omp::LightObject<omp::PointLight>>(
-            "point 1", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addPointLight(point_one);
-    m_CurrentScene->addEntityToScene(point_one);
-
-    auto&& point_two = std::make_shared<omp::LightObject<omp::PointLight>>(
-            "point 2", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addPointLight(point_two);
-    m_CurrentScene->addEntityToScene(point_two);
-
-    auto&& spot_one = std::make_shared<omp::LightObject<omp::SpotLight>>(
-            "spot 1", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addSpotLight(spot_one);
-    m_CurrentScene->addEntityToScene(spot_one);
-
-    auto&& spot_two = std::make_shared<omp::LightObject<omp::SpotLight>>(
-            "spot 2", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addSpotLight(spot_two);
-    m_CurrentScene->addEntityToScene(spot_two);
-
-    auto&& spot_three = std::make_shared<omp::LightObject<omp::SpotLight>>(
-            "spot 3", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addSpotLight(spot_three);
-    m_CurrentScene->addEntityToScene(spot_three);
-
-    glm::vec3 light_pos = {10.f, 13.f, 4.f};
-
-    const std::string point_name = "point_light";
-    for (size_t index = 0; index < m_LightSystem->getPointLight().size();
-         index++)
-    {
-        light_pos.x += 10.f;
-        m_LightSystem->getPointLight()[index]->getModel()->getPosition() =
-                light_pos;
-    }
-
-    const std::string spot_name = "spot_light";
-    for (size_t index = 0; index < m_LightSystem->getSpotLight().size();
-         index++)
-    {
-        light_pos.x += 10.f;
-        m_LightSystem->getSpotLight()[index]->getModel()->getPosition() = light_pos;
-    } */
-}

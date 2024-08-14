@@ -1,4 +1,7 @@
 #include "LightSystem.h"
+#include "Light.h"
+#include "LightObject.h"
+#include "Scene.h"
 
 omp::LightSystem::LightSystem(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrNum)
     : m_VulkanContext(inVulkanContext)
@@ -33,15 +36,9 @@ void omp::LightSystem::tryRecreateBuffers()
 
 void omp::LightSystem::update()
 {
-    if (m_GlobalLight)
-    {
-        m_GlobalLight->updateLightObject();
-    }
-    for (auto& light : m_PointLights)
-    {
-        light->updateLightObject();
-    }
-    for (auto& light : m_SpotLights)
+    if (!m_CurrentScene) return;
+
+    for (auto& light : m_CurrentScene->getLights())
     {
         light->updateLightObject();
     }
@@ -49,23 +46,53 @@ void omp::LightSystem::update()
 
 void omp::LightSystem::mapMemory(uint32_t khrImage)
 {
-    if (m_GlobalBuffer && m_GlobalLight)
-    {
-        m_GlobalBuffer->mapMemory(m_GlobalLight->getLight(), khrImage);
-    }
+    if (!m_CurrentScene) return;
 
-    uint32_t offset = 0;
-    for (size_t index = 0; index < m_PointLights.size(); index++)
+    uint32_t offset_p = 0, offset_s = 0;
+    for (auto& light : m_CurrentScene->getLights())
     {
-        m_PointBuffer->mapMemory(m_PointLights[index]->getLight(), khrImage, offset);
-        offset += sizeof(PointLight);
+        if (light->getType() == omp::ELightType::GLOBAL)
+        {
+            m_GlobalBuffer->mapMemory(*reinterpret_cast<omp::GlobalLight*>(light->getLight()), khrImage);
+        }
+        else if (light->getType() == omp::ELightType::POINT)
+        {
+            m_PointBuffer->mapMemory(*reinterpret_cast<omp::PointLight*>(light->getLight()), khrImage, offset_p);
+            offset_p += sizeof(PointLight);
+        }
+        else if (light->getType() == omp::ELightType::SPOT)
+        {
+            m_SpotBuffer->mapMemory(*reinterpret_cast<omp::SpotLight*>(light->getLight()), khrImage, offset_s);
+            offset_s += sizeof(SpotLight);
+        }
     }
+}
 
-    offset = 0;
-    for (size_t index = 0; index < m_SpotLights.size(); index++)
+void omp::LightSystem::onSceneChanged(omp::Scene* scene)
+{
+    m_CurrentScene = scene;
+
+    m_GlobalLightNum = 0;
+    m_PointLightNum = 0;
+    m_SpotLightNum = 0;
+
+    if (m_CurrentScene)
     {
-        m_SpotBuffer->mapMemory(m_SpotLights[index]->getLight(), khrImage, offset);
-        offset += sizeof(SpotLight);
+        for (auto& light : m_CurrentScene->getLights())
+        {
+            if (light->getType() == omp::ELightType::GLOBAL)
+            {
+                m_GlobalLightNum++;
+            }
+            else if (light->getType() == omp::ELightType::POINT)
+            {
+                m_PointLightNum++;
+            }
+            else if (light->getType() == omp::ELightType::SPOT)
+            {
+                m_SpotLightNum++;
+            }
+        }
     }
 }
 
@@ -96,19 +123,3 @@ VkBuffer omp::LightSystem::getSpotLightBuffer(uint32_t khr)
     return 0;
 }
 
-std::shared_ptr<omp::LightObject<omp::GlobalLight>> omp::LightSystem::enableGlobalLight(const std::shared_ptr<omp::ModelInstance>& inModel)
-{
-    m_GlobalLight = std::make_shared<LightObject<GlobalLight>>("Global Light", inModel);
-    // TODO maybe global should not have representation
-    return m_GlobalLight;
-}
-
-void omp::LightSystem::addPointLight(const std::shared_ptr<LightObject<omp::PointLight>>& inLight)
-{
-    m_PointLights.push_back(inLight);
-}
-
-void omp::LightSystem::addSpotLight(const std::shared_ptr<LightObject<omp::SpotLight>>& inLight)
-{
-    m_SpotLights.push_back(inLight);
-}

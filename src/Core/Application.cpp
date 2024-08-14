@@ -320,3 +320,43 @@ void omp::Application::debug_createSceneManually()
     future.get();
 }
 
+void omp::Application::debug_addLightToScene()
+{
+    const std::string_view model_path = "../models/sphere.obj";
+
+    auto material = m_AssetManager->getAsset("../assets/plane_material.json").lock()->getObjectAs<omp::Material>();
+    auto model = m_AssetManager->getAsset("../assets/plane_model.json").lock()->getObjectAs<omp::Model>();
+
+    std::unique_ptr<LightBase>&& global_one = std::make_unique<omp::LightObject<omp::GlobalLight>>(
+            "global", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(global_one));
+
+    std::unique_ptr<LightBase>&& point_one = std::make_unique<omp::LightObject<omp::PointLight>>(
+            "point 1", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(point_one));
+
+    auto&& point_two = std::make_unique<omp::LightObject<omp::PointLight>>(
+            "point 2", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(point_two));
+
+    auto&& spot_one = std::make_unique<omp::LightObject<omp::SpotLight>>(
+            "spot 1", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(spot_one));
+
+    auto&& spot_two = std::make_unique<omp::LightObject<omp::SpotLight>>(
+            "spot 2", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(spot_two));
+
+    auto&& spot_three = std::make_unique<omp::LightObject<omp::SpotLight>>(
+            "spot 3", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(spot_three));
+
+    glm::vec3 light_pos = {10.f, 13.f, 4.f};
+
+    for (auto& light : m_CurrentScene->getLights())
+    {
+        light->getModelInstance()->getPosition() = light_pos;
+        light_pos.x += 10.f;
+    }
+}
+
