@@ -67,11 +67,30 @@ void omp::Scene::serialize(JsonParser<>& parser)
         parser.writeObject(camera->getName(), std::move(new_parser));
     }
     parser.writeValue("CameraNames", names);
+
+    names.clear();
+    for (std::unique_ptr<omp::LightBase>& light : m_Lights)
+    {
+        names.push_back(light->getName());
+
+        JsonParser<> new_parser;
+        new_parser.writeValue("ClassName", light->getClassName());
+        light->onSceneSave(new_parser, this);
+
+        parser.writeObject(light->getName(), std::move(new_parser));
+    }
+    parser.writeValue("LightNames", names);
 }
 
 void omp::Scene::deserialize(JsonParser<>& parser)
 {
-    std::vector<std::string> names = parser.readValue<std::vector<std::string>>("EntityNames").value();
+    auto entities_opt = parser.readValue<std::vector<std::string>>("EntityNames");
+    std::vector<std::string> names{};
+
+    if (entities_opt.has_value())
+    {
+         names = entities_opt.value();
+    }
     size_t entities_num = names.size();
     for (size_t i = 0; i < entities_num; i++)
     {
@@ -82,7 +101,12 @@ void omp::Scene::deserialize(JsonParser<>& parser)
         m_Entities.push_back(std::move(entity));
     }
 
-    names = parser.readValue<std::vector<std::string>>("CameraNames").value();
+    auto cameras_opt = parser.readValue<std::vector<std::string>>("CameraNames");
+    names.clear();
+    if (cameras_opt.has_value())
+    {
+        names = cameras_opt.value();
+    }
     size_t camera_num = names.size();
     for (size_t i = 0; i < camera_num; i++)
     {
@@ -91,6 +115,22 @@ void omp::Scene::deserialize(JsonParser<>& parser)
         std::unique_ptr<Camera> camera = omp::SceneEntityFactory::createSceneEntity<omp::Camera>(class_name);
         camera->onSceneLoad(local_entity, this);
         m_Cameras.push_back(std::move(camera));
+    }
+    
+    auto light_ops = parser.readValue<std::vector<std::string>>("LightNames");
+
+    if (light_ops.has_value())
+    {
+        names = light_ops.value();
+    }
+    size_t light_num = names.size();
+    for (size_t i = 0; i < light_num; i++)
+    {
+        JsonParser<> local_entity = parser.readObject(names[i]);
+        std::string class_name = std::move(local_entity.readValue<std::string>("ClassName").value());
+        std::unique_ptr<LightBase> light = omp::SceneEntityFactory::createSceneEntity<omp::LightBase>(class_name);
+        light->onSceneLoad(local_entity, this);
+        m_Lights.push_back(std::move(light));
     }
 }
 

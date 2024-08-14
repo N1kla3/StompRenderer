@@ -87,7 +87,8 @@ bool omp::Asset::saveAsset()
             m_Parser.writeObject(MAIN_DATA_KEY, std::move(main_data_parser));
 
             // Call after main serialization, because we need to know dependencies
-            if (bool succ = saveMetadata())
+            bool succ = saveMetadata();
+            if (!succ)
             {
                 WARN(LogAssetManager, "Metadata saving error");
             };

@@ -54,7 +54,6 @@ void omp::Application::preInit()
         m_ThreadPool = std::make_unique<omp::ThreadPool>();
     }
 
-    fillInFactoryClasses();
     m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get());
     std::future<bool> wait_assets = m_AssetManager->loadProject();
 
@@ -92,6 +91,9 @@ void omp::Application::init()
 
 void omp::Application::preDestroy()
 {
+    std::future<bool> wait_save = m_AssetManager->saveProject();
+    wait_save.wait();
+
     m_ThreadPool.reset();
 
     m_CurrentScene.reset();
@@ -124,11 +126,6 @@ void omp::Application::tick(float delta)
 void omp::Application::parseFlags(const std::string& /*commands*/)
 {
 
-}
-
-void omp::Application::fillInFactoryClasses()
-{
-    // m_Factory->registerClass<texture>("texture");
 }
 
 void omp::Application::windowResizeCallback(GLFWwindow* window, int width, int height)
