@@ -16,7 +16,7 @@ namespace omp
         omp::threadsafe_map<AssetHandle, std::shared_ptr<Asset>> m_AssetRegistry;
         std::unordered_map<std::string, omp::AssetHandle::handle_type> m_PathRegistry;
 
-        omp::ThreadPool* m_ThreadPool;
+        omp::ThreadPool* m_ThreadPool = nullptr;
     public:
 
         AssetManager(omp::ThreadPool* threadPool);
@@ -46,7 +46,8 @@ namespace omp
     private:
         void saveAssetsToDrive();
         void loadAssetsFromDrive(const std::string& pathDirectory = ASSET_FOLDER);
-        void loadAsset_internal(const std::string& inPath);
+        void loadAssetFromFileSystem_internal(const std::string& inPath);
+        std::weak_ptr<Asset> loadAssetInternal(const std::shared_ptr<omp::Asset>& asset);
 
         // This is the only places to store data
         inline static const std::string ASSET_FOLDER = "../assets/";

@@ -139,7 +139,7 @@ private:
     VkBuffer m_VertexBuffer;
     VkDeviceMemory m_VertexMemory;
 
-    bool m_Loaded;
+    bool m_Loaded = false;
 
 public:
     // Methods //
@@ -150,6 +150,8 @@ public:
     void loadToGpuMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate);
 
     const std::string& getName() const { return m_Name; }
+    const std::string& getPath() const { return m_Path; }
+    bool isLoaded() const { return m_Loaded; }
 
     const std::vector<Vertex>& getVertices() const { return m_Vertices; }
 

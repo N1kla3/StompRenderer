@@ -40,20 +40,42 @@ omp::AssetManager::~AssetManager()
 
 std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)
 {
-    return m_ThreadPool->submit([this, inPath]() -> bool
+    if (m_ThreadPool)
     {
+        return m_ThreadPool->submit([this, inPath]() -> bool
+        {
+            loadAssetsFromDrive(inPath);
+            return true;
+        });
+    }
+    else 
+    {
+        std::promise<bool> prom;
+        std::future<bool> res = prom.get_future();
         loadAssetsFromDrive(inPath);
-        return true;
-    });
+        prom.set_value(true);
+        return res;
+    }
 }
 
 std::future<bool> omp::AssetManager::saveProject()
 {
-    return m_ThreadPool->submit([this]() -> bool
+    if (m_ThreadPool)
     {
+        return m_ThreadPool->submit([this]() -> bool
+        {
+            saveAssetsToDrive();
+            return true;
+        });
+    }
+    else
+    {
+        std::promise<bool> prom;
+        std::future<bool> res = prom.get_future();
         saveAssetsToDrive();
-        return true;
-    });
+        prom.set_value(true);
+        return res;
+    }
 }
 
 void omp::AssetManager::saveAsset(AssetHandle assetHandle)
@@ -67,10 +89,18 @@ void omp::AssetManager::saveAsset(AssetHandle assetHandle)
             return;
         }
         // TODO: saving multithreading handling, conflicts
-        m_ThreadPool->submit([found_asset]()
+
+        if (m_ThreadPool)
+        {
+            m_ThreadPool->submit([found_asset]()
+            {
+                found_asset->saveAsset();
+            });
+        }
+        else
         {
             found_asset->saveAsset();
-        });
+        }
     }
     else
     {
@@ -83,12 +113,21 @@ void omp::AssetManager::deleteAsset(AssetHandle assetHandle)
     std::shared_ptr<Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
     if (found_asset)
     {
-        m_ThreadPool->submit([this, found_asset, assetHandle]()
+        if (m_ThreadPool)
+        {
+            m_ThreadPool->submit([this, found_asset, assetHandle]()
+            {
+                found_asset->unloadAsset();
+                m_AssetRegistry.remove_mapping(assetHandle);
+                // TODO: delete file
+            });
+        }
+        else
         {
             found_asset->unloadAsset();
             m_AssetRegistry.remove_mapping(assetHandle);
             // TODO: delete file
-        });
+        }
     }
     else
     {
@@ -163,12 +202,12 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
         }
         if (iter.path().extension().string() == ASSET_FORMAT)
         {
-            loadAsset_internal(iter.path().string());
+            loadAssetFromFileSystem_internal(iter.path().string());
         }
     }
 }
 
-void omp::AssetManager::loadAsset_internal(const std::string& inPath)
+void omp::AssetManager::loadAssetFromFileSystem_internal(const std::string& inPath)
 {
     JsonParser<> file_data{};
     if (file_data.populateFromFile(inPath))
@@ -195,20 +234,20 @@ std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAssetAsync(AssetHa
     std::future<std::weak_ptr<Asset>> result;
     if (found_asset)
     {
-        result = m_ThreadPool->submit([found_asset, this, assetHandle]()
+        if (m_ThreadPool)
         {
-            auto metadata = found_asset->getMetaData();
-            for (auto dependency_id : metadata.dependencies)
+            result = m_ThreadPool->submit([found_asset, this]()
             {
-                INFO(LogAssetManager, "ASYNC: Start loading dependency for asset {}, dependency: {}", metadata.asset_id, dependency_id);
-
-                std::weak_ptr<omp::Asset> child = loadAsset(dependency_id);
-                found_asset->addChild(child.lock());
-            }
-
-            found_asset->tryLoadObject();
-            return std::weak_ptr<omp::Asset>(found_asset);
-        });
+                return loadAssetInternal(found_asset);
+            });
+        }
+        else
+        {
+            std::promise<std::weak_ptr<Asset>> prom;
+            result = prom.get_future();
+            prom.set_value(loadAssetInternal(found_asset));
+            return result;
+        }
     }
     ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);
     return result;
@@ -226,14 +265,28 @@ std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAssetAsync(const s
 
 std::future<bool> omp::AssetManager::loadAllAssets()
 {
-    return m_ThreadPool->submit([this]() -> bool
+    if (m_ThreadPool)
     {
+        return m_ThreadPool->submit([this]() -> bool
+        {
+            m_AssetRegistry.foreach([this](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
+            {
+                asset.second->tryLoadObject();
+            });
+            return true;
+        });
+    }
+    else
+    {
+        std::promise<bool> prom;
+        std::future<bool> res = prom.get_future();
         m_AssetRegistry.foreach([this](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
         {
             asset.second->tryLoadObject();
         });
-        return true;
-    });
+        prom.set_value(true);
+        return res;
+    }
 }
 
 std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(AssetHandle assetHandle)
@@ -242,19 +295,12 @@ std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(AssetHandle assetHandle)
     std::weak_ptr<Asset> result;
     if (found_asset)
     {
-        auto metadata = found_asset->getMetaData();
-        for (auto dependency_id : metadata.dependencies)
-        {
-            INFO(LogAssetManager, "Start loading dependency for asset {}, dependency: {}", metadata.asset_id, dependency_id);
-
-            std::weak_ptr<omp::Asset> child = loadAsset(dependency_id);
-            found_asset->addChild(child.lock());
-        }
-
-        found_asset->tryLoadObject();
-        return std::weak_ptr<omp::Asset>(found_asset);
+        result = loadAssetInternal(found_asset);
     }
-    ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);
+    else
+    {
+        ERROR(LogAssetManager, "Cant find asset with id {0}", assetHandle.id);
+    }
     return result;
 }
 
@@ -266,6 +312,21 @@ std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(const std::string& inPath
         result = loadAsset(m_PathRegistry[inPath]);
     }
     return result;
+}
+
+std::weak_ptr<omp::Asset> omp::AssetManager::loadAssetInternal(const std::shared_ptr<omp::Asset>& asset)
+{
+    auto metadata = asset->getMetaData();
+    for (auto dependency_id : metadata.dependencies)
+    {
+        INFO(LogAssetManager, "Start loading dependency for asset {}, dependency: {}", metadata.asset_id, dependency_id);
+
+        std::weak_ptr<omp::Asset> child = loadAsset(dependency_id);
+        asset->addChild(child.lock());
+    }
+
+    asset->tryLoadObject();
+    return std::weak_ptr<omp::Asset>(asset);
 }
 
 std::weak_ptr<omp::Asset> omp::AssetManager::getAsset(AssetHandle assetHandle) const
