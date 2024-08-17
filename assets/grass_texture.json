@@ -4,7 +4,7 @@
         "ClassName": "TextureSrc",
         "Dependencies": [],
         "DiscPath": "../assets/grass_texture.json",
-        "ObjectID": 10414610210021159
+        "ObjectID": 9852270144892441
     },
     "PlainData": {
         "PathToTexture": "../textures/grass.png"

@@ -3,16 +3,16 @@
         "AssetName": "window_mat",
         "ClassName": "Material",
         "Dependencies": [
-            10696106661895975
+            10415207213084185
         ],
         "DiscPath": "../assets/window_material.json",
-        "ObjectID": 10977607408541479
+        "ObjectID": 6193056792227353
     },
     "PlainData": {
-        "diffuse_map": 10696106661895975,
+        "diffuse_map": 10415207213084185,
         "enable_blending": true,
         "shader_name": "Grass",
-        "specular_map": 10696106661895975,
-        "texture": 10696106661895975
+        "specular_map": 10415207213084185,
+        "texture": 10415207213084185
     }
 }

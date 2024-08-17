@@ -4,7 +4,7 @@
         "ClassName": "TextureSrc",
         "Dependencies": [],
         "DiscPath": "../assets/texture_specular.json",
-        "ObjectID": 9570176689561383
+        "ObjectID": 8444903851404825
     },
     "PlainData": {
         "PathToTexture": "../textures/container_specular.png"

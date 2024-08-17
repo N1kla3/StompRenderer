@@ -3,16 +3,16 @@
         "AssetName": "grass_mat",
         "ClassName": "Material",
         "Dependencies": [
-            10414610210021159
+            9852270144892441
         ],
         "DiscPath": "../assets/grass_material.json",
-        "ObjectID": 6473986306006823
+        "ObjectID": 6193069677456921
     },
     "PlainData": {
-        "diffuse_map": 10414610210021159,
+        "diffuse_map": 9852270144892441,
         "enable_blending": true,
         "shader_name": "Grass",
-        "specular_map": 10414610210021159,
-        "texture": 10414610210021159
+        "specular_map": 9852270144892441,
+        "texture": 9852270144892441
     }
 }

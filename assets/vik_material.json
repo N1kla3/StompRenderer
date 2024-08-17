@@ -3,16 +3,16 @@
         "AssetName": "vik_mat",
         "ClassName": "Material",
         "Dependencies": [
-            93731216201211687
+            113435057279249945
         ],
         "DiscPath": "../assets/vik_material.json",
-        "ObjectID": 9570193869692711
+        "ObjectID": 7881936717852185
     },
     "PlainData": {
-        "diffuse_map": 93731216201211687,
+        "diffuse_map": 113435057279249945,
         "enable_blending": false,
         "shader_name": "Light",
-        "specular_map": 93731216201211687,
-        "texture": 93731216201211687
+        "specular_map": 113435057279249945,
+        "texture": 113435057279249945
     }
 }

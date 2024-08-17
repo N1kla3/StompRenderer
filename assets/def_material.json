@@ -3,17 +3,17 @@
         "AssetName": "def_mat",
         "ClassName": "Material",
         "Dependencies": [
-            48976677724086055,
-            9570176689561383
+            8444903851404825,
+            52073529536458265
         ],
         "DiscPath": "../assets/def_material.json",
-        "ObjectID": 11259017960021799
+        "ObjectID": 10133762301734425
     },
     "PlainData": {
-        "diffuse_map": 9570176689561383,
+        "diffuse_map": 8444903851404825,
         "enable_blending": false,
         "shader_name": "Light",
-        "specular_map": 9570176689561383,
-        "texture": 48976677724086055
+        "specular_map": 8444903851404825,
+        "texture": 52073529536458265
     }
 }
