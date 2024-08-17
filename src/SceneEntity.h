@@ -14,7 +14,7 @@ namespace omp
         uint32_t m_Id;
     protected:
         std::string m_Name;
-        std::shared_ptr<omp::ModelInstance> m_ModelInstance;
+        std::shared_ptr<omp::ModelInstance> m_ModelInstance = nullptr;
 
     public:
         SceneEntity();
