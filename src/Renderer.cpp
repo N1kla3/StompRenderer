@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "imgui.h"
 #include <algorithm>
 #include <optional>
 #include <set>
@@ -1962,6 +1963,13 @@ void omp::Renderer::createImguiContext()
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     // io.Fonts->Build();
     ImGui::StyleColorsDark();
+
+    if (!std::filesystem::exists("imgui.ini"))
+    {
+        // Use default layout first time 
+        ImGui::LoadIniSettingsFromDisk("../default_imgui.ini");
+        ImGui::SaveIniSettingsToDisk("imgui.ini");
+    }
 }
 
 void omp::Renderer::initializeImgui(GLFWwindow* window)
