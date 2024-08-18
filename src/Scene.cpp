@@ -173,16 +173,17 @@ omp::SceneEntity* omp::Scene::getCurrentEntity() const
     return getEntity(m_CurrentEntityId);
 }
 
-void omp::Scene::setCurrentCamera(uint16_t id)
+bool omp::Scene::setCurrentCamera(uint16_t index)
 {
-    if (id < m_Cameras.size())
+    if (index < m_Cameras.size())
     {
-        m_CurrentCamera = m_Cameras.at(id).get();
-        //OMP_ASSERT(m_CurrentCamera, "Ivalid camera!");
+        m_CurrentCamera = m_Cameras.at(index).get();
+        return true;
     }
     else
     {
         ERROR(LogRendering, "Invalid camera access");
+        return false;
     }
 }
 

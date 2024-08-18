@@ -90,3 +90,46 @@ TEST_F(SceneAssetSuite, SceneAsset__Test__Serialization)
     ASSERT_STREQ(raw_data.c_str(), laststr.c_str());
 }
 
+TEST_F(SceneAssetSuite, SceneAsset__Test__Cameras)
+{
+    omp::Scene scene{};
+    EXPECT_FALSE(scene.getCurrentCamera());
+    scene.addCameraToScene();
+    EXPECT_TRUE(scene.getCurrentCamera());
+    EXPECT_FALSE(scene.setCurrentCamera(4));
+    EXPECT_TRUE(scene.getCurrentCamera());
+    EXPECT_TRUE(scene.setCurrentCamera(0));
+    ASSERT_TRUE(scene.getCurrentCamera());
+}
+
+TEST_F(SceneAssetSuite, SceneAsset__Test__Lights)
+{
+    omp::Scene scene{};
+    scene.addLightToScene(std::make_unique<omp::LightObject<omp::GlobalLight>>("glo"));
+    scene.addLightToScene(std::make_unique<omp::LightObject<omp::PointLight>>("poi"));
+    scene.addLightToScene(std::make_unique<omp::LightObject<omp::SpotLight>>("spo"));
+
+    EXPECT_EQ(scene.getEntities().size(), 0);
+
+    ASSERT_EQ(scene.getLights().size(), 3);
+}
+
+TEST_F(SceneAssetSuite, SceneAsset__Test__Entities)
+{
+    omp::Scene scene{};
+
+    omp::SceneEntity entity{"ent", nullptr};
+
+    uint32_t test_id = entity.getId();
+    scene.setCurrentId(test_id);
+    EXPECT_EQ(scene.getCurrentId(), test_id);
+    
+    scene.addEntityToScene(entity);
+    scene.addEntityToScene(omp::SceneEntity{});
+    
+    EXPECT_EQ(scene.getEntities().size(), 2);
+    EXPECT_EQ(*scene.getEntity("ent"), entity);
+    EXPECT_EQ(*scene.getEntity(test_id), entity);
+    ASSERT_EQ(*scene.getCurrentEntity(), entity);
+}
+

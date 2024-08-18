@@ -43,7 +43,7 @@ namespace omp
         std::span<std::unique_ptr<omp::SceneEntity>> getEntities();
         std::span<std::unique_ptr<omp::LightBase>> getLights();
 
-        void setCurrentCamera(uint16_t id);
+        bool setCurrentCamera(uint16_t index);
         omp::Camera* getCurrentCamera() const;
         void addCameraToScene();
         void addCameraToScene(std::unique_ptr<omp::Camera>&& camera);

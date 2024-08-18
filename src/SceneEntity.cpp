@@ -17,6 +17,31 @@ omp::SceneEntity::SceneEntity(const std::string& inName, const std::shared_ptr<o
     m_Id = omp::CoreLib::generateId32();
 }
 
+omp::SceneEntity::SceneEntity(const SceneEntity& rhs)
+{
+    m_Id = rhs.m_Id;
+    m_Name = rhs.m_Name;
+    if (rhs.m_ModelInstance)
+    {
+        m_ModelInstance = std::make_shared<omp::ModelInstance>(*rhs.m_ModelInstance);
+    }
+}
+
+omp::SceneEntity::SceneEntity(SceneEntity&& rhs)
+{
+    m_Id = rhs.m_Id;
+    m_Name = std::move(rhs.m_Name);
+    m_ModelInstance = std::move(rhs.m_ModelInstance);
+}
+
+omp::SceneEntity& omp::SceneEntity::operator=(SceneEntity rhs)
+{
+    std::swap(m_Id, rhs.m_Id);
+    std::swap(m_Name, rhs.m_Name);
+    std::swap(m_ModelInstance, rhs.m_ModelInstance);
+    return *this;
+}
+
 void omp::SceneEntity::tryLoadToGpu(const std::shared_ptr<omp::VulkanContext>& context)
 {
     m_ModelInstance->tryLoad(context, false);
