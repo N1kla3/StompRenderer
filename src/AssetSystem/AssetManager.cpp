@@ -108,30 +108,22 @@ void omp::AssetManager::saveAsset(AssetHandle assetHandle)
     }
 }
 
-void omp::AssetManager::deleteAsset(AssetHandle assetHandle)
+bool omp::AssetManager::deleteAsset(AssetHandle assetHandle)
 {
     std::shared_ptr<Asset> found_asset = m_AssetRegistry.value_for(assetHandle, nullptr);
     if (found_asset)
     {
-        if (m_ThreadPool)
-        {
-            m_ThreadPool->submit([this, found_asset, assetHandle]()
-            {
-                found_asset->unloadAsset();
-                m_AssetRegistry.remove_mapping(assetHandle);
-                // TODO: delete file
-            });
-        }
-        else
-        {
-            found_asset->unloadAsset();
-            m_AssetRegistry.remove_mapping(assetHandle);
-            // TODO: delete file
-        }
+        omp::MetaData meta = found_asset->getMetaData();
+        found_asset->unloadAsset();
+        m_AssetRegistry.remove_mapping(meta.asset_id);
+        m_PathRegistry.erase(meta.path_on_disk);
+        // TODO: delete file
+        return true;
     }
     else
     {
         WARN(LogAssetManager, "Cant delete asset with id specified {}", assetHandle.id);
+        return false;
     }
 }
 
@@ -215,8 +207,9 @@ void omp::AssetManager::loadAssetFromFileSystem_internal(const std::string& inPa
         std::shared_ptr<omp::Asset> asset = std::make_shared<omp::Asset>((std::move(file_data)));
         if (asset->loadMetadata())
         {
-            m_AssetRegistry.add_or_update_mapping(asset->getMetaData().asset_id, asset);
-            m_PathRegistry.emplace(inPath, asset->getMetaData().asset_id);
+            omp::MetaData meta = asset->getMetaData();
+            m_AssetRegistry.add_or_update_mapping(meta.asset_id, asset);
+            m_PathRegistry.emplace(meta.path_on_disk, meta.asset_id);
             INFO(LogAssetManager, "Asset loaded successfully: {0}", inPath);
         }
         else

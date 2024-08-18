@@ -37,7 +37,7 @@ namespace omp
         std::weak_ptr<Asset> loadAsset(AssetHandle assetId);
         std::weak_ptr<Asset> loadAsset(const std::string& inPath);
         void saveAsset(AssetHandle assetId);
-        void deleteAsset(AssetHandle assetId);
+        bool deleteAsset(AssetHandle assetId);
         AssetHandle createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass);
 
         [[nodiscard]] std::weak_ptr<Asset> getAsset(AssetHandle assetId) const;

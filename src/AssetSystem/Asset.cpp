@@ -97,7 +97,7 @@ bool omp::Asset::saveAsset()
         }
         else
         {
-            ERROR(LogAssetManager, "Cant deserialize object while saving asset");
+            WARN(LogAssetManager, "Cant deserialize object because it is not loaded");
             return false;
         }
     }

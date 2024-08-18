@@ -25,6 +25,7 @@ namespace omp
             id = other;
             return *this;
         }
+        bool isValid() const { return id != INVALID_HANDLE; }
 
         static const AssetHandle INVALID_HANDLE;
     };
