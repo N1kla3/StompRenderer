@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "imgui.h"
 #include <algorithm>
 #include <optional>
 #include <set>
@@ -62,7 +63,6 @@ void omp::Renderer::initResources()
 {
     createImguiWidgets();
     postSwapChainInitialize();
-    createLights();
     createImageViews();
     createRenderPass();
     createDescriptorSetLayout();
@@ -91,6 +91,10 @@ void omp::Renderer::loadScene(omp::Scene* scene)
     m_CurrentScene->loadToGPU(m_VulkanContext);
 
     updateImguiWidgets();
+    initializeScene();
+    m_LightSystem->onSceneChanged(scene);
+    recreateSwapChain();
+    // TODO: add request to update pipelines and 
 }
 
 void omp::Renderer::requestDrawFrame(float deltaTime)
@@ -116,7 +120,7 @@ void omp::Renderer::cleanup()
 
     cleanupSwapChain();
     
-    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, m_MaterialSets.size(),
+    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, static_cast<uint32_t>(m_MaterialSets.size()),
                          m_MaterialSets.data());
     m_MaterialSets.clear();
 
@@ -535,7 +539,7 @@ VkPresentModeKHR omp::Renderer::chooseSwapPresentMode(
 }
 
 VkExtent2D
-omp::Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+omp::Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR&)
 {
     // TODO: this is strange and possibly incorrect
     
@@ -932,7 +936,7 @@ void omp::Renderer::createRenderPass()
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = refs.size();
+    subpass.colorAttachmentCount = static_cast<uint32_t>(refs.size());
     subpass.pColorAttachments = refs.data();
     subpass.pDepthStencilAttachment = &depth_attach_ref;
     subpass.pResolveAttachments = resolve_refs.data();
@@ -1041,7 +1045,7 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
     omp::SceneEntity* outline_entity = nullptr;
     VkDeviceSize offsets[] = {0};
 
-    std::vector<std::unique_ptr<omp::SceneEntity>>& scene_ref =
+    std::span<std::unique_ptr<omp::SceneEntity>> scene_ref =
             m_CurrentScene->getEntities();
     std::sort(
             scene_ref.begin(), scene_ref.end(),
@@ -1393,9 +1397,9 @@ void omp::Renderer::cleanupSwapChain()
     } */
 
     vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool,
-                         m_UboDescriptorSets.size(), m_UboDescriptorSets.data());
+                         static_cast<uint32_t>(m_UboDescriptorSets.size()), m_UboDescriptorSets.data());
     vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool,
-                         m_OutlineDescriptorSets.size(),
+                         static_cast<uint32_t>(m_OutlineDescriptorSets.size()),
                          m_OutlineDescriptorSets.data());
 
     m_ImguiRenderPass->destroyInnerState();
@@ -1433,7 +1437,7 @@ void omp::Renderer::createDescriptorSetLayout()
                 skybox_layout_binding, cubemap_layout};
         VkDescriptorSetLayoutCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        info.bindingCount = bindings.size();
+        info.bindingCount = static_cast<uint32_t>(bindings.size());
         info.pBindings = bindings.data();
 
         if (vkCreateDescriptorSetLayout(m_LogicalDevice, &info, nullptr,
@@ -1589,9 +1593,9 @@ void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
             m_CurrentScene->getCurrentCamera()->getFarClipping());
     ubo.proj[1][1] *= -1;
     ubo.view_position = m_CurrentScene->getCurrentCamera()->getPosition();
-    ubo.global_light_enabled = m_LightSystem->getGlobalLight() ? 1 : 0;
-    ubo.point_light_size = m_LightSystem->getPointLightSize();
-    ubo.spot_light_size = m_LightSystem->getSpotLightSize();
+    ubo.global_light_enabled = m_LightSystem->getGlobalLightSize() > 0;
+    ubo.point_light_size = static_cast<uint32_t>(m_LightSystem->getPointLightSize());
+    ubo.spot_light_size = static_cast<uint32_t>(m_LightSystem->getSpotLightSize());
     m_UboBuffer->mapMemory(ubo, currentImage);
 
     OutlineUniformBuffer outline_buffer{};
@@ -1959,6 +1963,13 @@ void omp::Renderer::createImguiContext()
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     // io.Fonts->Build();
     ImGui::StyleColorsDark();
+
+    if (!std::filesystem::exists("imgui.ini"))
+    {
+        // Use default layout first time 
+        ImGui::LoadIniSettingsFromDisk("../default_imgui.ini");
+        ImGui::SaveIniSettingsToDisk("imgui.ini");
+    }
 }
 
 void omp::Renderer::initializeImgui(GLFWwindow* window)
@@ -2244,7 +2255,7 @@ void omp::Renderer::updateImguiWidgets()
         m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
         m_ScenePanel->setScene(m_CurrentScene);
         m_CameraPanel->setCamera(m_CurrentScene->getCurrentCamera());
-        m_LightPanel->setLightRef(m_LightSystem->getGlobalLight());
+        m_LightPanel->setLightRef(nullptr);
     }
     else
     {
@@ -2413,7 +2424,7 @@ void omp::Renderer::destroyAllCommandBuffers()
 void omp::Renderer::initializeScene()
 {
     // TODO: should go to asset initialization
-    /* auto lambda = [this](ImVec2 pos)
+     auto lambda = [this](ImVec2 pos)
     { m_MousePickingData.push(pos); };
     m_RenderViewport->setMouseClickCallback(lambda);
 
@@ -2441,81 +2452,6 @@ void omp::Renderer::initializeScene()
                      glm::vec3(inVec[0], inVec[1], inVec[2]);
          }
     });
-
-    // TODO: model split
-    addModelToScene("1-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f, 4.f};
-    addModelToScene("1-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f, 4.f};
-    addModelToScene("1-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f, 4.f};
-    addModelToScene("1-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f, 4.f};
-    addModelToScene("2-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f,
-                                                                  14.f};
-    addModelToScene("2-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f,
-                                                                  14.f};
-    addModelToScene("2-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f,
-                                                                  14.f};
-    addModelToScene("2-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f,
-                                                                  14.f};
-    addModelToScene("3-1", g_ModelPath.c_str())->getPosition() = {10.f, 3.f,
-                                                                  24.f};
-    addModelToScene("3-2", g_ModelPath.c_str())->getPosition() = {20.f, 3.f,
-                                                                  24.f};
-    addModelToScene("3-3", g_ModelPath.c_str())->getPosition() = {30.f, 3.f,
-                                                                  24.f};
-    addModelToScene("3-4", g_ModelPath.c_str())->getPosition() = {40.f, 3.f,
-                                                                  24.f};
-
-    auto viking = addModelToScene("dfasdf", "../models/vikingroom.obj");
-    auto viking_mat =
-            omp::MaterialManager::getMaterialManager().createOrGetMaterial("viking");
-    auto vik_texture =
-            omp::MaterialManager::getMaterialManager().loadTextureInstantly(
-                    "../textures/viking.png");
-    viking_mat->addTexture(omp::ETextureType::Texture, vik_texture);
-    viking_mat->addTexture(omp::ETextureType::DiffusiveMap, vik_texture);
-    viking_mat->addTexture(omp::ETextureType::SpecularMap, vik_texture);
-    viking_mat->setShaderName("Light");
-    viking->setMaterialInstance(
-            std::make_shared<omp::MaterialInstance>(viking_mat));
-
-    auto quad = addModelToScene("grass", "../models/quad.obj");
-    auto grass_mat =
-            omp::MaterialManager::getMaterialManager().createOrGetMaterial("grass");
-    auto grass_texture =
-            omp::MaterialManager::getMaterialManager().loadTextureInstantly(
-                    "../textures/grass.png");
-    grass_mat->addTexture(omp::ETextureType::Texture, grass_texture);
-    grass_mat->addTexture(omp::ETextureType::DiffusiveMap, grass_texture);
-    grass_mat->addTexture(omp::ETextureType::SpecularMap, grass_texture);
-    grass_mat->setShaderName("Grass");
-    grass_mat->enableBlending(true);
-    quad->setMaterialInstance(std::make_shared<omp::MaterialInstance>(grass_mat));
-
-    auto window = addModelToScene("window", "../models/quad.obj");
-    auto window_mat =
-            omp::MaterialManager::getMaterialManager().createOrGetMaterial("window");
-    auto window_texture =
-            omp::MaterialManager::getMaterialManager().loadTextureInstantly(
-                    "../textures/window.png");
-    window_mat->addTexture(omp::ETextureType::Texture, window_texture);
-    window_mat->addTexture(omp::ETextureType::DiffusiveMap, window_texture);
-    window_mat->addTexture(omp::ETextureType::SpecularMap, window_texture);
-    window_mat->setShaderName("Grass");
-    window_mat->enableBlending(true);
-    window->setMaterialInstance(
-            std::make_shared<omp::MaterialInstance>(window_mat));
-
-    auto plane = addModelToScene("plane", "../models/plane.obj");
-    auto plane_mat =
-            omp::MaterialManager::getMaterialManager().createOrGetMaterial("plane");
-    auto plane_texture =
-            omp::MaterialManager::getMaterialManager().loadTextureInstantly(
-                    "../textures/default.png");
-    plane_mat->addTexture(omp::ETextureType::Texture, plane_texture);
-    plane_mat->addTexture(omp::ETextureType::DiffusiveMap, plane_texture);
-    plane_mat->addTexture(omp::ETextureType::SpecularMap, plane_texture);
-    plane_mat->setShaderName("Light");
-    plane->setMaterialInstance(
-            std::make_shared<omp::MaterialInstance>(plane_mat)); */
 }
 
 void omp::Renderer::postFrame()
@@ -2557,7 +2493,7 @@ void omp::Renderer::postFrame()
                                m_PixelReadBuffer, 1, &region);
         endSingleTimeCommands(buffer);
 
-        int32_t pixel_value = -1;
+        uint32_t pixel_value = 1;
         void* data;
         vkMapMemory(m_VulkanContext->logical_device, m_PixelReadMemory, 0,
                     sizeof(int32_t), 0, &data);
@@ -2581,7 +2517,7 @@ void omp::Renderer::tick(float deltaTime)
             m_CurrentScene->getCurrentCamera()->getNearClipping(),
             m_CurrentScene->getCurrentCamera()->getFarClipping());
     // projection[1][1] *= -1;
-    int32_t id = m_CurrentScene->getCurrentId();
+    uint32_t id = m_CurrentScene->getCurrentId();
     auto ent = m_CurrentScene->getEntity(id);
     glm::mat4 model{};
     if (ent)
@@ -2597,79 +2533,3 @@ void omp::Renderer::tick(float deltaTime)
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
 
-void omp::Renderer::addModelToScene(std::unique_ptr<omp::SceneEntity>&& inEntity)
-{
-    // TODO: do not handle default mat here
-    if (!inEntity->getModelInstance()->getMaterialInstance())
-    {
-        inEntity->getModelInstance()->setMaterialInstance(
-                std::make_shared<omp::MaterialInstance>(m_DefaultMaterial));
-    }
-    m_CurrentScene->addEntityToScene(std::move(inEntity));
-}
-
-void omp::Renderer::createLights()
-{
-    /* // LIGHTS
-    const std::string model_path = "../models/sphere.obj";
-
-    // TODO: load model through asset manager
-    std::shared_ptr<omp::Model> light_model = nullptr;
-    auto mat = omp::MaterialManager::getMaterialManager().createOrGetMaterial(
-            "default_no_light");
-    mat->addTexture(
-            omp::ETextureType::Texture,
-            omp::MaterialManager::getMaterialManager().getDefaultTexture().lock());
-    mat->setShaderName("Simple");
-    // need other way to load, and async
-    loadModelInMemory(light_model);
-
-    // TODO: remake light to unique 
-
-    m_CurrentScene->addEntityToScene(m_LightSystem->enableGlobalLight(
-            std::make_shared<omp::ModelInstance>(light_model, mat)));
-
-    auto&& point_one = std::make_shared<omp::LightObject<omp::PointLight>>(
-            "point 1", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addPointLight(point_one);
-    m_CurrentScene->addEntityToScene(point_one);
-
-    auto&& point_two = std::make_shared<omp::LightObject<omp::PointLight>>(
-            "point 2", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addPointLight(point_two);
-    m_CurrentScene->addEntityToScene(point_two);
-
-    auto&& spot_one = std::make_shared<omp::LightObject<omp::SpotLight>>(
-            "spot 1", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addSpotLight(spot_one);
-    m_CurrentScene->addEntityToScene(spot_one);
-
-    auto&& spot_two = std::make_shared<omp::LightObject<omp::SpotLight>>(
-            "spot 2", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addSpotLight(spot_two);
-    m_CurrentScene->addEntityToScene(spot_two);
-
-    auto&& spot_three = std::make_shared<omp::LightObject<omp::SpotLight>>(
-            "spot 3", std::make_shared<omp::ModelInstance>(light_model, mat));
-    m_LightSystem->addSpotLight(spot_three);
-    m_CurrentScene->addEntityToScene(spot_three);
-
-    glm::vec3 light_pos = {10.f, 13.f, 4.f};
-
-    const std::string point_name = "point_light";
-    for (size_t index = 0; index < m_LightSystem->getPointLight().size();
-         index++)
-    {
-        light_pos.x += 10.f;
-        m_LightSystem->getPointLight()[index]->getModel()->getPosition() =
-                light_pos;
-    }
-
-    const std::string spot_name = "spot_light";
-    for (size_t index = 0; index < m_LightSystem->getSpotLight().size();
-         index++)
-    {
-        light_pos.x += 10.f;
-        m_LightSystem->getSpotLight()[index]->getModel()->getPosition() = light_pos;
-    } */
-}

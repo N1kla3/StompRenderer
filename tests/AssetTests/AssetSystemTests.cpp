@@ -13,7 +13,6 @@ class AssetSuite : public ::testing::Test
 {
 public:
     inline static std::unique_ptr<omp::ThreadPool> pool;
-    std::unique_ptr<omp::ObjectFactory> factory;
     std::unique_ptr<omp::AssetManager> manager;
 
 protected:
@@ -21,11 +20,6 @@ protected:
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
-        omp::SceneEntityFactory::registerClass<omp::SceneEntity>("SceneEntity");
-        omp::SceneEntityFactory::registerClass<omp::Camera>("Camera");
-        omp::SceneEntityFactory::registerClass<omp::LightObject<omp::GlobalLight>>("GlobalLight");
-        omp::SceneEntityFactory::registerClass<omp::LightObject<omp::PointLight>>("PointLight");
-        omp::SceneEntityFactory::registerClass<omp::LightObject<omp::SpotLight>>("SpotLight");
 
         pool = std::make_unique<omp::ThreadPool>(4);
     }
@@ -37,14 +31,12 @@ protected:
     virtual void SetUp() override
     {
         INFO(LogTesting, "Setup");
-        factory = std::make_unique<omp::ObjectFactory>();
-        manager = std::make_unique<omp::AssetManager>(pool.get(), factory.get());
+        manager = std::make_unique<omp::AssetManager>(pool.get());
     }
 
     virtual void TearDown() override
     {
         manager.reset();
-        factory.reset();
         INFO(LogTesting, "Teardown");
     }
 
@@ -52,7 +44,7 @@ protected:
 
 const std::string g_TestProjectPath = "../../../tests/assets";
 
-TEST_F(AssetSuite, AssetLoaderTest)
+TEST_F(AssetSuite, AssetSystem__test__CreatingAssets)
 {
     INFO(LogTesting, "Start first asset test");
 
@@ -105,7 +97,7 @@ TEST_F(AssetSuite, AssetLoaderTest)
     ASSERT_TRUE(true);
 }
 
-TEST_F(AssetSuite, AssetMetadata)
+TEST_F(AssetSuite, AssetManager__test__LoadingAssets)
 {
     INFO(LogTesting, "Start loading test");
 
@@ -113,17 +105,41 @@ TEST_F(AssetSuite, AssetMetadata)
     EXPECT_NO_THROW(wait.get());
 
     std::future<bool> result = manager->loadAllAssets();
-    EXPECT_NO_THROW(result.get());
+    bool res_val;
+    EXPECT_NO_THROW(res_val = result.get());
 
-    ASSERT_TRUE(true);
+    ASSERT_TRUE(res_val);
 }
 
-TEST_F(AssetSuite, AssetFirst)
+TEST_F(AssetSuite, AssetManager__test__SavingProject)
 {
     std::future<bool> wait = manager->loadProject(g_TestProjectPath);
     EXPECT_NO_THROW(wait.get());
 
     std::future<bool> res = manager->saveProject();
-    EXPECT_NO_THROW(res.get());
-    ASSERT_TRUE(true);
+    bool res_val;
+    EXPECT_NO_THROW(res_val = res.get());
+    ASSERT_TRUE(res_val);
 }
+
+TEST_F(AssetSuite, AssetManager__test__AssetUnload)
+{
+    std::future<bool> wait = manager->loadProject(g_TestProjectPath);
+    EXPECT_NO_THROW(wait.get());
+
+    std::shared_ptr<omp::Asset> asset = manager->getAsset(g_TestProjectPath + "/main_scene.json").lock();
+    EXPECT_TRUE(asset);
+    EXPECT_FALSE(asset->isLoaded());
+
+    auto fut = manager->loadAssetAsync(asset->getMetaData().asset_id);
+    EXPECT_NO_THROW(fut.get());
+    EXPECT_TRUE(asset->isLoaded());
+    EXPECT_TRUE(manager->deleteAsset(asset->getMetaData().asset_id));
+
+    auto asset_deleted = manager->getAsset(g_TestProjectPath + "/main_scene.json");
+    EXPECT_TRUE(asset_deleted.expired());
+
+    omp::AssetHandle scene_handle = manager->createAsset("main_scene", g_TestProjectPath + "/main_scene.json", "Scene");
+    ASSERT_TRUE(scene_handle.isValid());
+}
+

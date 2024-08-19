@@ -2,12 +2,17 @@
     "Metadata": {
         "AssetName": "plane_mat",
         "ClassName": "Material",
-        "Dependencies": [],
+        "Dependencies": [
+            11541077054828057
+        ],
         "DiscPath": "../assets/plane_material.json",
-        "ObjectID": 1049699487286
+        "ObjectID": 6474536064101913
     },
     "PlainData": {
+        "diffuse_map": 11541077054828057,
         "enable_blending": false,
-        "shader_name": ""
+        "shader_name": "Light",
+        "specular_map": 11541077054828057,
+        "texture": 11541077054828057
     }
 }

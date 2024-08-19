@@ -1,59 +1,60 @@
 #include "gtest/gtest.h"
+#include <memory>
 #include "AssetSystem/AssetManager.h"
+#include "IO/JsonParser.h"
+#include "Rendering/Model.h"
 #include "AssetSystem/ObjectFactory.h"
-
-/*
-class Test_ModelAsset : public omp::ModelAsset
-{
-public:
-    void setModelPath(const std::string& path) { ModelPath = path; }
-    void setMaterialPath(const std::string& path) { MaterialPath = path; }
-};
 
 class ModelAssetSuite : public ::testing::Test
 {
+public:
+    std::unique_ptr<omp::AssetManager> manager;
+
 protected:
 
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
+    }
+    static void TearDownTestSuite()
+    {
+    }
 
-        omp::ObjectFactory::s_CreationMap.insert(ADD_CLASS(Test_ModelAsset));
+    virtual void SetUp() override
+    {
+        INFO(LogTesting, "Setup");
+        manager = std::make_unique<omp::AssetManager>(nullptr);
+    }
+
+    virtual void TearDown() override
+    {
+        manager.reset();
+        INFO(LogTesting, "Teardown");
     }
 };
 
-const std::string g_Path = "../tests/testAssets/ModelAsset.json";
-const std::string g_ModelPath = "../models/cube.obj";
-const std::string g_MaterialPath = "../tests/testAssets/test.json";
-
-TEST_F(ModelAssetSuite, ModelAsset__Test__FirstSave)
+TEST_F(ModelAssetSuite, ModelAsset__Test__Serialization)
 {
-    omp::AssetManager& manager = omp::AssetManager::getAssetManager();
+    omp::AssetHandle handle = manager->createAsset("testmodel", "invalid", "Model");
+    auto asset = manager->getAsset(handle);
+    EXPECT_TRUE(asset.lock()->isLoaded());
 
-    manager.createAsset<Test_ModelAsset>("TestModel", g_Path);
+    std::shared_ptr<omp::Model> model = asset.lock()->getObjectAs<omp::Model>();
 
-    auto&& asset = manager.getAsset(g_Path);
-    ASSERT_TRUE(asset);
+    model->setPath("somepath");
+    omp::JsonParser<> parser{};
+    EXPECT_NO_THROW(model->serialize(parser));
+    std::string raw_data = parser.to_string();
+    EXPECT_FALSE(model->isLoaded());
 
-    auto&& my_asset = std::dynamic_pointer_cast<Test_ModelAsset>(asset);
-    ASSERT_TRUE(my_asset);
-    my_asset->setName("NewTestModel");
-    my_asset->setModelPath(g_ModelPath);
-    my_asset->setMaterialPath(g_MaterialPath);
+    auto second = std::dynamic_pointer_cast<omp::Model>(omp::ObjectFactory::createSerializableObject("Model"));
+    EXPECT_NO_THROW(second->deserialize(parser));
+    EXPECT_STREQ(model->getPath().c_str(), second->getPath().c_str());
 
-    ASSERT_TRUE(asset->saveToLastValidPath());
+    omp::JsonParser<> new_parser{};
+    EXPECT_NO_THROW(second->serialize(new_parser));
+    std::string laststr = new_parser.to_string();
+
+    ASSERT_STREQ(raw_data.c_str(), laststr.c_str());
 }
 
-TEST_F(ModelAssetSuite, ModelAsset__Test__FirstLoad)
-{
-    omp::AssetManager& manager = omp::AssetManager::getAssetManager();
-    auto&& asset = manager.loadAsset(g_Path);
-
-    auto&& asset_casted = std::dynamic_pointer_cast<omp::ModelAsset>(asset);
-    ASSERT_TRUE(asset_casted);
-    ASSERT_TRUE(asset_casted->getName() == "NewTestModel");
-    ASSERT_TRUE(asset_casted->getMaterialPath() == g_MaterialPath);
-    ASSERT_TRUE(asset_casted->getModelPath() == g_ModelPath);
-    ASSERT_TRUE(std::dynamic_pointer_cast<Test_ModelAsset>(asset));
-}
-*/

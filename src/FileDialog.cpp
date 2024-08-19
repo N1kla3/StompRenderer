@@ -1,4 +1,4 @@
-#if WIN32
+#if 0 //WIN32
 
 #include <windows.h>
 #include <shobjidl.h>

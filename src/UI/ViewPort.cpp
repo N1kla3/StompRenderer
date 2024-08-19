@@ -46,16 +46,16 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
         ImGui::Image(m_ImageId, m_Size);
     }
 
-    if (m_Info.id != -1)
+    if (m_Info.id != 0)
     {
-        //ImGuizmo::Enable(true);
+        ImGuizmo::Enable(true);
 
         ImGuizmo::SetOrthographic(true);
         ImGuizmo::SetDrawlist();
         float w = ImGui::GetWindowWidth();
         float h = ImGui::GetWindowHeight();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, w, h);
-        ImGuizmo::Manipulate(glm::value_ptr(m_Camera->getViewMatrix()), glm::value_ptr(m_Info.projection),
+        bool manipulated = ImGuizmo::Manipulate(glm::value_ptr(m_Camera->getViewMatrix()), glm::value_ptr(m_Info.projection),
                              m_Operation, ImGuizmo::LOCAL, glm::value_ptr(m_Info.model));
 
         float matrixTranslation[3], matrixRotation[3], matrixScale[3];
@@ -63,9 +63,18 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
 
         if (ImGuizmo::IsUsingAny())
         {
-            m_TranslationChange(matrixTranslation);
-            m_RotationChange(matrixRotation);
-            m_ScaleChange(matrixScale);
+            ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
+            if (manipulated)
+            {
+                m_TranslationChange(matrixTranslation);
+                m_RotationChange(matrixRotation);
+                m_ScaleChange(matrixScale);
+            }
+        }
+        else
+        {
+
+            ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = false;
         }
     }
 
@@ -143,8 +152,11 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
         && !ImGuizmo::IsUsing() && !ImGuizmo::IsOver())
     {
         m_CursorPos = viewport_cursor;
-        // TODO: fix later
-        //m_MouseClick(m_CursorPos);
+
+        if (m_MouseClick)
+        {
+            m_MouseClick(m_CursorPos);
+        }
     }
 
     ImGui::End();

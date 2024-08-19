@@ -19,7 +19,6 @@ namespace omp
         Renderer* getRenderer() const { return m_Renderer.get(); }
         omp::AssetManager* getAssetManager() const { return m_AssetManager.get(); }
         omp::ThreadPool* getThreadPool() const { return m_ThreadPool.get(); }
-        omp::ObjectFactory* getObjectFactory() const { return m_Factory.get(); }
         omp::Scene* getCurrentScene() const { return m_CurrentScene.get(); }
         GLFWwindow* getWindow() const { return m_Window; }
 
@@ -38,7 +37,6 @@ namespace omp
         std::unique_ptr<Renderer> m_Renderer;
         std::unique_ptr<omp::AssetManager> m_AssetManager;
         std::unique_ptr<omp::ThreadPool> m_ThreadPool;
-        std::unique_ptr<omp::ObjectFactory> m_Factory;
         std::shared_ptr<omp::Scene> m_CurrentScene;
         GLFWwindow* m_Window;
 
@@ -51,9 +49,9 @@ namespace omp
 
     private:
         void parseFlags(const std::string& commands);
-        void fillInFactoryClasses();
         inline static void windowResizeCallback(GLFWwindow* window, int width, int height);
 
         void debug_createSceneManually();
+        void debug_addLightToScene();
     };
 }

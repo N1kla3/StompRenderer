@@ -23,7 +23,6 @@
 #include "backends/imgui_impl_vulkan.h"
 
 #include "Scene.h"
-#include "MaterialManager.h"
 #include "Rendering/Shader.h"
 #include "Camera.h"
 #include "Rendering/GraphicsPipeline.h"
@@ -157,12 +156,6 @@ namespace omp
         
         void requestDrawFrame(float deltaTime);
 
-            //TODO: initWindow();
-            // TODO: initVulkan();
-            //initializeScene();
-            // TODO: requestDrawFrame();
-            //cleanup();
-
         void onWindowResize(int width, int height);
         void cleanup();
 
@@ -231,8 +224,6 @@ namespace omp
 
         void createDescriptorSets();
 
-        void addModelToScene(std::unique_ptr<omp::SceneEntity>&& inModel);
-
         void retrieveMaterialRenderState(const std::shared_ptr<omp::Material>& material);
 
         void recreateSwapChain();
@@ -249,9 +240,6 @@ namespace omp
         void updateImguiWidgets();
         void createImguiFramebuffers();
 
-        void createMaterialManager();
-        void createLights();
-
         void destroyMainRenderPassResources();
         void onViewportResize(size_t imageIndex);
 
@@ -266,7 +254,7 @@ namespace omp
 
         VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 
-        VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+        VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& /*capabilities*/);
 
         void setupDebugMessenger();
 

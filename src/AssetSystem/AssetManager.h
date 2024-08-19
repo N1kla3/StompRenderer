@@ -16,12 +16,10 @@ namespace omp
         omp::threadsafe_map<AssetHandle, std::shared_ptr<Asset>> m_AssetRegistry;
         std::unordered_map<std::string, omp::AssetHandle::handle_type> m_PathRegistry;
 
-        // TODO: Get from Application, should not have own thread pool 
-        omp::ThreadPool* m_ThreadPool;
-        omp::ObjectFactory* m_Factory;
+        omp::ThreadPool* m_ThreadPool = nullptr;
     public:
 
-        AssetManager(omp::ThreadPool* threadPool, omp::ObjectFactory* factory);
+        AssetManager(omp::ThreadPool* threadPool);
         ~AssetManager();
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;
@@ -39,15 +37,17 @@ namespace omp
         std::weak_ptr<Asset> loadAsset(AssetHandle assetId);
         std::weak_ptr<Asset> loadAsset(const std::string& inPath);
         void saveAsset(AssetHandle assetId);
-        void deleteAsset(AssetHandle assetId);
+        bool deleteAsset(AssetHandle assetId);
         AssetHandle createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass);
 
-        [[nodiscard]] std::weak_ptr<Asset> getAsset(AssetHandle assetId);
+        [[nodiscard]] std::weak_ptr<Asset> getAsset(AssetHandle assetId) const;
+        [[nodiscard]] std::weak_ptr<Asset> getAsset(const std::string& inPath) const;
 
     private:
         void saveAssetsToDrive();
         void loadAssetsFromDrive(const std::string& pathDirectory = ASSET_FOLDER);
-        void loadAsset_internal(const std::string& inPath);
+        void loadAssetFromFileSystem_internal(const std::string& inPath);
+        std::weak_ptr<Asset> loadAssetInternal(const std::shared_ptr<omp::Asset>& asset);
 
         // This is the only places to store data
         inline static const std::string ASSET_FOLDER = "../assets/";

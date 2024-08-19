@@ -21,7 +21,7 @@ omp::FrameBuffer::FrameBuffer(
     m_CreateInfo.pAttachments = imagesViews.data();
     m_CreateInfo.width = width;
     m_CreateInfo.height = height;
-    m_CreateInfo.layers = layers;
+    m_CreateInfo.layers = static_cast<uint32_t>(layers);
 
     finishCreation();
 }

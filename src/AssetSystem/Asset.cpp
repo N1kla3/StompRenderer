@@ -17,12 +17,12 @@ bool omp::Asset::loadMetadata()
     return m_Metadata.IsValid();
 }
 
-bool omp::Asset::tryLoadObject(ObjectFactory* factory)
+bool omp::Asset::tryLoadObject()
 {
     std::lock_guard<std::mutex> lock(m_Access);
     if (m_Metadata && !m_IsLoaded)
     {
-        m_Object = factory->createSerializableObject(m_Metadata.class_id);
+        m_Object = omp::ObjectFactory::createSerializableObject(m_Metadata.class_id);
         addMetadataToObject(this, m_Metadata.asset_id);
         JsonParser<> main_parser = m_Parser.readObject(MAIN_DATA_KEY);
         m_Object->deserialize(main_parser);
@@ -32,11 +32,11 @@ bool omp::Asset::tryLoadObject(ObjectFactory* factory)
     return false;
 }
 
-void omp::Asset::createObject(ObjectFactory* factory)
+void omp::Asset::createObject()
 {
     if (m_Metadata)
     {
-        m_Object = factory->createSerializableObject(m_Metadata.class_id);
+        m_Object = omp::ObjectFactory::createSerializableObject(m_Metadata.class_id);
         if (m_Object)
         {
             addMetadataToObject(this, m_Metadata.asset_id);
@@ -88,12 +88,16 @@ bool omp::Asset::saveAsset()
 
             // Call after main serialization, because we need to know dependencies
             bool succ = saveMetadata();
+            if (!succ)
+            {
+                WARN(LogAssetManager, "Metadata saving error");
+            };
 
             return m_Parser.writeToFile(m_Metadata.path_on_disk);
         }
         else
         {
-            ERROR(LogAssetManager, "Cant deserialize object while saving asset");
+            WARN(LogAssetManager, "Cant deserialize object because it is not loaded");
             return false;
         }
     }

@@ -12,7 +12,7 @@ namespace omp
 
     struct PickingInfo
     {
-        int32_t id;
+        uint32_t id;
         glm::mat4 projection;
         glm::mat4 model;
     };

@@ -4,7 +4,7 @@
         "ClassName": "TextureSrc",
         "Dependencies": [],
         "DiscPath": "../assets/window_texture.json",
-        "ObjectID": 1002453995062
+        "ObjectID": 10415207213084185
     },
     "PlainData": {
         "PathToTexture": "../textures/window.png"

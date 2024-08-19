@@ -1,6 +1,5 @@
 #include "Material.h"
 #include "Logs.h"
-#include "MaterialManager.h"
 #include "UI/MaterialRepresentation.h"
 #include <memory>
 

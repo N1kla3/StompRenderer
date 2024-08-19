@@ -25,6 +25,7 @@ namespace omp
             id = other;
             return *this;
         }
+        bool isValid() const { return id != INVALID_HANDLE; }
 
         static const AssetHandle INVALID_HANDLE;
     };
@@ -110,8 +111,8 @@ namespace omp
     // ======= //
     private:
         bool loadMetadata();
-        bool tryLoadObject(ObjectFactory* factory);
-        void createObject(ObjectFactory* factory);
+        bool tryLoadObject();
+        void createObject();
         void addMetadataToObject(omp::Asset* asset, omp::SerializableObject::SerializationId id);
         bool unloadAsset();
         bool saveMetadata();

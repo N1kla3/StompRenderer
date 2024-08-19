@@ -83,6 +83,11 @@ namespace omp
             return m_Data.contains(inKey);
         }
 
+        std::string to_string() const
+        {
+            return m_Data.dump();
+        }
+
         ImplementationType getImplementation()
         {
             return m_Data;
@@ -134,6 +139,8 @@ namespace omp
 
         bool contains(const std::string& inKey) const;
 
+        std::string to_string() const;
+
     };
 
     template< typename ParserType >
@@ -178,5 +185,11 @@ namespace omp
     bool JsonParser<ParserType>::contains(const std::string& inKey) const
     {
         return m_Parser.contains(inKey);
+    }
+
+    template< typename ParserType >
+    std::string JsonParser<ParserType>::to_string() const
+    {
+        return m_Parser.to_string();
     }
 }

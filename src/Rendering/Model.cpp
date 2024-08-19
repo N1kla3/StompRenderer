@@ -10,7 +10,7 @@ omp::Model::Model()
 omp::Model::Model(const std::string& path)
         : m_Name("NONE")
 {
-    omp::ModelImporter::loadModel(this, path);
+    m_Loaded = omp::ModelImporter::loadModel(this, path);
 }
 
 void omp::Model::serialize(JsonParser<>& parser)
@@ -24,7 +24,7 @@ void omp::Model::deserialize(JsonParser<>& parser)
 
     if (!m_Path.empty())
     {
-        omp::ModelImporter::loadModel(this, m_Path);
+        m_Loaded = omp::ModelImporter::loadModel(this, m_Path);
     }
 }
 
@@ -137,7 +137,7 @@ omp::Model::~Model()
     tryClear();
 }
 
-void omp::Model::loadToMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate)
+void omp::Model::loadToGpuMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate)
 {
     if (!m_Context.expired() && !forceUpdate)
     {
@@ -148,7 +148,19 @@ void omp::Model::loadToMemory(const std::shared_ptr<omp::VulkanContext>& context
 
     m_Context = context;
 
-    loadVertexToMemory();
-    loadIndexToMemory();
+    if (!m_Loaded)
+    {
+        m_Loaded = omp::ModelImporter::loadModel(this, m_Path);
+    }
+
+    if (m_Loaded)
+    {
+        loadVertexToMemory();
+        loadIndexToMemory();
+    }
+    else
+    {
+        ERROR(LogIO, "Cant load Model to GPU, because 3D model file not loaded");
+    }
 }
 

@@ -1,0 +1,12 @@
+{
+    "Metadata": {
+        "AssetName": "container_specular",
+        "ClassName": "TextureSrc",
+        "Dependencies": [],
+        "DiscPath": "../assets/texture_specular.json",
+        "ObjectID": 8444903851404825
+    },
+    "PlainData": {
+        "PathToTexture": "../textures/container_specular.png"
+    }
+}

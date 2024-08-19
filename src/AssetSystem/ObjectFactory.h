@@ -13,16 +13,16 @@ namespace omp
     class ObjectFactory final
     {
     private:
-        std::unordered_map<std::string, std::function<std::unique_ptr<SerializableObject>()>> m_CreationMap;
+        inline static std::unordered_map<std::string, std::function<std::shared_ptr<SerializableObject>()>> m_CreationMap{};
     public:
 
         template< typename T >
-        void registerClass(const std::string& inClassName)
+        inline static void registerClass(const std::string& inClassName)
         {
-            m_CreationMap.insert( {inClassName, []{ return std::make_unique<T>(); }} );
+            m_CreationMap.insert( {inClassName, []{ return std::make_shared<T>(); }} );
         }
 
-        std::unique_ptr<SerializableObject> createSerializableObject(const std::string& inClassName)
+        [[nodiscard]] inline static std::shared_ptr<SerializableObject> createSerializableObject(const std::string& inClassName)
         {
             if (m_CreationMap.find(inClassName) != m_CreationMap.end())
             {
@@ -33,8 +33,8 @@ namespace omp
             return nullptr;
         }
 
-        ObjectFactory() = default;
-        ~ObjectFactory() = default;
+        ObjectFactory() = delete;
+        ~ObjectFactory() = delete;
         ObjectFactory(const ObjectFactory&) = delete;
         ObjectFactory(ObjectFactory&&) = delete;
         ObjectFactory& operator=(const ObjectFactory&) = delete;

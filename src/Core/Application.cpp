@@ -10,7 +10,7 @@ void omp::Application::start()
     preInit();
     init();
 
-    float ms_limit = static_cast<float>(1.f / m_FrameLimit);
+    //float ms_limit = static_cast<float>(1.f / m_FrameLimit);
 
     time_point previous = steady_clock::now();
 
@@ -54,10 +54,7 @@ void omp::Application::preInit()
         m_ThreadPool = std::make_unique<omp::ThreadPool>();
     }
 
-    m_Factory = std::make_unique<omp::ObjectFactory>();
-
-    fillInFactoryClasses();
-    m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get(), m_Factory.get());
+    m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get());
     std::future<bool> wait_assets = m_AssetManager->loadProject();
 
     glfwInit();
@@ -72,15 +69,12 @@ void omp::Application::preInit()
     m_Renderer->initVulkan(m_Window, m_Width, m_Height);
     m_Renderer->initResources();
 
-    // TODO: maybe other stuff while assets loading
-    //m_CurrentScene = std::make_unique<omp::Scene>();
-
     wait_assets.wait();
 }
 
 void omp::Application::init()
 {
-    // debug_createSceneManually();
+    //debug_createSceneManually();
     //m_CurrentScene->setCurrentCamera(0);
     std::weak_ptr<omp::Asset> scene_weak_ptr = m_AssetManager->loadAsset("../assets/main_scene.json");
     if (!scene_weak_ptr.expired())
@@ -97,6 +91,9 @@ void omp::Application::init()
 
 void omp::Application::preDestroy()
 {
+    std::future<bool> wait_save = m_AssetManager->saveProject();
+    wait_save.wait();
+
     m_ThreadPool.reset();
 
     m_CurrentScene.reset();
@@ -124,17 +121,11 @@ void omp::Application::tick(float delta)
 
     // We can run some systems in minimazed application
 
-
 }
 
 void omp::Application::parseFlags(const std::string& /*commands*/)
 {
 
-}
-
-void omp::Application::fillInFactoryClasses()
-{
-    // m_Factory->registerClass<texture>("texture");
 }
 
 void omp::Application::windowResizeCallback(GLFWwindow* window, int width, int height)
@@ -181,17 +172,15 @@ void omp::Application::debug_createSceneManually()
     material->addDiffusiveTexture(spec_texture);
     material->setShaderName("Light");
     
-    std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
-    
-
     glm::vec3 def_pos = {10.f, 3.f, 4.f};
 
     for (size_t i = 0; i < 6; i++)
     {
         def_pos.z += 10.f;
-        float temp_x = def_pos.x;
+        float temp_x = 10.f;
         for (size_t j = 0; j < 6; j++)
         {
+            std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
             temp_x += 10.f;
             def_pos.x = temp_x;
             std::string name = std::to_string(i) + "-" + std::to_string(j);
@@ -201,6 +190,7 @@ void omp::Application::debug_createSceneManually()
         }
     }
 
+    std::shared_ptr<omp::ModelInstance> inst = std::make_shared<omp::ModelInstance>(model, material);
     std::unique_ptr<omp::Camera> camera = std::make_unique<omp::Camera>();
     camera->setModelInstance(inst);
     camera->setName("camera1");
@@ -325,5 +315,45 @@ void omp::Application::debug_createSceneManually()
 
     std::future<bool> future = m_AssetManager->saveProject();
     future.get();
+}
+
+void omp::Application::debug_addLightToScene()
+{
+    const std::string_view model_path = "../models/sphere.obj";
+
+    auto material = m_AssetManager->getAsset("../assets/plane_material.json").lock()->getObjectAs<omp::Material>();
+    auto model = m_AssetManager->getAsset("../assets/plane_model.json").lock()->getObjectAs<omp::Model>();
+
+    std::unique_ptr<LightBase>&& global_one = std::make_unique<omp::LightObject<omp::GlobalLight>>(
+            "global", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(global_one));
+
+    std::unique_ptr<LightBase>&& point_one = std::make_unique<omp::LightObject<omp::PointLight>>(
+            "point 1", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(point_one));
+
+    auto&& point_two = std::make_unique<omp::LightObject<omp::PointLight>>(
+            "point 2", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(point_two));
+
+    auto&& spot_one = std::make_unique<omp::LightObject<omp::SpotLight>>(
+            "spot 1", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(spot_one));
+
+    auto&& spot_two = std::make_unique<omp::LightObject<omp::SpotLight>>(
+            "spot 2", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(spot_two));
+
+    auto&& spot_three = std::make_unique<omp::LightObject<omp::SpotLight>>(
+            "spot 3", std::make_shared<omp::ModelInstance>(model, material));
+    m_CurrentScene->addLightToScene(std::move(spot_three));
+
+    glm::vec3 light_pos = {10.f, 13.f, 4.f};
+
+    for (auto& light : m_CurrentScene->getLights())
+    {
+        light->getModelInstance()->getPosition() = light_pos;
+        light_pos.x += 10.f;
+    }
 }
 

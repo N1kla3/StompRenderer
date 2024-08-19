@@ -20,7 +20,6 @@ struct omp::ModelPushConstant
 {
     glm::mat4 model;
 
-    // TODO: why we need this
     glm::vec4 ambient{1};
     glm::vec4 diffusive{2};
     glm::vec4 specular{3};
@@ -140,15 +139,19 @@ private:
     VkBuffer m_VertexBuffer;
     VkDeviceMemory m_VertexMemory;
 
+    bool m_Loaded = false;
+
 public:
     // Methods //
     // ======= //
     void setName(const std::string& inName) { m_Name = inName; }
     void setPath(const std::string& inPath) { m_Path = inPath; }
 
-    void loadToMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate);
+    void loadToGpuMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate);
 
     const std::string& getName() const { return m_Name; }
+    const std::string& getPath() const { return m_Path; }
+    bool isLoaded() const { return m_Loaded; }
 
     const std::vector<Vertex>& getVertices() const { return m_Vertices; }
 
