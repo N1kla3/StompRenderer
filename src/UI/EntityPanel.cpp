@@ -1,20 +1,13 @@
 #include "EntityPanel.h"
-#include "Rendering/Material.h"
 #include "imgui.h"
 
-void omp::EntityPanel::setEntity(IDrawable* inEntity)
+void omp::EntityPanel::update(IDrawable* entity)
 {
-    m_Entity = inEntity;
-}
-
-void omp::EntityPanel::renderUi(float /*deltaTime*/)
-{
-
     ImGui::Begin("Entity Panel");
 
-    if (m_Entity)
+    if (entity)
     {
-        m_Entity->draw();
+        entity->draw();
     }
 
     ImGui::End();

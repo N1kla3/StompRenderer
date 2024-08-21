@@ -2232,13 +2232,11 @@ void omp::Renderer::createImguiWidgets()
     m_RenderViewport = std::make_shared<omp::ViewPort>();
 
     auto material_panel = std::make_shared<omp::MaterialPanel>();
-    auto entity = std::make_shared<omp::EntityPanel>();
-    m_ScenePanel = std::make_shared<omp::ScenePanel>(entity, material_panel);
+    m_ScenePanel = std::make_shared<omp::ScenePanel>(material_panel);
     m_LightPanel = std::make_shared<omp::GlobalLightPanel>();
 
     m_Widgets.push_back(std::make_shared<omp::MainLayer>());
     m_Widgets.push_back(m_RenderViewport);
-    m_Widgets.push_back(std::move(entity));
     m_Widgets.push_back(std::move(material_panel));
     m_Widgets.push_back(m_ScenePanel);
     m_Widgets.push_back(m_LightPanel);

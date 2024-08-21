@@ -1,9 +1,8 @@
 #include "ScenePanel.h"
 #include "imgui.h"
 
-omp::ScenePanel::ScenePanel(const std::shared_ptr<EntityPanel>& entityPanel, const std::shared_ptr<omp::MaterialPanel>& inMatPanel)
+omp::ScenePanel::ScenePanel(const std::shared_ptr<omp::MaterialPanel>& inMatPanel)
         : ImguiUnit()
-        , m_EntityUi(entityPanel)
         , m_MaterialPanel(inMatPanel)
 {
 
@@ -27,12 +26,12 @@ void omp::ScenePanel::renderUi(float /*deltaTime*/)
                 {
                     // on click selectable entity event
                     m_Scene->setCurrentId(entity_ref->getId());
-                    m_EntityUi->setEntity(entity_ref.get());
+                    //m_EntityUi->setEntity(entity_ref.get());
                     //m_MaterialPanel->setMaterial(entity_ref->getModelInstance()->getMaterialInstance());
                 }
                 else if (highlight_current)
                 {
-                    m_EntityUi->setEntity(entity_ref.get());
+                    //m_EntityUi->setEntity(entity_ref.get());
                     //m_MaterialPanel->setMaterial(entity_ref->getModelInstance()->getMaterialInstance());
                 }
 

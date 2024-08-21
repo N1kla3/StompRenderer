@@ -1,18 +1,12 @@
 #pragma once
-
-#include "ImguiUnit.h"
 #include "IDrawable.h"
 
 namespace omp
 {
-class EntityPanel : public ImguiUnit
+    namespace EntityPanel
     {
-        IDrawable* m_Entity = nullptr;
-
-    public:
-        virtual void renderUi(float deltaTime) override;
-        void setEntity(IDrawable* inEntity);
-    };
+        void update(IDrawable* entity);
+    }
 }
 
 
