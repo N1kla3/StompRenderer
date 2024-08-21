@@ -67,15 +67,22 @@ namespace omp
 
         void applyInputs(float deltaTime);
 
+        float getSpeed() const { return m_MovementSpeed; }
+        float getSens() const { return m_MouseSensitivity; }
         float getViewAngle() const { return m_ViewAngle; }
-
         float getNearClipping() const { return m_NearClipping; }
-
         float getFarClipping() const { return m_FarClipping; }
 
         virtual void onSceneSave(JsonParser<>& parser, omp::Scene* scene) override;
         virtual void onSceneLoad(JsonParser<>& parser, omp::Scene* scene) override;
         virtual std::string getClassName() const override { return "Camera"; }
+
+        void setSpeed(float speed);
+        void setSens(float sens);
+        void setPosition(const glm::vec3& vec);
+        void setViewAngle(float angle);
+        void setNearClip(float clip);
+        void setFarClip(float clip);
 
     private:
         glm::vec3 m_Position;
@@ -98,7 +105,5 @@ namespace omp
         float m_FarClipping = 1000.f;
 
         void updateCameraVectors();
-
-        friend class CameraPanel;
     };
 }

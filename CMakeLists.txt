@@ -80,6 +80,8 @@ set(SOURCE
         Rendering/GraphicsPipeline.cpp
         AssetSystem/ObjectFactory.h
         AssetSystem/ObjectFactory.cpp
+        UI/UIController.h
+        UI/UIController.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp

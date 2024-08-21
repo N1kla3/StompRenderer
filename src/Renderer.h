@@ -30,7 +30,6 @@
 #include "Rendering/FrameBuffer.h"
 #include "UI/ImguiUnit.h"
 #include "UI/GlobalLightPanel.h"
-#include "UI/CameraPanel.h"
 #include "Logs.h"
 #include "LightSystem.h"
 #include "Rendering/ModelStatics.h"
@@ -402,7 +401,6 @@ namespace omp
         // TODO: ui should not live here
         std::shared_ptr<omp::ViewPort> m_RenderViewport;
         std::shared_ptr<omp::ScenePanel> m_ScenePanel;
-        std::shared_ptr<omp::CameraPanel> m_CameraPanel;
         std::shared_ptr<omp::GlobalLightPanel> m_LightPanel;
         
 

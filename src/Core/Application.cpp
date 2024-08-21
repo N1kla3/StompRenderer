@@ -116,6 +116,9 @@ void omp::Application::tick(float delta)
     if (width != 0 && height != 0)
     {
         // TODO: render stuff
+        UIData ui_data{};
+        ui_data.scene = m_CurrentScene.get();
+        m_UIController.update(ui_data, delta);
         m_Renderer->requestDrawFrame(delta);
     }
 
