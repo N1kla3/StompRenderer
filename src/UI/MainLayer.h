@@ -1,13 +1,10 @@
 #pragma once
 
-#include "ImguiUnit.h"
-
 namespace omp
 {
-    class MainLayer : public ImguiUnit
+    namespace MainLayer
     {
-    public:
-        virtual void renderUi(float deltaTime) override;
-    };
+        void update();
+    }
 }
 

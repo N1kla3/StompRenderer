@@ -1,41 +1,36 @@
 #include "ScenePanel.h"
+#include "Scene.h"
 #include "imgui.h"
 
-omp::ScenePanel::ScenePanel(const std::shared_ptr<omp::MaterialPanel>& inMatPanel)
-        : ImguiUnit()
-        , m_MaterialPanel(inMatPanel)
-{
-
-}
-
-void omp::ScenePanel::renderUi(float /*deltaTime*/)
+void omp::ScenePanel::update(omp::Scene* scene)
 {
 
     ImGui::Begin("Scene Panel");
 
-    if (m_Scene)
+    if (scene)
     {
         if (ImGui::TreeNode("Scene items"))
         {
-            for (auto& entity_ref : m_Scene->getEntities())
+            for (auto& entity_ref : scene->getEntities())
             {
                 int32_t id = entity_ref->getId();
-                int32_t current_id = m_Scene->getCurrentId();
+                int32_t current_id = scene->getCurrentId();
                 bool highlight_current = id == current_id;
                 if (ImGui::Selectable(entity_ref->getName().c_str(), highlight_current))
                 {
                     // on click selectable entity event
-                    m_Scene->setCurrentId(entity_ref->getId());
-                    //m_EntityUi->setEntity(entity_ref.get());
-                    //m_MaterialPanel->setMaterial(entity_ref->getModelInstance()->getMaterialInstance());
-                }
-                else if (highlight_current)
-                {
-                    //m_EntityUi->setEntity(entity_ref.get());
-                    //m_MaterialPanel->setMaterial(entity_ref->getModelInstance()->getMaterialInstance());
+                    scene->setCurrentId(entity_ref->getId());
                 }
 
             }
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Camera Items"))
+        {
+            ImGui::TreePop();
+        }
+        if (ImGui::TreeNode("Light Items"))
+        {
             ImGui::TreePop();
         }
     }

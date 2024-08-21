@@ -1,7 +1,7 @@
 #include "MainLayer.h"
 #include "imgui.h"
 
-void omp::MainLayer::renderUi(float)
+void omp::MainLayer::update()
 {
     auto viewport = ImGui::GetMainViewport();
 

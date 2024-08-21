@@ -5,7 +5,7 @@ namespace omp
 {
     struct UIData
     {
-        class Scene* scene;
+        class Scene* scene = nullptr;
     };
 
     class UIController

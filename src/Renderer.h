@@ -68,8 +68,6 @@ namespace
 
 namespace omp
 {
-    class ScenePanel;
-
     class ViewPort;
 
     struct UniformBufferObject
@@ -400,8 +398,6 @@ namespace omp
         omp::Scene* m_CurrentScene = nullptr;
         // TODO: ui should not live here
         std::shared_ptr<omp::ViewPort> m_RenderViewport;
-        std::shared_ptr<omp::ScenePanel> m_ScenePanel;
-        std::shared_ptr<omp::GlobalLightPanel> m_LightPanel;
         
 
         GLFWwindow* m_Window;

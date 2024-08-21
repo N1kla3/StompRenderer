@@ -2231,15 +2231,8 @@ void omp::Renderer::createImguiWidgets()
 
     m_RenderViewport = std::make_shared<omp::ViewPort>();
 
-    auto material_panel = std::make_shared<omp::MaterialPanel>();
-    m_ScenePanel = std::make_shared<omp::ScenePanel>(material_panel);
-    m_LightPanel = std::make_shared<omp::GlobalLightPanel>();
 
-    m_Widgets.push_back(std::make_shared<omp::MainLayer>());
     m_Widgets.push_back(m_RenderViewport);
-    m_Widgets.push_back(std::move(material_panel));
-    m_Widgets.push_back(m_ScenePanel);
-    m_Widgets.push_back(m_LightPanel);
 
     updateImguiWidgets();
 }
@@ -2249,14 +2242,10 @@ void omp::Renderer::updateImguiWidgets()
     if (m_CurrentScene)
     {
         m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
-        m_ScenePanel->setScene(m_CurrentScene);
-        m_LightPanel->setLightRef(nullptr);
     }
     else
     {
         m_RenderViewport->setCamera(nullptr);
-        m_ScenePanel->setScene(nullptr);
-        m_LightPanel->setLightRef(nullptr);
     }
 }
 
