@@ -1,5 +1,5 @@
 #pragma once
-#include <stack>
+#include <deque>
 #include <memory>
 #include <type_traits>
 
@@ -10,7 +10,9 @@ namespace omp
     public:
         virtual void execute() = 0;
         virtual void undo() = 0;
-        virtual ~ICommand();
+        virtual ~ICommand() = default;
+    protected:
+        ICommand() = default;
     };
         
     template<typename T>
@@ -20,8 +22,10 @@ namespace omp
     class CommandStack
     {
     private:
-        std::stack<std::unique_ptr<ICommand>> m_MainStack;
-        std::stack<std::unique_ptr<ICommand>> m_ReverseStack;
+        std::deque<std::unique_ptr<ICommand>> m_MainStack;
+        std::deque<std::unique_ptr<ICommand>> m_ReverseStack;
+        
+        const size_t m_MaxStackSize = 20;
 
     public:
 
@@ -31,28 +35,48 @@ namespace omp
             // TODO: maybe thinkg of custom memory realloc
             std::unique_ptr<ICommand> new_object = std::make_unique<T>(std::forward<Arg>(arg)...);
             new_object->execute();
-            m_MainStack.push(std::move(new_object));
+            m_MainStack.push_front(std::move(new_object));
+            if (m_MainStack.size() > m_MaxStackSize)
+            {
+                m_MainStack.pop_back();
+            }
         }
 
         void undo()
         {
-            auto& command = m_MainStack.top();
-            if (command)
+            if (!m_MainStack.empty())
             {
+                auto& command = m_MainStack.front();
                 command->undo();
-                m_ReverseStack.push(std::move(command));
-                m_MainStack.pop();
+                swapBetweenStacks(m_MainStack, m_ReverseStack);
             }
         }
 
         void redo()
         {
-            auto& command = m_ReverseStack.top();
-            if (command)
+            if (!m_ReverseStack.empty())
             {
+                auto& command = m_ReverseStack.front();
                 command->execute();
-                m_MainStack.push(std::move(command));
-                m_ReverseStack.pop();
+                swapBetweenStacks(m_ReverseStack, m_MainStack);
+            }
+        }
+
+    private:
+        void swapBetweenStacks(std::deque<std::unique_ptr<ICommand>>& fromRef, std::deque<std::unique_ptr<ICommand>>& toRef)
+        {
+            // TODO: add assert
+            auto& command = fromRef.front();
+            toRef.push_front(std::move(command));
+            fromRef.pop_front();
+
+            if (fromRef.size() > m_MaxStackSize)
+            {
+                fromRef.pop_back();
+            }
+            if (toRef.size() > m_MaxStackSize)
+            {
+                toRef.pop_back();
             }
         }
     };

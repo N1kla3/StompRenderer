@@ -12,6 +12,25 @@ protected:
     }
 };
 
+class TestICommand : public omp::ICommand
+{
+public:
+    TestICommand(int& data) : test_data(&data){}
+    virtual void execute() override
+    {
+        prev_data = *test_data;
+        *test_data = 8;
+    }
+    virtual void undo() override
+    {
+        *test_data = prev_data;
+    }
+
+private: 
+    int* test_data;
+    int prev_data;
+};
+
 
 TEST_F(CoreTestSuite, Id64Test)
 {
@@ -64,9 +83,25 @@ TEST_F(CoreTestSuite, Id32Test)
 
 TEST_F(CoreTestSuite, CommandTest)
 {
-
+    int number = 20;
+    omp::CommandStack stack;
+    EXPECT_NO_THROW(stack.execute<TestICommand>(number));
+    EXPECT_EQ(number, 8);
+    EXPECT_NO_THROW(stack.undo());
+    EXPECT_EQ(number, 20);
+    EXPECT_NO_THROW(stack.undo());
+    EXPECT_EQ(number, 20);
+    EXPECT_NO_THROW(stack.redo());
+    EXPECT_EQ(number, 8);
+    EXPECT_NO_THROW(stack.redo());
+    ASSERT_EQ(number, 8);
 }
 
-TEST_F(CoreTestSuite, UndoCommandTest)
+TEST_F(CoreTestSuite, ProxyCommandTest)
 {
+    int number = 20;
+    auto stack = std::make_shared<omp::CommandStack>();
+    omp::CommandStackProxy proxy(stack);
+    EXPECT_NO_THROW(proxy.execute<TestICommand>(number));
+    ASSERT_EQ(number, 8);
 }
