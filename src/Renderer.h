@@ -16,23 +16,16 @@
 #include <vector>
 #include <unordered_map>
 #include <optional>
-#include "array"
 #include <glm/glm.hpp>
 #include <queue>
 #include "imgui.h"
-#include "backends/imgui_impl_vulkan.h"
 
 #include "Scene.h"
-#include "Rendering/Shader.h"
-#include "Camera.h"
 #include "Rendering/GraphicsPipeline.h"
 #include "Rendering/RenderPass.h"
 #include "Rendering/FrameBuffer.h"
-#include "UI/ImguiUnit.h"
-#include "UI/GlobalLightPanel.h"
 #include "Logs.h"
 #include "LightSystem.h"
-#include "Rendering/ModelStatics.h"
 
 namespace
 {
@@ -152,6 +145,9 @@ namespace omp
         // TODO: void initNewScene(omp::Scene* scene);
         
         void requestDrawFrame(float deltaTime);
+        VkDescriptorSet getViewportDescriptor() const { return m_ViewportDescriptor; }
+        void resizeViewport(uint32_t x, uint32_t y);
+        void setClickedEntity(uint32_t x, uint32_t y);
 
         void onWindowResize(int width, int height);
         void cleanup();
@@ -161,8 +157,6 @@ namespace omp
         void pickPhysicalDevice();
 
         void drawFrame();
-        void initializeScene();
-        void postFrame();
         void tick(float deltaTime);
 
         void destroyAllCommandBuffers();
@@ -232,13 +226,9 @@ namespace omp
         void createImguiRenderPass();
 
         void createImguiCommandPools();
-        void renderAllUi();
-        void createImguiWidgets();
-        void updateImguiWidgets();
         void createImguiFramebuffers();
 
         void destroyMainRenderPassResources();
-        void onViewportResize(size_t imageIndex);
 
         bool checkValidationLayerSupport();
 
@@ -396,15 +386,10 @@ namespace omp
         VkImageView m_DepthImageView;
 
         omp::Scene* m_CurrentScene = nullptr;
-        // TODO: ui should not live here
-        std::shared_ptr<omp::ViewPort> m_RenderViewport;
-        
 
         GLFWwindow* m_Window;
 
         std::unique_ptr<omp::LightSystem> m_LightSystem;
-
-        std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 
         VkFormat m_SwapChainImageFormat;
 
@@ -424,10 +409,9 @@ namespace omp
 
         std::shared_ptr<omp::VulkanContext> m_VulkanContext;
 
-        std::queue<ImVec2> m_MousePickingData{};
-
         VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
+        uint32_t m_ViewportSize[2]{110,110};
         int m_CurrentWidth = 0;
         int m_CurrentHeight = 0;
         const uint32_t MAX_FRAMES_IN_FLIGHT = 2;

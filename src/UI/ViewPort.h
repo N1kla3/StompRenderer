@@ -1,23 +1,21 @@
 #pragma once
-#include <functional>
-#include "ImguiUnit.h"
 #include "imgui.h"
 #include "glm/glm.hpp"
 #include "ImGuizmo/ImGuizmo.h"
 
 namespace omp
 {
-
     class Camera;
+    class Scene;
 
     struct PickingInfo
     {
-        uint32_t id;
+        bool isPicked;
         glm::mat4 projection;
         glm::mat4 model;
     };
 
-    class ViewPort : public ImguiUnit
+    class ViewPort
     {
     private:
         PickingInfo m_Info;
@@ -26,30 +24,16 @@ namespace omp
         ImVec2 m_Size = { 100, 100};
         ImVec2 m_CursorPos = { 1, 1};
         bool m_Resized = false;
-        ImTextureID m_ImageId;
-
-        std::function<void(ImVec2)> m_MouseClick;
-        std::function<void(float[3])> m_TranslationChange;
-        std::function<void(float[3])> m_RotationChange;
-        std::function<void(float[3])> m_ScaleChange;
-
-        omp::Camera* m_Camera;
+        bool m_ClickedEntity = false;
 
     public:
-        virtual void renderUi(float deltaTime) override;
+        void updateUi(omp::Scene* scene, omp::Camera* camera, ImTextureID viewportImage);
 
         ImVec2 getSize() const { return m_Size; };
-        ImVec2 getLocalCursorPos() { return m_CursorPos; }
+        ImVec2 getLocalCursorPos() const { return m_CursorPos; }
 
         bool isResized() const { return m_Resized; }
-
-        void setCamera(omp::Camera* camera) { m_Camera = camera; };
-        void sendPickingData(PickingInfo info);
-        void setImageId(ImTextureID id) { m_ImageId = id; };
-        void setMouseClickCallback(const std::function<void(ImVec2)> inFunc);
-        void setTranslationChangeCallback(const std::function<void(float[3])> inFunc);
-        void setRotationChangeCallback(const std::function<void(float[3])> inFunc);
-        void setScaleChangeCallback(const std::function<void(float[3])> inFunc);
+        bool isEntityClicked() const { return m_ClickedEntity; }
     };
 } // omp
 
