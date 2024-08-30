@@ -21,11 +21,11 @@ void omp::UIController::update(const omp::UIData& data, float deltaTime)
     m_Viewport.updateUi(data.scene, data.scene->getCurrentCamera(), reinterpret_cast<ImTextureID>(data.renderer->getViewportDescriptor()));
     if (m_Viewport.isResized())
     {
-        data.renderer->setClickedEntity(static_cast<uint32_t>(m_Viewport.getSize().x), static_cast<uint32_t>(m_Viewport.getSize().y));
+        data.renderer->resizeViewport(static_cast<uint32_t>(m_Viewport.getSize().x), static_cast<uint32_t>(m_Viewport.getSize().y));
     }
     if (m_Viewport.isEntityClicked())
     {
-        data.renderer->resizeViewport(static_cast<uint32_t>(m_Viewport.getLocalCursorPos().x), static_cast<uint32_t>(m_Viewport.getLocalCursorPos().y));
+        data.renderer->setClickedEntity(static_cast<uint32_t>(m_Viewport.getLocalCursorPos().x), static_cast<uint32_t>(m_Viewport.getLocalCursorPos().y));
     }
     if (data.scene)
     {

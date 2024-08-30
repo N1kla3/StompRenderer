@@ -21,7 +21,12 @@ void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, ImTextureID
     ImGui::PopStyleVar(3);
 
 
-    auto new_size = ImGui::GetContentRegionAvail();
+    ImVec2 new_size = ImGui::GetContentRegionAvail();
+    if (new_size.x != m_Size.x || new_size.y != m_Size.y)
+    {
+        m_Size = new_size;
+        m_Resized = true;
+    }
 
     ImVec2 viewport_cursor = ImGui::GetMousePos();
     auto window_pos = ImGui::GetWindowPos();
