@@ -119,8 +119,12 @@ void omp::Application::tick(float delta)
         UIData ui_data{};
         ui_data.scene = m_CurrentScene.get();
         ui_data.renderer = m_Renderer.get();
-        m_UIController.update(ui_data, delta);
-        m_Renderer->requestDrawFrame(delta);
+        bool should_continue = m_Renderer->prepareFrame();
+        if (should_continue)
+        {
+            m_UIController.update(ui_data, delta);
+            m_Renderer->requestDrawFrame(delta);
+        }
     }
 
     // We can run some systems in minimazed application

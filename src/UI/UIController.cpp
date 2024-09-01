@@ -18,7 +18,7 @@ void omp::UIController::update(const omp::UIData& data, float deltaTime)
     // Should be first
     omp::MainLayer::update();
     omp::ScenePanel::update(data.scene);
-    m_Viewport.updateUi(data.scene, data.scene->getCurrentCamera(), reinterpret_cast<ImTextureID>(data.renderer->getViewportDescriptor()));
+    m_Viewport.updateUi(data.scene, data.scene->getCurrentCamera(), data.renderer->getViewportDescriptor());
     if (m_Viewport.isResized())
     {
         data.renderer->resizeViewport(static_cast<uint32_t>(m_Viewport.getSize().x), static_cast<uint32_t>(m_Viewport.getSize().y));

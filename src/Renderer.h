@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Rendering/VulkanImage.h"
 #define NOMINMAX
 
 #define GLFW_INCLUDE_VULKAN
@@ -17,7 +18,6 @@
 #include <unordered_map>
 #include <optional>
 #include <glm/glm.hpp>
-#include <queue>
 #include "imgui.h"
 
 #include "Scene.h"
@@ -110,8 +110,6 @@ namespace omp
         }
     };
 
-    const std::string g_ModelPath = "../models/cube2.obj";
-    const std::string g_TexturePath = "../textures/container.png";
     const VkClearColorValue g_ClearColor = {0.82f, 0.48f, 0.52f, 1.0f};
 
     class Renderer
@@ -143,17 +141,19 @@ namespace omp
         void initResources();
         void loadScene(omp::Scene* scene);
         // TODO: void initNewScene(omp::Scene* scene);
-        
+
+        bool prepareFrame();
         void requestDrawFrame(float deltaTime);
-        VkDescriptorSet getViewportDescriptor() const { return m_ViewportDescriptor; }
         void resizeViewport(uint32_t x, uint32_t y);
         void setClickedEntity(uint32_t x, uint32_t y);
 
         void onWindowResize(int width, int height);
         void cleanup();
+        VkDescriptorSet getViewportDescriptor() { return m_ViewportImage->getImguiImage(); }
 
     private:
 
+        void resizeInternal();
         void pickPhysicalDevice();
 
         void drawFrame();
@@ -348,11 +348,7 @@ namespace omp
         VkDeviceMemory m_ColorImageMemory;
         VkImageView m_ColorImageView;
 
-        VkImage m_ViewportImage;
-        VkImageView m_ViewportImageView;
-        VkSampler m_ViewportSampler = VK_NULL_HANDLE;
-        VkDeviceMemory m_ViewportImageMemory;
-        VkDescriptorSet m_ViewportDescriptor = VK_NULL_HANDLE;
+        std::unique_ptr<omp::VulkanImage> m_ViewportImage = nullptr;
 
         VkImage m_PickingImage;
         VkImageView m_PickingImageView;
@@ -412,8 +408,11 @@ namespace omp
         VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
         uint32_t m_ViewportSize[2]{110,110};
+        uint32_t m_RequestedViewportSize[2]{110,110};
+        bool m_ShouldResize = false;
         int m_CurrentWidth = 0;
         int m_CurrentHeight = 0;
+        uint32_t m_CurrentImage = 0;
         const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
     };

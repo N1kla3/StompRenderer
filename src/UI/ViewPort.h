@@ -1,6 +1,7 @@
 #pragma once
 #include "imgui.h"
 #include "glm/glm.hpp"
+#include "vulkan/vulkan.h"
 #include "ImGuizmo/ImGuizmo.h"
 
 namespace omp
@@ -27,7 +28,7 @@ namespace omp
         bool m_ClickedEntity = false;
 
     public:
-        void updateUi(omp::Scene* scene, omp::Camera* camera, ImTextureID viewportImage);
+        void updateUi(omp::Scene* scene, omp::Camera* camera, VkDescriptorSet viewportImage);
 
         ImVec2 getSize() const { return m_Size; };
         ImVec2 getLocalCursorPos() const { return m_CursorPos; }

@@ -4,8 +4,9 @@
 #include "imgui.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "ImGuizmo/ImGuizmo.h"
+#include "stomp_imconfig.h"
 
-void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, ImTextureID viewportImage)
+void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, VkDescriptorSet viewportImage)
 {
     ImGuiWindowClass window_class;
     window_class.ClassId = ImGui::GetID("Window");
@@ -22,6 +23,7 @@ void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, ImTextureID
 
 
     ImVec2 new_size = ImGui::GetContentRegionAvail();
+    m_Resized = false;
     if (new_size.x != m_Size.x || new_size.y != m_Size.y)
     {
         m_Size = new_size;
@@ -40,7 +42,7 @@ void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, ImTextureID
 
     if (camera)
     {
-        ImGui::Image(viewportImage, m_Size);
+        ImGui::Image(reinterpret_cast<ImTextureID>(viewportImage), m_Size);
     }
 
     if (m_Info.isPicked)

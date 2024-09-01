@@ -126,7 +126,9 @@ set(SOURCE
         Async/threadsafe_queue.h
         Async/threadsafe_map.h
         Math/GlmHash.h
-        )
+        Rendering/VulkanImage.cpp
+        Rendering/VulkanImage.h
+)
 
 #include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
 

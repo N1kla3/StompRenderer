@@ -87,6 +87,44 @@ void omp::Renderer::loadScene(omp::Scene* scene)
     // TODO: add request to update pipelines and 
 }
 
+bool omp::Renderer::prepareFrame()
+{
+    vkWaitForFences(m_LogicalDevice, 1, &m_InFlightFences[m_CurrentFrame],
+                    VK_TRUE, UINT64_MAX);
+
+    uint32_t image_index;
+    VkResult result = vkAcquireNextImageKHR(
+            m_LogicalDevice, m_SwapChain, UINT64_MAX,
+            m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &image_index);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || m_FramebufferResized)
+    {
+        recreateSwapChain();
+        resizeInternal();
+        m_FramebufferResized = false;
+        m_ShouldResize = false;
+        return false;
+    }
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+    {
+        throw std::runtime_error("Failed to acquire swap chain image!");
+    }
+
+    if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
+    {
+        vkWaitForFences(m_LogicalDevice, 1, &m_ImagesInFlight[image_index], VK_TRUE,
+                        UINT64_MAX);
+    }
+    m_ImagesInFlight[image_index] = m_InFlightFences[m_CurrentFrame];
+
+    if (m_ShouldResize)
+    {
+        resizeInternal();
+    }
+    m_CurrentImage = image_index;
+    return true;
+}
+
 void omp::Renderer::requestDrawFrame(float deltaTime)
 {
     drawFrame();
@@ -432,8 +470,7 @@ void omp::Renderer::createLogicalDevice()
     createCommandPool();
     m_VulkanContext = std::make_shared<omp::VulkanContext>(
             m_LogicalDevice, m_PhysDevice, m_CommandPool, m_GraphicsQueue);
-    //omp::MaterialManager::getMaterialManager().specifyVulkanContext(
-    //        m_VulkanContext);
+    m_ViewportImage = std::make_unique<omp::VulkanImage>(m_VulkanContext);
     m_RenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
     m_ImguiRenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
 }
@@ -978,7 +1015,7 @@ void omp::Renderer::createFramebuffers()
 void omp::Renderer::createFramebufferAtImage(size_t index)
 {
     std::vector<VkImageView> attachments{m_ColorImageView, m_PickingImageView,
-                                         m_DepthImageView, m_ViewportImageView,
+                                         m_DepthImageView, m_ViewportImage->getImageView(),
                                          m_PickingResolveView};
     omp::FrameBuffer frame_buffer(
             m_LogicalDevice, attachments, m_RenderPass,
@@ -1197,36 +1234,8 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
 
 void omp::Renderer::drawFrame()
 {
-    vkWaitForFences(m_LogicalDevice, 1, &m_InFlightFences[m_CurrentFrame],
-                    VK_TRUE, UINT64_MAX);
-
-    uint32_t image_index;
-    VkResult result = vkAcquireNextImageKHR(
-            m_LogicalDevice, m_SwapChain, UINT64_MAX,
-            m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &image_index);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || m_FramebufferResized)
-    {
-        recreateSwapChain();
-        //resizeViewport(image_index);
-        m_FramebufferResized = false;
-        return;
-    }
-    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-    {
-        throw std::runtime_error("Failed to acquire swap chain image!");
-    }
-
-    if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
-    {
-        vkWaitForFences(m_LogicalDevice, 1, &m_ImagesInFlight[image_index], VK_TRUE,
-                        UINT64_MAX);
-    }
-    m_ImagesInFlight[image_index] = m_InFlightFences[m_CurrentFrame];
-
-    //resizeViewport(image_index);
-    updateUniformBuffer(image_index);
-    prepareFrameForImage(image_index);
+    updateUniformBuffer(m_CurrentImage);
+    prepareFrameForImage(m_CurrentImage);
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1239,8 +1248,8 @@ void omp::Renderer::drawFrame()
     submit_info.pWaitDstStageMask = wait_stages;
 
     std::array<VkCommandBuffer, 2> command_buffers{
-            m_CommandBuffers[image_index].buffer,
-            m_ImguiCommandBuffers[image_index].buffer};
+            m_CommandBuffers[m_CurrentImage].buffer,
+            m_ImguiCommandBuffers[m_CurrentImage].buffer};
     submit_info.commandBufferCount =
             static_cast<uint32_t>(command_buffers.size());
     submit_info.pCommandBuffers = command_buffers.data();
@@ -1266,10 +1275,10 @@ void omp::Renderer::drawFrame()
     VkSwapchainKHR swap_chains[] = {m_SwapChain};
     present_info.swapchainCount = 1;
     present_info.pSwapchains = swap_chains;
-    present_info.pImageIndices = &image_index;
+    present_info.pImageIndices = &m_CurrentImage;
     present_info.pResults = nullptr;
 
-    result = vkQueuePresentKHR(m_PresentQueue, &present_info);
+    VkResult result = vkQueuePresentKHR(m_PresentQueue, &present_info);
     if (result != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to present swap chain image!");
@@ -1318,23 +1327,16 @@ void omp::Renderer::recreateSwapChain()
     createRenderPass();
     createGraphicsPipeline();
     createColorResources();
-    createViewportResources();
+    m_ViewportImage->recreateImage(m_ViewportSize[0], m_ViewportSize[1]);
     createPickingResources();
     createDepthResources();
     createFramebuffers();
     createUniformBuffers();
     createDescriptorSets();
 
-    if (m_ViewportDescriptor != VK_NULL_HANDLE)
-    {
-        ImGui_ImplVulkan_RemoveTexture(m_ViewportDescriptor);
-    }
-    m_ViewportDescriptor =
-            ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView,
-                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
     createImguiRenderPass();
     createImguiFramebuffers();
+    m_ViewportImage->createImguiImage();
 
     ImGui_ImplVulkan_SetMinImageCount(2);
 }
@@ -2120,15 +2122,13 @@ void omp::Renderer::createViewportResources()
 {
     VkFormat color_format = m_SwapChainImageFormat;
 
-    m_VulkanContext->createImage(
+    m_ViewportImage->createImage(
             m_ViewportSize[0],
             m_ViewportSize[1], 1, color_format,
             VK_IMAGE_TILING_OPTIMAL,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ViewportImage,
-            m_ViewportImageMemory, VK_SAMPLE_COUNT_1_BIT);
-    m_ViewportImageView = m_VulkanContext->createImageView(
-            m_ViewportImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_SAMPLE_COUNT_1_BIT, 0, 1);
+    m_ViewportImage->createImageView(color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
     VkSamplerCreateInfo sampler_info{};
     sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -2144,11 +2144,7 @@ void omp::Renderer::createViewportResources()
     sampler_info.minLod = 0.0f;
     sampler_info.maxLod = 1.0f;
     sampler_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-    if (vkCreateSampler(m_LogicalDevice, &sampler_info, nullptr,
-                        &m_ViewportSampler) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create viewport sampler");
-    }
+    m_ViewportImage->createSampler(sampler_info);
 }
 
 void omp::Renderer::createPickingResources()
@@ -2185,10 +2181,7 @@ void omp::Renderer::destroyMainRenderPassResources()
     vkDestroyImage(m_LogicalDevice, m_ColorImage, nullptr);
     vkFreeMemory(m_LogicalDevice, m_ColorImageMemory, nullptr);
 
-    vkDestroySampler(m_LogicalDevice, m_ViewportSampler, nullptr);
-    vkDestroyImageView(m_LogicalDevice, m_ViewportImageView, nullptr);
-    vkDestroyImage(m_LogicalDevice, m_ViewportImage, nullptr);
-    vkFreeMemory(m_LogicalDevice, m_ViewportImageMemory, nullptr);
+    m_ViewportImage->destroyAll();
 
     vkDestroyImageView(m_LogicalDevice, m_PickingImageView, nullptr);
     vkDestroyImage(m_LogicalDevice, m_PickingImage, nullptr);
@@ -2205,6 +2198,15 @@ void omp::Renderer::destroyMainRenderPassResources()
 
 void omp::Renderer::resizeViewport(uint32_t x, uint32_t y)
 {
+    m_RequestedViewportSize[0] = x;
+    m_RequestedViewportSize[1] = y;
+    m_ShouldResize = true;
+}
+
+void omp::Renderer::resizeInternal()
+{
+    uint32_t x = m_RequestedViewportSize[0];
+    uint32_t y = m_RequestedViewportSize[1];
     m_ViewportSize[0] = x;
     m_ViewportSize[1] = y;
 
@@ -2221,20 +2223,15 @@ void omp::Renderer::resizeViewport(uint32_t x, uint32_t y)
 
     createColorResources();
     createDepthResources();
-    createViewportResources();
+    m_ViewportImage->recreateImage(x, y);
+    m_ViewportImage->createImguiImage();
     createPickingResources();
 
     for (size_t index = 0; index < m_SwapChainFramebuffers.size(); index++)
     {
         createFramebufferAtImage(index);
     }
-    if (m_ViewportDescriptor != VK_NULL_HANDLE)
-    {
-        ImGui_ImplVulkan_RemoveTexture(m_ViewportDescriptor);
-    }
-    m_ViewportDescriptor =
-            ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView,
-                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    m_ShouldResize = false;
 }
 
 void omp::Renderer::setClickedEntity(uint32_t x, uint32_t y)
