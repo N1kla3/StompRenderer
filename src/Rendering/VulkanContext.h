@@ -31,6 +31,7 @@ namespace omp
                 VkImageCreateFlags flags = 0,
                 uint32_t arrayLayers = 1
         );
+        void createImage(const VkImageCreateInfo& imageInfo, VkImage& image, VkDeviceMemory& imageMemory,VkMemoryPropertyFlags properties);
         void transitionImageLayout(
                 VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
         void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
@@ -46,6 +47,7 @@ namespace omp
         void endSingleTimeCommands(VkCommandBuffer commandBuffer);
         bool hasStencilComponent(VkFormat format);
         VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+        VkImageView createImageView(const VkImageViewCreateInfo& info);
 
         VkShaderModule createShaderModule(const std::vector<char>& code);
         void destroyShaderModule(VkShaderModule inModule);

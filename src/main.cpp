@@ -11,17 +11,18 @@ int main()
 {
     omp::InitializeLogs();
     INFO(LogRendering, "=================Create Application=================");
-    omp::Application application{ "EMPTY FLAGS" };
+    omp::Application* application = new omp::Application{ "EMPTY FLAGS" };
 
     //try
     {
-        application.start();
+        application->start();
     }
     //catch (const std::exception& e)
     //{
     //    ERROR(LogRendering, e.what());
     //    return EXIT_FAILURE;
     //}
+    delete application;
     INFO(LogRendering, "================Destroy Application=================");
     return EXIT_SUCCESS;
 }

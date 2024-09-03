@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include "SceneEntity.h"
+#include "imgui.h"
 #include "glm/ext/matrix_transform.hpp"
 
 omp::Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
@@ -153,6 +154,36 @@ void omp::Camera::onSceneLoad(omp::JsonParser<>& parser, omp::Scene* scene)
     m_ViewAngle = parser.readValue<float>("view_angle").value();
     m_NearClipping = parser.readValue<float>("near_clipping").value();
     m_FarClipping = parser.readValue<float>("far_clipping").value();
+}
+
+void omp::Camera::setSpeed(float speed)
+{
+    m_MovementSpeed = std::clamp(speed, 10.f, 200.f);
+}
+
+void omp::Camera::setSens(float sens)
+{
+    m_MouseSensitivity = std::clamp(sens, 0.05f, 0.5f);
+}
+
+void omp::Camera::setPosition(const glm::vec3& vec)
+{
+    m_Position = vec;
+}
+
+void omp::Camera::setViewAngle(float angle)
+{
+    m_ViewAngle = std::clamp(angle, 45.f, 180.f);
+}
+
+void omp::Camera::setNearClip(float clip)
+{
+    m_NearClipping = std::clamp(clip, 0.01f, 1.f);
+}
+
+void omp::Camera::setFarClip(float clip)
+{
+    m_FarClipping = std::clamp(clip, 2.f, 10000.f);
 }
 
 void omp::Camera::updateCameraVectors()

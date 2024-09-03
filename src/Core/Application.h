@@ -2,6 +2,7 @@
 #include <string>
 #include "Renderer.h"
 #include "Scene.h"
+#include "UI/UIController.h"
 #include "AssetSystem/AssetManager.h"
 
 namespace omp
@@ -32,6 +33,7 @@ namespace omp
     private:
         std::unordered_map<std::string, std::string> m_Flags;
 
+        UIController m_UIController{};
         std::unique_ptr<Renderer> m_Renderer;
         std::unique_ptr<omp::AssetManager> m_AssetManager;
         std::unique_ptr<omp::ThreadPool> m_ThreadPool;

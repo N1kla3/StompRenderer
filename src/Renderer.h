@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Rendering/VulkanImage.h"
 #define NOMINMAX
 
 #define GLFW_INCLUDE_VULKAN
@@ -16,24 +17,15 @@
 #include <vector>
 #include <unordered_map>
 #include <optional>
-#include "array"
 #include <glm/glm.hpp>
-#include <queue>
 #include "imgui.h"
-#include "backends/imgui_impl_vulkan.h"
 
 #include "Scene.h"
-#include "Rendering/Shader.h"
-#include "Camera.h"
 #include "Rendering/GraphicsPipeline.h"
 #include "Rendering/RenderPass.h"
 #include "Rendering/FrameBuffer.h"
-#include "UI/ImguiUnit.h"
-#include "UI/GlobalLightPanel.h"
-#include "UI/CameraPanel.h"
 #include "Logs.h"
 #include "LightSystem.h"
-#include "Rendering/ModelStatics.h"
 
 namespace
 {
@@ -69,8 +61,6 @@ namespace
 
 namespace omp
 {
-    class ScenePanel;
-
     class ViewPort;
 
     struct UniformBufferObject
@@ -120,8 +110,6 @@ namespace omp
         }
     };
 
-    const std::string g_ModelPath = "../models/cube2.obj";
-    const std::string g_TexturePath = "../textures/container.png";
     const VkClearColorValue g_ClearColor = {0.82f, 0.48f, 0.52f, 1.0f};
 
     class Renderer
@@ -153,19 +141,22 @@ namespace omp
         void initResources();
         void loadScene(omp::Scene* scene);
         // TODO: void initNewScene(omp::Scene* scene);
-        
+
+        bool prepareFrame();
         void requestDrawFrame(float deltaTime);
+        void resizeViewport(uint32_t x, uint32_t y);
+        void setClickedEntity(uint32_t x, uint32_t y);
 
         void onWindowResize(int width, int height);
         void cleanup();
+        VkDescriptorSet getViewportDescriptor() { return m_ViewportImage->getImguiImage(); }
 
     private:
 
+        void resizeInternal();
         void pickPhysicalDevice();
 
         void drawFrame();
-        void initializeScene();
-        void postFrame();
         void tick(float deltaTime);
 
         void destroyAllCommandBuffers();
@@ -235,13 +226,9 @@ namespace omp
         void createImguiRenderPass();
 
         void createImguiCommandPools();
-        void renderAllUi();
-        void createImguiWidgets();
-        void updateImguiWidgets();
         void createImguiFramebuffers();
 
         void destroyMainRenderPassResources();
-        void onViewportResize(size_t imageIndex);
 
         bool checkValidationLayerSupport();
 
@@ -361,11 +348,7 @@ namespace omp
         VkDeviceMemory m_ColorImageMemory;
         VkImageView m_ColorImageView;
 
-        VkImage m_ViewportImage;
-        VkImageView m_ViewportImageView;
-        VkSampler m_ViewportSampler = VK_NULL_HANDLE;
-        VkDeviceMemory m_ViewportImageMemory;
-        VkDescriptorSet m_ViewportDescriptor = VK_NULL_HANDLE;
+        std::unique_ptr<omp::VulkanImage> m_ViewportImage = nullptr;
 
         VkImage m_PickingImage;
         VkImageView m_PickingImageView;
@@ -399,18 +382,10 @@ namespace omp
         VkImageView m_DepthImageView;
 
         omp::Scene* m_CurrentScene = nullptr;
-        // TODO: ui should not live here
-        std::shared_ptr<omp::ViewPort> m_RenderViewport;
-        std::shared_ptr<omp::ScenePanel> m_ScenePanel;
-        std::shared_ptr<omp::CameraPanel> m_CameraPanel;
-        std::shared_ptr<omp::GlobalLightPanel> m_LightPanel;
-        
 
         GLFWwindow* m_Window;
 
         std::unique_ptr<omp::LightSystem> m_LightSystem;
-
-        std::vector<std::shared_ptr<omp::ImguiUnit>> m_Widgets;
 
         VkFormat m_SwapChainImageFormat;
 
@@ -430,12 +405,14 @@ namespace omp
 
         std::shared_ptr<omp::VulkanContext> m_VulkanContext;
 
-        std::queue<ImVec2> m_MousePickingData{};
-
         VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
+        uint32_t m_ViewportSize[2]{110,110};
+        uint32_t m_RequestedViewportSize[2]{110,110};
+        bool m_ShouldResize = false;
         int m_CurrentWidth = 0;
         int m_CurrentHeight = 0;
+        uint32_t m_CurrentImage = 0;
         const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
     };

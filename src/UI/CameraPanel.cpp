@@ -1,28 +1,39 @@
 #include "CameraPanel.h"
+#include "Camera.h"
 #include "imgui.h"
 
-omp::CameraPanel::CameraPanel(Camera* camera)
-        : ImguiUnit()
-        , m_Camera(camera)
-{
-
-}
-
-void omp::CameraPanel::renderUi(float /*deltaTime*/)
+void omp::CameraPanel::update(omp::Camera* camera)
 {
 
     ImGui::Begin("Camera Panel");
 
-    if (m_Camera)
+    if (camera)
     {
         ImGui::PushStyleColor(ImGuiCol_FrameBg, {1.0, 0.5, 0.5, 0.5});
 
-        ImGui::DragFloat("Speed", &m_Camera->m_MovementSpeed, 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        ImGui::DragFloat("Sensitivity", &m_Camera->m_MouseSensitivity, 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        ImGui::DragFloat3("Position", &m_Camera->m_Position[0], 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        ImGui::DragFloat("View angle", &m_Camera->m_ViewAngle, 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        ImGui::DragFloat("Near clip distance", &m_Camera->m_NearClipping, 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        ImGui::DragFloat("Far clip distance", &m_Camera->m_FarClipping, 0.1f, 0.0f, 0.0f, "%.2f", 0);
+        float val = camera->getSpeed();
+        bool res = ImGui::DragFloat("Speed", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
+        if (res) camera->setSpeed(val);
+
+        val = camera->getSens();
+        res = ImGui::DragFloat("Sensitivity", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
+        if (res) camera->setSens(val);
+
+        glm::vec3 pos = camera->getPosition();
+        res = ImGui::DragFloat3("Position", &pos[0], 0.1f, 0.0f, 0.0f, "%.2f", 0);
+        if (res) camera->setPosition(pos);
+
+        val = camera->getViewAngle();
+        res = ImGui::DragFloat("View angle", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
+        if (res) camera->setViewAngle(val);
+
+        val = camera->getNearClipping();
+        res = ImGui::DragFloat("Near clip distance", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
+        if (res) camera->setNearClip(val);
+
+        val = camera->getFarClipping();
+        res = ImGui::DragFloat("Far clip distance", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
+        if (res) camera->setFarClip(val);
 
         ImGui::PopStyleColor(1);
     }
@@ -32,10 +43,5 @@ void omp::CameraPanel::renderUi(float /*deltaTime*/)
     }
 
     ImGui::End();
-}
-
-void omp::CameraPanel::setCamera(Camera* inCamera)
-{
-    m_Camera = inCamera;
 }
 

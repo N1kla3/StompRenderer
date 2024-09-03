@@ -14,18 +14,11 @@
 #include <chrono>
 
 #include "IO/stb_image.h"
-#include "UI/CameraPanel.h"
-#include "UI/EntityPanel.h"
-#include "UI/MainLayer.h"
-#include "UI/ScenePanel.h"
-#include "UI/ViewPort.h"
+#include "backends/imgui_impl_vulkan.h"
+#include "Rendering/Shader.h"
 #include "backends/imgui_impl_glfw.h"
-
 #include <tiny_obj_loader.h>
-
-#include "ImGuizmo/ImGuizmo.h"
 #include "Logs.h"
-#include "Rendering/ModelStatics.h"
 
 #ifdef NDEBUG
 const bool g_EnableValidationLayers = false;
@@ -61,7 +54,6 @@ void omp::Renderer::initVulkan(GLFWwindow* window, int initWidth, int initHeight
 
 void omp::Renderer::initResources()
 {
-    createImguiWidgets();
     postSwapChainInitialize();
     createImageViews();
     createRenderPass();
@@ -90,17 +82,53 @@ void omp::Renderer::loadScene(omp::Scene* scene)
 
     m_CurrentScene->loadToGPU(m_VulkanContext);
 
-    updateImguiWidgets();
-    initializeScene();
     m_LightSystem->onSceneChanged(scene);
     recreateSwapChain();
     // TODO: add request to update pipelines and 
 }
 
+bool omp::Renderer::prepareFrame()
+{
+    vkWaitForFences(m_LogicalDevice, 1, &m_InFlightFences[m_CurrentFrame],
+                    VK_TRUE, UINT64_MAX);
+
+    uint32_t image_index;
+    VkResult result = vkAcquireNextImageKHR(
+            m_LogicalDevice, m_SwapChain, UINT64_MAX,
+            m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &image_index);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || m_FramebufferResized)
+    {
+        recreateSwapChain();
+        resizeInternal();
+        m_FramebufferResized = false;
+        m_ShouldResize = false;
+        return false;
+    }
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+    {
+        throw std::runtime_error("Failed to acquire swap chain image!");
+    }
+
+    if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
+    {
+        vkWaitForFences(m_LogicalDevice, 1, &m_ImagesInFlight[image_index], VK_TRUE,
+                        UINT64_MAX);
+    }
+    m_ImagesInFlight[image_index] = m_InFlightFences[m_CurrentFrame];
+
+    if (m_ShouldResize)
+    {
+        resizeInternal();
+    }
+    m_CurrentImage = image_index;
+    return true;
+}
+
 void omp::Renderer::requestDrawFrame(float deltaTime)
 {
     drawFrame();
-    postFrame();
+    //TODO: remove
     tick(deltaTime);
 
     vkDeviceWaitIdle(m_LogicalDevice);
@@ -442,8 +470,7 @@ void omp::Renderer::createLogicalDevice()
     createCommandPool();
     m_VulkanContext = std::make_shared<omp::VulkanContext>(
             m_LogicalDevice, m_PhysDevice, m_CommandPool, m_GraphicsQueue);
-    //omp::MaterialManager::getMaterialManager().specifyVulkanContext(
-    //        m_VulkanContext);
+    m_ViewportImage = std::make_unique<omp::VulkanImage>(m_VulkanContext);
     m_RenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
     m_ImguiRenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
 }
@@ -988,16 +1015,16 @@ void omp::Renderer::createFramebuffers()
 void omp::Renderer::createFramebufferAtImage(size_t index)
 {
     std::vector<VkImageView> attachments{m_ColorImageView, m_PickingImageView,
-                                         m_DepthImageView, m_ViewportImageView,
+                                         m_DepthImageView, m_ViewportImage->getImageView(),
                                          m_PickingResolveView};
     omp::FrameBuffer frame_buffer(
             m_LogicalDevice, attachments, m_RenderPass,
-            static_cast<uint32_t>(m_RenderViewport->getSize().x),
-            static_cast<uint32_t>(m_RenderViewport->getSize().y));
+            m_ViewportSize[0],
+            m_ViewportSize[1]);
     m_SwapChainFramebuffers[index] = frame_buffer;
 
     // test
-    INFO(LogRendering, "Framebuffer created with size {} {}", m_RenderViewport->getSize().x, m_RenderViewport->getSize().y);
+    INFO(LogRendering, "Framebuffer created with size {} {}", m_ViewportSize[0], m_ViewportSize[1]);
 }
 
 void omp::Renderer::createCommandPool()
@@ -1036,8 +1063,8 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
 
     rect.offset.x = 0;
     rect.offset.y = 0;
-    rect.extent.height = static_cast<uint32_t>(m_RenderViewport->getSize().y);
-    rect.extent.width = static_cast<uint32_t>(m_RenderViewport->getSize().x);
+    rect.extent.width = m_ViewportSize[0];
+    rect.extent.height = m_ViewportSize[1];
     beginRenderPass(m_RenderPass.get(), main_buffer,
                     m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
     setViewport(main_buffer);
@@ -1198,14 +1225,6 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
                     m_ImguiCommandBuffers[KHRImageIndex].buffer,
                     m_ImguiFramebuffers[KHRImageIndex], clear_value, rect);
 
-    ImGui_ImplVulkan_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    ImGuizmo::BeginFrame();
-
-    renderAllUi();
-
-    ImGui::Render();
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),
                                     m_ImguiCommandBuffers[KHRImageIndex].buffer);
 
@@ -1215,36 +1234,8 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
 
 void omp::Renderer::drawFrame()
 {
-    vkWaitForFences(m_LogicalDevice, 1, &m_InFlightFences[m_CurrentFrame],
-                    VK_TRUE, UINT64_MAX);
-
-    uint32_t image_index;
-    VkResult result = vkAcquireNextImageKHR(
-            m_LogicalDevice, m_SwapChain, UINT64_MAX,
-            m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &image_index);
-
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || m_FramebufferResized)
-    {
-        recreateSwapChain();
-        onViewportResize(image_index);
-        m_FramebufferResized = false;
-        return;
-    }
-    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
-    {
-        throw std::runtime_error("Failed to acquire swap chain image!");
-    }
-
-    if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
-    {
-        vkWaitForFences(m_LogicalDevice, 1, &m_ImagesInFlight[image_index], VK_TRUE,
-                        UINT64_MAX);
-    }
-    m_ImagesInFlight[image_index] = m_InFlightFences[m_CurrentFrame];
-
-    onViewportResize(image_index);
-    updateUniformBuffer(image_index);
-    prepareFrameForImage(image_index);
+    updateUniformBuffer(m_CurrentImage);
+    prepareFrameForImage(m_CurrentImage);
 
     VkSubmitInfo submit_info{};
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -1257,8 +1248,8 @@ void omp::Renderer::drawFrame()
     submit_info.pWaitDstStageMask = wait_stages;
 
     std::array<VkCommandBuffer, 2> command_buffers{
-            m_CommandBuffers[image_index].buffer,
-            m_ImguiCommandBuffers[image_index].buffer};
+            m_CommandBuffers[m_CurrentImage].buffer,
+            m_ImguiCommandBuffers[m_CurrentImage].buffer};
     submit_info.commandBufferCount =
             static_cast<uint32_t>(command_buffers.size());
     submit_info.pCommandBuffers = command_buffers.data();
@@ -1284,10 +1275,10 @@ void omp::Renderer::drawFrame()
     VkSwapchainKHR swap_chains[] = {m_SwapChain};
     present_info.swapchainCount = 1;
     present_info.pSwapchains = swap_chains;
-    present_info.pImageIndices = &image_index;
+    present_info.pImageIndices = &m_CurrentImage;
     present_info.pResults = nullptr;
 
-    result = vkQueuePresentKHR(m_PresentQueue, &present_info);
+    VkResult result = vkQueuePresentKHR(m_PresentQueue, &present_info);
     if (result != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to present swap chain image!");
@@ -1336,24 +1327,16 @@ void omp::Renderer::recreateSwapChain()
     createRenderPass();
     createGraphicsPipeline();
     createColorResources();
-    createViewportResources();
+    m_ViewportImage->recreateImage(m_ViewportSize[0], m_ViewportSize[1]);
     createPickingResources();
     createDepthResources();
     createFramebuffers();
     createUniformBuffers();
     createDescriptorSets();
 
-    if (m_ViewportDescriptor != VK_NULL_HANDLE)
-    {
-        ImGui_ImplVulkan_RemoveTexture(m_ViewportDescriptor);
-    }
-    m_ViewportDescriptor =
-            ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView,
-                                        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    m_RenderViewport->setImageId(reinterpret_cast<ImTextureID>(m_ViewportDescriptor));
-
     createImguiRenderPass();
     createImguiFramebuffers();
+    m_ViewportImage->createImguiImage();
 
     ImGui_ImplVulkan_SetMinImageCount(2);
 }
@@ -1587,8 +1570,7 @@ void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
     ubo.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
     ubo.proj = glm::perspective(
             glm::radians(m_CurrentScene->getCurrentCamera()->getViewAngle()),
-            static_cast<float>(m_RenderViewport->getSize().x) /
-            static_cast<float>(m_RenderViewport->getSize().y),
+            static_cast<float>(m_ViewportSize[0]) / m_ViewportSize[1],
             m_CurrentScene->getCurrentCamera()->getNearClipping(),
             m_CurrentScene->getCurrentCamera()->getFarClipping());
     ubo.proj[1][1] *= -1;
@@ -1905,8 +1887,8 @@ void omp::Renderer::createDepthResources()
 {
     VkFormat depth_format = findDepthFormat();
     m_VulkanContext->createImage(
-            static_cast<uint32_t>(m_RenderViewport->getSize().x),
-            static_cast<uint32_t>(m_RenderViewport->getSize().y), 1, depth_format,
+            m_ViewportSize[0],
+            m_ViewportSize[1], 1, depth_format,
             VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImage, m_DepthImageMemory,
             m_MSAASamples);
@@ -2125,8 +2107,8 @@ void omp::Renderer::createColorResources()
     VkFormat color_format = m_SwapChainImageFormat;
 
     m_VulkanContext->createImage(
-            static_cast<uint32_t>(m_RenderViewport->getSize().x),
-            static_cast<uint32_t>(m_RenderViewport->getSize().y), 1, color_format,
+            m_ViewportSize[0],
+            m_ViewportSize[1], 1, color_format,
             VK_IMAGE_TILING_OPTIMAL,
             VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -2140,15 +2122,13 @@ void omp::Renderer::createViewportResources()
 {
     VkFormat color_format = m_SwapChainImageFormat;
 
-    m_VulkanContext->createImage(
-            static_cast<uint32_t>(m_RenderViewport->getSize().x),
-            static_cast<uint32_t>(m_RenderViewport->getSize().y), 1, color_format,
+    m_ViewportImage->createImage(
+            m_ViewportSize[0],
+            m_ViewportSize[1], 1, color_format,
             VK_IMAGE_TILING_OPTIMAL,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ViewportImage,
-            m_ViewportImageMemory, VK_SAMPLE_COUNT_1_BIT);
-    m_ViewportImageView = m_VulkanContext->createImageView(
-            m_ViewportImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_SAMPLE_COUNT_1_BIT, 0, 1);
+    m_ViewportImage->createImageView(color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
     VkSamplerCreateInfo sampler_info{};
     sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -2164,11 +2144,7 @@ void omp::Renderer::createViewportResources()
     sampler_info.minLod = 0.0f;
     sampler_info.maxLod = 1.0f;
     sampler_info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-    if (vkCreateSampler(m_LogicalDevice, &sampler_info, nullptr,
-                        &m_ViewportSampler) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to create viewport sampler");
-    }
+    m_ViewportImage->createSampler(sampler_info);
 }
 
 void omp::Renderer::createPickingResources()
@@ -2176,8 +2152,8 @@ void omp::Renderer::createPickingResources()
     VkFormat image_format = VK_FORMAT_R32_SINT;
 
     m_VulkanContext->createImage(
-            static_cast<uint32_t>(m_RenderViewport->getSize().x),
-            static_cast<uint32_t>(m_RenderViewport->getSize().y), 1, image_format,
+            m_ViewportSize[0],
+            m_ViewportSize[1], 1, image_format,
             VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_PickingImage, m_PickingMemory,
             m_MSAASamples);
@@ -2185,8 +2161,8 @@ void omp::Renderer::createPickingResources()
             m_PickingImage, image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
     m_VulkanContext->createImage(
-            static_cast<uint32_t>(m_RenderViewport->getSize().x),
-            static_cast<uint32_t>(m_RenderViewport->getSize().y), 1, image_format,
+            m_ViewportSize[0],
+            m_ViewportSize[1], 1, image_format,
             VK_IMAGE_TILING_LINEAR,
             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_PickingResolve,
@@ -2194,78 +2170,6 @@ void omp::Renderer::createPickingResources()
     m_PickingResolveView = m_VulkanContext->createImageView(
             m_PickingResolve, image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
-
-void omp::Renderer::renderAllUi()
-{
-    static auto prev_time = std::chrono::high_resolution_clock::now();
-
-    auto current_time = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(
-            current_time - prev_time)
-            .count();
-    prev_time = current_time;
-
-    for (auto& unit: m_Widgets)
-    {
-        unit->renderUi(time);
-    }
-
-    // TODO remove
-    /* ImGui::Begin("Imagessss");
-    if (omp::MaterialManager::getMaterialManager().getTexture(
-            "../textures/viking.png"))
-    {
-        ImGui::Image((ImTextureID) (omp::MaterialManager::getMaterialManager()
-                             .getTexture("../textures/viking.png")
-                             ->getTextureId()),
-                     {100, 100});
-    }
-    ImGui::End();*/
-
-    ImGui::ShowDemoWindow();
-}
-
-void omp::Renderer::createImguiWidgets()
-{
-    // ORDER IS IMPORTANT DOCK NODES GO FIRST
-
-    m_RenderViewport = std::make_shared<omp::ViewPort>();
-
-    auto material_panel = std::make_shared<omp::MaterialPanel>();
-    auto entity = std::make_shared<omp::EntityPanel>();
-    m_ScenePanel = std::make_shared<omp::ScenePanel>(entity, material_panel);
-    m_CameraPanel = std::make_shared<omp::CameraPanel>();
-    m_LightPanel = std::make_shared<omp::GlobalLightPanel>();
-
-    m_Widgets.push_back(std::make_shared<omp::MainLayer>());
-    m_Widgets.push_back(m_RenderViewport);
-    m_Widgets.push_back(std::move(entity));
-    m_Widgets.push_back(std::move(material_panel));
-    m_Widgets.push_back(m_ScenePanel);
-    m_Widgets.push_back(m_CameraPanel);
-    m_Widgets.push_back(m_LightPanel);
-
-    updateImguiWidgets();
-}
-
-void omp::Renderer::updateImguiWidgets()
-{
-    if (m_CurrentScene)
-    {
-        m_RenderViewport->setCamera(m_CurrentScene->getCurrentCamera());
-        m_ScenePanel->setScene(m_CurrentScene);
-        m_CameraPanel->setCamera(m_CurrentScene->getCurrentCamera());
-        m_LightPanel->setLightRef(nullptr);
-    }
-    else
-    {
-        m_RenderViewport->setCamera(nullptr);
-        m_ScenePanel->setScene(nullptr);
-        m_CameraPanel->setCamera(nullptr);
-        m_LightPanel->setLightRef(nullptr);
-    }
-}
-
 
 void omp::Renderer::destroyMainRenderPassResources()
 {
@@ -2277,10 +2181,7 @@ void omp::Renderer::destroyMainRenderPassResources()
     vkDestroyImage(m_LogicalDevice, m_ColorImage, nullptr);
     vkFreeMemory(m_LogicalDevice, m_ColorImageMemory, nullptr);
 
-    vkDestroySampler(m_LogicalDevice, m_ViewportSampler, nullptr);
-    vkDestroyImageView(m_LogicalDevice, m_ViewportImageView, nullptr);
-    vkDestroyImage(m_LogicalDevice, m_ViewportImage, nullptr);
-    vkFreeMemory(m_LogicalDevice, m_ViewportImageMemory, nullptr);
+    m_ViewportImage->destroyAll();
 
     vkDestroyImageView(m_LogicalDevice, m_PickingImageView, nullptr);
     vkDestroyImage(m_LogicalDevice, m_PickingImage, nullptr);
@@ -2295,41 +2196,87 @@ void omp::Renderer::destroyMainRenderPassResources()
     }
 }
 
-void omp::Renderer::onViewportResize(size_t /*imageIndex*/)
+void omp::Renderer::resizeViewport(uint32_t x, uint32_t y)
 {
-    if (m_RenderViewport->isResized() || m_FramebufferResized)
+    m_RequestedViewportSize[0] = x;
+    m_RequestedViewportSize[1] = y;
+    m_ShouldResize = true;
+}
+
+void omp::Renderer::resizeInternal()
+{
+    uint32_t x = m_RequestedViewportSize[0];
+    uint32_t y = m_RequestedViewportSize[1];
+    m_ViewportSize[0] = x;
+    m_ViewportSize[1] = y;
+
+    if (x <= 0 || x >= m_DeviceLimits.maxFramebufferWidth)
     {
-        uint32_t x = static_cast<uint32_t>(m_RenderViewport->getSize().x);
-        uint32_t y = static_cast<uint32_t>(m_RenderViewport->getSize().y);
-        if (x <= 0 || x >= m_DeviceLimits.maxFramebufferWidth)
-        {
-            return;
-        }
-        if (y <= 0 || y >= m_DeviceLimits.maxFramebufferHeight)
-        {
-            return;
-        }
-
-        destroyMainRenderPassResources();
-
-        createColorResources();
-        createDepthResources();
-        createViewportResources();
-        createPickingResources();
-
-        for (size_t index = 0; index < m_SwapChainFramebuffers.size(); index++)
-        {
-            createFramebufferAtImage(index);
-        }
-        if (m_ViewportDescriptor != VK_NULL_HANDLE)
-        {
-            ImGui_ImplVulkan_RemoveTexture(m_ViewportDescriptor);
-        }
-        m_ViewportDescriptor =
-                ImGui_ImplVulkan_AddTexture(m_ViewportSampler, m_ViewportImageView,
-                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        m_RenderViewport->setImageId(reinterpret_cast<ImTextureID>(m_ViewportDescriptor));
+        return;
     }
+    if (y <= 0 || y >= m_DeviceLimits.maxFramebufferHeight)
+    {
+        return;
+    }
+
+    destroyMainRenderPassResources();
+
+    createColorResources();
+    createDepthResources();
+    m_ViewportImage->recreateImage(x, y);
+    m_ViewportImage->createImguiImage();
+    createPickingResources();
+
+    for (size_t index = 0; index < m_SwapChainFramebuffers.size(); index++)
+    {
+        createFramebufferAtImage(index);
+    }
+    m_ShouldResize = false;
+}
+
+void omp::Renderer::setClickedEntity(uint32_t x, uint32_t y)
+{
+        VkImageSubresourceLayers subres{};
+        subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        subres.mipLevel = 0;
+        subres.baseArrayLayer = 0;
+        subres.layerCount = 1;
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 1;
+        region.bufferImageHeight = 1;
+        region.imageSubresource = subres;
+        VkOffset3D offset{};
+        offset.x = static_cast<int32_t>(x);
+        offset.y = static_cast<int32_t>(y);
+        offset.z = 0;
+        region.imageOffset = offset;
+        VkExtent3D extent{};
+        extent.height = 1;
+        extent.width = 1;
+        extent.depth = 1;
+        region.imageExtent = extent;
+
+        m_VulkanContext->transitionImageLayout(
+                m_PickingResolve, VK_FORMAT_R32_SINT,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1);
+
+        VkCommandBuffer buffer = beginSingleTimeCommands();
+        vkCmdCopyImageToBuffer(buffer, m_PickingResolve,
+                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                               m_PixelReadBuffer, 1, &region);
+        endSingleTimeCommands(buffer);
+
+        uint32_t pixel_value = 1;
+        void* data;
+        vkMapMemory(m_VulkanContext->logical_device, m_PixelReadMemory, 0,
+                    sizeof(uint32_t), 0, &data);
+        memcpy(&pixel_value, data, sizeof(uint32_t));
+        vkUnmapMemory(m_VulkanContext->logical_device, m_PixelReadMemory);
+
+        m_CurrentScene->setCurrentId(pixel_value);
+        INFO(LogRendering, "value {}", pixel_value);
 }
 
 omp::GraphicsPipeline* omp::Renderer::findGraphicsPipeline(const std::string& name)
@@ -2401,8 +2348,8 @@ void omp::Renderer::setViewport(VkCommandBuffer inCommandBuffer)
     VkViewport viewport;
     viewport.x = 0;
     viewport.y = 0;
-    viewport.height = m_RenderViewport->getSize().y;
-    viewport.width = m_RenderViewport->getSize().x;
+    viewport.width = m_ViewportSize[0];
+    viewport.height = m_ViewportSize[1];
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
@@ -2421,115 +2368,8 @@ void omp::Renderer::destroyAllCommandBuffers()
     }
 }
 
-void omp::Renderer::initializeScene()
-{
-    // TODO: should go to asset initialization
-     auto lambda = [this](ImVec2 pos)
-    { m_MousePickingData.push(pos); };
-    m_RenderViewport->setMouseClickCallback(lambda);
-
-    m_RenderViewport->setTranslationChangeCallback([this](float inVec[3])
-    {
-        if (m_CurrentScene->getCurrentEntity())
-        {
-            m_CurrentScene->getCurrentEntity()->getModelInstance()->getPosition() = glm::vec3(inVec[0], inVec[1], inVec[2]);
-        }
-    });
-    m_RenderViewport->setRotationChangeCallback([this](float inVec[3])
-    {
-        if (m_CurrentScene->getCurrentEntity())
-        {
-            glm::vec3 new_rotation{inVec[0], inVec[1], inVec[2]};
-            glm::vec3 rotation = m_CurrentScene->getCurrentEntity()->getModelInstance()->getRotation();
-            m_CurrentScene->getCurrentEntity()->getModelInstance()->getRotation() += new_rotation - rotation;
-        }
-    });
-    m_RenderViewport->setScaleChangeCallback([this](float inVec[3])
-    {
-         if (m_CurrentScene->getCurrentEntity())
-         {
-             m_CurrentScene->getCurrentEntity()->getModelInstance()->getScale() =
-                     glm::vec3(inVec[0], inVec[1], inVec[2]);
-         }
-    });
-}
-
-void omp::Renderer::postFrame()
-{
-    while (!m_MousePickingData.empty())
-    {
-        ImVec2 mouse_data = m_MousePickingData.back();
-
-        // read mouse coordinate pixel from image
-        VkImageSubresourceLayers subres{};
-        subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        subres.mipLevel = 0;
-        subres.baseArrayLayer = 0;
-        subres.layerCount = 1;
-        VkBufferImageCopy region{};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 1;
-        region.bufferImageHeight = 1;
-        region.imageSubresource = subres;
-        VkOffset3D offset{};
-        offset.x = static_cast<int32_t>(m_RenderViewport->getLocalCursorPos().x);
-        offset.y = static_cast<int32_t>(m_RenderViewport->getLocalCursorPos().y);
-        offset.z = 0;
-        region.imageOffset = offset;
-        VkExtent3D extent{};
-        extent.height = 1;
-        extent.width = 1;
-        extent.depth = 1;
-        region.imageExtent = extent;
-
-        m_VulkanContext->transitionImageLayout(
-                m_PickingResolve, VK_FORMAT_R32_SINT,
-                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1);
-
-        VkCommandBuffer buffer = beginSingleTimeCommands();
-        vkCmdCopyImageToBuffer(buffer, m_PickingResolve,
-                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                               m_PixelReadBuffer, 1, &region);
-        endSingleTimeCommands(buffer);
-
-        uint32_t pixel_value = 1;
-        void* data;
-        vkMapMemory(m_VulkanContext->logical_device, m_PixelReadMemory, 0,
-                    sizeof(int32_t), 0, &data);
-        memcpy(&pixel_value, data, sizeof(int32_t));
-        vkUnmapMemory(m_VulkanContext->logical_device, m_PixelReadMemory);
-
-        m_CurrentScene->setCurrentId(pixel_value);
-        INFO(LogRendering, "value {}", pixel_value);
-
-        m_MousePickingData.pop();
-    }
-}
-
 void omp::Renderer::tick(float deltaTime)
 {
-    if (!m_CurrentScene) return;
-    glm::mat4 projection = glm::perspective(
-            glm::radians(m_CurrentScene->getCurrentCamera()->getViewAngle()),
-            (float) m_RenderViewport->getSize().x /
-            (float) m_RenderViewport->getSize().y,
-            m_CurrentScene->getCurrentCamera()->getNearClipping(),
-            m_CurrentScene->getCurrentCamera()->getFarClipping());
-    // projection[1][1] *= -1;
-    uint32_t id = m_CurrentScene->getCurrentId();
-    auto ent = m_CurrentScene->getEntity(id);
-    glm::mat4 model{};
-    if (ent)
-    {
-        model = ent->getModelInstance()->getTransform();
-    }
-    m_RenderViewport->sendPickingData({id, projection, model});
-
-    // m_CurrentScene->getEntity("1-1")->getRotation().x += 1*deltaTime;
-    m_CurrentScene->getEntity("2-1")->getModelInstance()->getRotation().x +=
-            1 * deltaTime;
-    // m_CurrentScene->getEntity("dfasdf")->getRotation().x += 1*deltaTime;
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
 

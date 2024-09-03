@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "Logs.h"
+#include "Core/ICommand.h"
 #include "Core/CoreLib.h"
 
 class CoreTestSuite : public ::testing::Test
@@ -9,6 +10,25 @@ protected:
     {
         omp::InitializeTestLogs();
     }
+};
+
+class TestICommand : public omp::ICommand
+{
+public:
+    TestICommand(int& data) : test_data(&data){}
+    virtual void execute() override
+    {
+        prev_data = *test_data;
+        *test_data = 8;
+    }
+    virtual void undo() override
+    {
+        *test_data = prev_data;
+    }
+
+private: 
+    int* test_data;
+    int prev_data;
 };
 
 
@@ -59,4 +79,29 @@ TEST_F(CoreTestSuite, Id32Test)
         set_two.insert(id);
     }
     ASSERT_TRUE(set_two.size() == size);
+}
+
+TEST_F(CoreTestSuite, CommandTest)
+{
+    int number = 20;
+    omp::CommandStack stack;
+    EXPECT_NO_THROW(stack.execute<TestICommand>(number));
+    EXPECT_EQ(number, 8);
+    EXPECT_NO_THROW(stack.undo());
+    EXPECT_EQ(number, 20);
+    EXPECT_NO_THROW(stack.undo());
+    EXPECT_EQ(number, 20);
+    EXPECT_NO_THROW(stack.redo());
+    EXPECT_EQ(number, 8);
+    EXPECT_NO_THROW(stack.redo());
+    ASSERT_EQ(number, 8);
+}
+
+TEST_F(CoreTestSuite, ProxyCommandTest)
+{
+    int number = 20;
+    auto stack = std::make_shared<omp::CommandStack>();
+    omp::CommandStackProxy proxy(stack);
+    EXPECT_NO_THROW(proxy.execute<TestICommand>(number));
+    ASSERT_EQ(number, 8);
 }

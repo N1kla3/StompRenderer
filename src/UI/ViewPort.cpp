@@ -1,11 +1,12 @@
 #include "ViewPort.h"
 #include "Camera.h"
+#include "Scene.h"
 #include "imgui.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "ImGuizmo/ImGuizmo.h"
-#include "Logs.h"
+#include "stomp_imconfig.h"
 
-void omp::ViewPort::renderUi(float /*deltaTime*/)
+void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, VkDescriptorSet viewportImage)
 {
     ImGuiWindowClass window_class;
     window_class.ClassId = ImGui::GetID("Window");
@@ -21,18 +22,14 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
     ImGui::PopStyleVar(3);
 
 
-    auto new_size = ImGui::GetContentRegionAvail();
-
-    if (new_size.x != m_Size.x
-        || new_size.y != m_Size.y)
+    ImVec2 new_size = ImGui::GetContentRegionAvail();
+    m_Resized = false;
+    if (new_size.x != m_Size.x || new_size.y != m_Size.y)
     {
-        m_Resized = true;
         m_Size = new_size;
+        m_Resized = true;
     }
-    else
-    {
-        m_Resized = false;
-    }
+
     ImVec2 viewport_cursor = ImGui::GetMousePos();
     auto window_pos = ImGui::GetWindowPos();
     auto content_min= ImGui::GetWindowContentRegionMin();
@@ -41,12 +38,14 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
     viewport_cursor.x = viewport_cursor.x - window_pos.x - content_min.x;
     viewport_cursor.y = viewport_cursor.y - window_pos.y - content_min.y;
 
-    if (m_Camera)
+    m_ClickedEntity = false;
+
+    if (camera)
     {
-        ImGui::Image(m_ImageId, m_Size);
+        ImGui::Image(reinterpret_cast<ImTextureID>(viewportImage), m_Size);
     }
 
-    if (m_Info.id != 0)
+    if (m_Info.isPicked)
     {
         ImGuizmo::Enable(true);
 
@@ -54,21 +53,23 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
         ImGuizmo::SetDrawlist();
         float w = ImGui::GetWindowWidth();
         float h = ImGui::GetWindowHeight();
+        auto entity = scene->getCurrentEntity();
+        m_Info.model = entity->getModelInstance()->getTransform();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, w, h);
-        bool manipulated = ImGuizmo::Manipulate(glm::value_ptr(m_Camera->getViewMatrix()), glm::value_ptr(m_Info.projection),
+        bool manipulated = ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(m_Info.projection),
                              m_Operation, ImGuizmo::LOCAL, glm::value_ptr(m_Info.model));
 
-        float matrixTranslation[3], matrixRotation[3], matrixScale[3];
-        ImGuizmo::DecomposeMatrixToComponents(value_ptr(m_Info.model), matrixTranslation, matrixRotation, matrixScale);
+        glm::vec3 matrixTranslation, matrixRotation, matrixScale;
+        ImGuizmo::DecomposeMatrixToComponents(value_ptr(m_Info.model), &matrixTranslation[0], &matrixRotation[0], &matrixScale[0]);
 
         if (ImGuizmo::IsUsingAny())
         {
             ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
             if (manipulated)
             {
-                m_TranslationChange(matrixTranslation);
-                m_RotationChange(matrixRotation);
-                m_ScaleChange(matrixScale);
+                entity->setTranslation(matrixTranslation);
+                entity->setRotation(matrixRotation);
+                entity->setScale(matrixScale);
             }
         }
         else
@@ -79,7 +80,7 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
     }
 
 
-    if (!m_Camera || !ImGui::IsWindowFocused())
+    if (!camera || !ImGui::IsWindowFocused())
     {
         ImGui::End();
         return;
@@ -90,27 +91,27 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
 
     if (ImGui::IsKeyDown(ImGuiKey_W))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_FORWARD);
+        camera->processKeyboard(ECameraMovement::MOVE_FORWARD);
     }
     if (ImGui::IsKeyDown(ImGuiKey_A))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_LEFT);
+        camera->processKeyboard(ECameraMovement::MOVE_LEFT);
     }
     if (ImGui::IsKeyDown(ImGuiKey_S))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_BACK);
+        camera->processKeyboard(ECameraMovement::MOVE_BACK);
     }
     if (ImGui::IsKeyDown(ImGuiKey_D))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_RIGHT);
+        camera->processKeyboard(ECameraMovement::MOVE_RIGHT);
     }
     if (ImGui::IsKeyDown(ImGuiKey_E))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_UP);
+        camera->processKeyboard(ECameraMovement::MOVE_UP);
     }
     if (ImGui::IsKeyDown(ImGuiKey_Q))
     {
-        m_Camera->processKeyboard(ECameraMovement::MOVE_DOWN);
+        camera->processKeyboard(ECameraMovement::MOVE_DOWN);
     }
     if (ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_R))
     {
@@ -126,7 +127,6 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
     }
 
 
-
     // MOUSE INPUT
     static bool should_reset_mouse = true;
     if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
@@ -138,7 +138,7 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
             should_reset_mouse = false;
         }
         ImVec2 second = ImGui::GetMousePos();
-        m_Camera->processMouseMovement(second.x - first_pos.x, -(second.y - first_pos.y));
+        camera->processMouseMovement(second.x - first_pos.x, -(second.y - first_pos.y));
         first_pos = second;
     }
     else
@@ -151,39 +151,14 @@ void omp::ViewPort::renderUi(float /*deltaTime*/)
         && ImGui::IsMouseClicked(ImGuiMouseButton_Left)
         && !ImGuizmo::IsUsing() && !ImGuizmo::IsOver())
     {
+        m_ClickedEntity = true;
         m_CursorPos = viewport_cursor;
-
-        if (m_MouseClick)
-        {
-            m_MouseClick(m_CursorPos);
-        }
+        m_Info.isPicked = true;
+        m_Info.projection = glm::perspective(glm::radians(camera->getViewAngle()),
+                                             m_Size.x / m_Size.y,
+                                             camera->getNearClipping(), camera->getFarClipping());
     }
 
     ImGui::End();
 }
 
-
-void omp::ViewPort::setMouseClickCallback(const std::function<void(ImVec2)> inFunc)
-{
-    m_MouseClick = inFunc;
-}
-
-void omp::ViewPort::sendPickingData(PickingInfo info)
-{
-    m_Info = info;
-}
-
-void omp::ViewPort::setTranslationChangeCallback(const std::function<void(float*)> inFunc)
-{
-    m_TranslationChange = inFunc;
-}
-
-void omp::ViewPort::setRotationChangeCallback(const std::function<void(float*)> inFunc)
-{
-    m_RotationChange = inFunc;
-}
-
-void omp::ViewPort::setScaleChangeCallback(const std::function<void(float*)> inFunc)
-{
-    m_ScaleChange = inFunc;
-}

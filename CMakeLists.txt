@@ -37,6 +37,8 @@ set(SOURCE
         Core/Application.cpp
         Core/CoreLib.h
         Core/CoreLib.cpp
+        Core/MemoryPool.h
+        Core/ICommand.h
         Renderer.cpp
         Renderer.h
         Rendering/Model.h
@@ -78,6 +80,8 @@ set(SOURCE
         Rendering/GraphicsPipeline.cpp
         AssetSystem/ObjectFactory.h
         AssetSystem/ObjectFactory.cpp
+        UI/UIController.h
+        UI/UIController.cpp
         UI/ImguiUnit.h
         UI/ImguiUnit.cpp
         UI/ViewPort.cpp
@@ -122,7 +126,9 @@ set(SOURCE
         Async/threadsafe_queue.h
         Async/threadsafe_map.h
         Math/GlmHash.h
-        )
+        Rendering/VulkanImage.cpp
+        Rendering/VulkanImage.h
+)
 
 #include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/imgui)
 

@@ -104,6 +104,29 @@ void omp::VulkanContext::createImage(
     vkBindImageMemory(logical_device, image, imageMemory, 0);
 }
 
+void omp::VulkanContext::createImage(const VkImageCreateInfo& imageInfo, VkImage& image, VkDeviceMemory& imageMemory,VkMemoryPropertyFlags properties)
+{
+    if (vkCreateImage(logical_device, &imageInfo, nullptr, &image) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create image!");
+    }
+
+    VkMemoryRequirements mem_req;
+    vkGetImageMemoryRequirements(logical_device, image, &mem_req);
+
+    VkMemoryAllocateInfo allocate_info{};
+    allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocate_info.allocationSize = mem_req.size;
+    allocate_info.memoryTypeIndex = findMemoryType(mem_req.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(logical_device, &allocate_info, nullptr, &imageMemory) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate image memory!");
+    }
+
+    vkBindImageMemory(logical_device, image, imageMemory, 0);
+}
+
 void omp::VulkanContext::transitionImageLayout(
         VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
 {
@@ -364,8 +387,19 @@ VkImageView omp::VulkanContext::createImageView(
     view_info.subresourceRange.baseArrayLayer = 0;
     view_info.subresourceRange.layerCount = 1;
 
-    VkImageView image_view;
+    VkImageView image_view = VK_NULL_HANDLE;
     if (vkCreateImageView(logical_device, &view_info, nullptr, &image_view) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to create texture image view!");
+    }
+
+    return image_view;
+}
+
+VkImageView omp::VulkanContext::createImageView(const VkImageViewCreateInfo& info)
+{
+    VkImageView image_view = VK_NULL_HANDLE;
+    if (vkCreateImageView(logical_device, &info, nullptr, &image_view) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create texture image view!");
     }
