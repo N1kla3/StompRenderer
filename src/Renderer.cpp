@@ -1071,13 +1071,13 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
     omp::SceneEntity* outline_entity = nullptr;
     VkDeviceSize offsets[] = {0};
 
-    std::span<std::unique_ptr<omp::SceneEntity>> scene_ref =
-            m_CurrentScene->getEntities();
+    std::vector<omp::SceneEntity*> scene_copy =
+            m_CurrentScene->getEntitiesCopy();
     std::sort(
-            scene_ref.begin(), scene_ref.end(),
+            scene_copy.begin(), scene_copy.end(),
             [this](
-                    const std::unique_ptr<omp::SceneEntity>& inEnt,
-                    const std::unique_ptr<omp::SceneEntity>& inEnt2) -> bool
+                    const omp::SceneEntity* inEnt,
+                    const omp::SceneEntity* inEnt2) -> bool
             {
                 if (inEnt->getModelInstance()
                             ->getMaterialInstance()
@@ -1112,9 +1112,9 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
                                      inEnt2->getModelInstance()->getPosition());
                 // return true;
             });
-    for (size_t index = 0; index < scene_ref.size(); index++)
+    for (size_t index = 0; index < scene_copy.size(); index++)
     {
-        auto& scene_entity = scene_ref[index];
+        auto& scene_entity = scene_copy[index];
         auto& material_instance = scene_entity->getModelInstance()->getMaterialInstance();
         auto material = material_instance->getStaticMaterial().lock();
         if (!material)
@@ -1128,7 +1128,7 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
         {
             // TODO check this for valid shader, because light have simple shader, and
             // should not have lightstencil layouts
-            outline_entity = scene_entity.get();
+            outline_entity = scene_entity;
             model_pipeline =
                     findGraphicsPipeline("LightStencil")->getGraphicsPipeline();
             model_pipeline_layout =
@@ -2347,8 +2347,8 @@ void omp::Renderer::setViewport(VkCommandBuffer inCommandBuffer)
     VkViewport viewport;
     viewport.x = 0;
     viewport.y = 0;
-    viewport.width = m_ViewportSize[0];
-    viewport.height = m_ViewportSize[1];
+    viewport.width = static_cast<float>(m_ViewportSize[0]);
+    viewport.height = static_cast<float>(m_ViewportSize[1]);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 

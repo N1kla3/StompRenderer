@@ -7,6 +7,17 @@ std::span<std::unique_ptr<omp::SceneEntity>> omp::Scene::getEntities()
     return std::span(m_Entities.begin(), m_Entities.end());
 }
 
+std::vector<omp::SceneEntity*> omp::Scene::getEntitiesCopy()
+{
+    std::vector<omp::SceneEntity*> res;
+    res.resize(m_Entities.size());
+    for (size_t i = 0; i < m_Entities.size(); i++)
+    {
+        res[i] = m_Entities[i].get();
+    }
+    return res;
+}
+
 std::span<std::unique_ptr<omp::LightBase>> omp::Scene::getLights()
 {
     return std::span(m_Lights.begin(), m_Lights.end());

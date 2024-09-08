@@ -41,6 +41,7 @@ namespace omp
         virtual void deserialize(JsonParser<>& parser) override;
 
         std::span<std::unique_ptr<omp::SceneEntity>> getEntities();
+        std::vector<omp::SceneEntity*> getEntitiesCopy();
         std::span<std::unique_ptr<omp::LightBase>> getLights();
 
         bool setCurrentCamera(uint16_t index);

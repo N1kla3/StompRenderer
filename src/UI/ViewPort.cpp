@@ -45,7 +45,8 @@ void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, VkDescripto
         ImGui::Image(reinterpret_cast<ImTextureID>(viewportImage), m_Size);
     }
 
-    if (m_Info.isPicked)
+    auto entity = scene->getCurrentEntity();
+    if (entity)
     {
         ImGuizmo::Enable(true);
 
@@ -53,7 +54,6 @@ void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, VkDescripto
         ImGuizmo::SetDrawlist();
         float w = ImGui::GetWindowWidth();
         float h = ImGui::GetWindowHeight();
-        auto entity = scene->getCurrentEntity();
         m_Info.model = entity->getModelInstance()->getTransform();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, w, h);
         bool manipulated = ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(m_Info.projection),
