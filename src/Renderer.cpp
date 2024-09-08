@@ -161,6 +161,7 @@ void omp::Renderer::cleanup()
         DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugMessenger, nullptr);
     }
 
+    m_ViewportImage.reset();
     m_UboBuffer.reset();
     m_OutlineBuffer.reset();
     m_LightSystem.reset();
@@ -172,8 +173,6 @@ void omp::Renderer::cleanup()
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_TexturesDescriptorSetLayout,
                                  nullptr);
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
-
-    //omp::MaterialManager::getMaterialManager().clearGpuState();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
