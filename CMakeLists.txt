@@ -28,6 +28,7 @@ add_subdirectory(json)
 add_subdirectory(tracy)
 
 include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+include_directories(tracy/public)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 include_directories(SYSTEM imgui)
