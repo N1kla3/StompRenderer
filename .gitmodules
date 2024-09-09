@@ -27,3 +27,6 @@
 	path = tinyobjloader
 	url = https://github.com/tinyobjloader/tinyobjloader.git
     branch = release
+[submodule "tracy"]
+	path = tracy
+	url = https://github.com/wolfpld/tracy.git
