@@ -2,6 +2,7 @@
 #include <mutex>
 #include "AssetSystem/Asset.h"
 #include "Logs.h"
+#include "Core/Profiling.h"
 #include "AssetSystem/ObjectFactory.h"
 
 const omp::AssetHandle omp::AssetHandle::INVALID_HANDLE = 0;
@@ -19,6 +20,8 @@ bool omp::Asset::loadMetadata()
 
 bool omp::Asset::tryLoadObject()
 {
+    OMP_STAT_SCOPE("LoadObject");
+
     std::lock_guard<std::mutex> lock(m_Access);
     if (m_Metadata && !m_IsLoaded)
     {
@@ -34,6 +37,8 @@ bool omp::Asset::tryLoadObject()
 
 void omp::Asset::createObject()
 {
+    OMP_STAT_SCOPE("CreateObject");
+
     if (m_Metadata)
     {
         m_Object = omp::ObjectFactory::createSerializableObject(m_Metadata.class_id);
@@ -76,6 +81,8 @@ bool omp::Asset::saveMetadata()
 
 bool omp::Asset::saveAsset()
 {
+    OMP_STAT_SCOPE("SaveAsset");
+
     if (m_Metadata)
     {
         std::lock_guard<std::mutex> lock(m_Access);

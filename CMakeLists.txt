@@ -41,6 +41,7 @@ set(SOURCE
         Core/CoreLib.cpp
         Core/MemoryPool.h
         Core/ICommand.h
+        Core/Profiling.h
         Renderer.cpp
         Renderer.h
         Rendering/Model.h

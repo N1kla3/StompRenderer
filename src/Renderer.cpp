@@ -16,6 +16,7 @@
 #include "IO/stb_image.h"
 #include "backends/imgui_impl_vulkan.h"
 #include "Rendering/Shader.h"
+#include "Core/Profiling.h"
 #include "backends/imgui_impl_glfw.h"
 #include <tiny_obj_loader.h>
 #include "Logs.h"
@@ -41,6 +42,8 @@ omp::Renderer::Renderer()
 
 void omp::Renderer::initVulkan(GLFWwindow* window, int initWidth, int initHeight)
 {
+    OMP_STAT_SCOPE("InitVulkan");
+
     m_Window = window;
     m_CurrentWidth = initWidth;
     m_CurrentHeight = initHeight;
@@ -54,6 +57,8 @@ void omp::Renderer::initVulkan(GLFWwindow* window, int initWidth, int initHeight
 
 void omp::Renderer::initResources()
 {
+    OMP_STAT_SCOPE("InitResources");
+
     postSwapChainInitialize();
     createImageViews();
     createRenderPass();
@@ -78,6 +83,8 @@ void omp::Renderer::initResources()
 
 void omp::Renderer::loadScene(omp::Scene* scene)
 {
+    OMP_STAT_SCOPE("LoadScene");
+
     m_CurrentScene = scene;
 
     m_CurrentScene->loadToGPU(m_VulkanContext);
@@ -89,6 +96,8 @@ void omp::Renderer::loadScene(omp::Scene* scene)
 
 bool omp::Renderer::prepareFrame()
 {
+    OMP_STAT_SCOPE("PrepareFrame");
+
     vkWaitForFences(m_LogicalDevice, 1, &m_InFlightFences[m_CurrentFrame],
                     VK_TRUE, UINT64_MAX);
 
@@ -127,6 +136,8 @@ bool omp::Renderer::prepareFrame()
 
 void omp::Renderer::requestDrawFrame(float deltaTime)
 {
+    OMP_STAT_SCOPE("RequestDrawFrame");
+
     drawFrame();
     //TODO: remove
     tick(deltaTime);
@@ -136,6 +147,8 @@ void omp::Renderer::requestDrawFrame(float deltaTime)
 
 void omp::Renderer::cleanup()
 {
+    OMP_STAT_SCOPE("Cleanup");
+
     vkFreeMemory(m_LogicalDevice, m_PixelReadMemory, nullptr);
     vkDestroyBuffer(m_LogicalDevice, m_PixelReadBuffer, nullptr);
 
@@ -1044,6 +1057,8 @@ void omp::Renderer::createCommandPool()
 
 void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
 {
+    OMP_STAT_SCOPE("PrepareFrameForImage");
+    
     prepareCommandBuffer(m_ImguiCommandBuffers[KHRImageIndex],
                          m_ImguiCommandPool);
 

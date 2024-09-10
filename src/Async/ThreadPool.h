@@ -4,6 +4,7 @@
 #include <functional>
 #include <deque>
 #include <future>
+#include "Core/Profiling.h"
 #include "threadsafe_queue.h"
 
 namespace omp
@@ -388,7 +389,9 @@ namespace omp
                 || popTaskFromPoolQueue(task)
                 || popTaskFromOtherThread(task))
             {
+                OMP_STAT_THREAD_BEGIN("Thread");
                 task();
+                OMP_STAT_THREAD_END("Thread");
             }
             else
             {

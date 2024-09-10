@@ -28,7 +28,7 @@ void omp::Application::start()
         {
 
         }
-        FrameMark;
+        OMP_FRAME();
     }
 
 
@@ -109,7 +109,8 @@ void omp::Application::preDestroy()
 
 void omp::Application::tick(float delta)
 {
-    ZoneScopedN("Tick");
+    OMP_STAT_SCOPE("Tick");
+
     glfwPollEvents();
     m_RequestExit = m_RequestExit || glfwWindowShouldClose(m_Window);
 

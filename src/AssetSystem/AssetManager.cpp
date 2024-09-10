@@ -7,6 +7,7 @@
 #include "Core/CoreLib.h"
 #include "Rendering/Shader.h"
 #include "Scene.h"
+#include "Core/Profiling.h"
 #include "SceneEntityFactory.h"
 #include "LightSystem.h"
 #include "Rendering/Model.h"
@@ -40,6 +41,8 @@ omp::AssetManager::~AssetManager()
 
 std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)
 {
+    OMP_STAT_SCOPE("LoadProject");
+
     if (m_ThreadPool)
     {
         return m_ThreadPool->submit([this, inPath]() -> bool
@@ -60,6 +63,8 @@ std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)
 
 std::future<bool> omp::AssetManager::saveProject()
 {
+    OMP_STAT_SCOPE("SaveProject");
+
     if (m_ThreadPool)
     {
         return m_ThreadPool->submit([this]() -> bool
@@ -129,6 +134,8 @@ bool omp::AssetManager::deleteAsset(AssetHandle assetHandle)
 
 omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass)
 {
+    OMP_STAT_SCOPE("CreateAsset");
+
     omp::MetaData init_metadata;
     uint64_t id = omp::CoreLib::generateId64();
 
@@ -167,6 +174,8 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
 
 void omp::AssetManager::saveAssetsToDrive()
 {
+    OMP_STAT_SCOPE("SaveAssetsToDrive");
+
     m_AssetRegistry.foreach([](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
     {
         INFO(LogAssetManager, "Starting to Save asset: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
@@ -184,6 +193,8 @@ void omp::AssetManager::saveAssetsToDrive()
 
 void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 {
+    OMP_STAT_SCOPE("LoadAssetsFromDrive");
+
     directory_iterator directory{std::filesystem::path(path)};
     for (auto iter: directory)
     {
@@ -258,6 +269,8 @@ std::future<std::weak_ptr<omp::Asset>> omp::AssetManager::loadAssetAsync(const s
 
 std::future<bool> omp::AssetManager::loadAllAssets()
 {
+    OMP_STAT_SCOPE("LoadAllAssets");
+
     if (m_ThreadPool)
     {
         return m_ThreadPool->submit([this]() -> bool

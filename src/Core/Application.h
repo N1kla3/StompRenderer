@@ -2,8 +2,7 @@
 #include <string>
 #include "Renderer.h"
 #include "Scene.h"
-#define TRACY_ENABLE
-#include "tracy/Tracy.hpp"
+#include "Core/Profiling.h"
 #include "UI/UIController.h"
 #include "AssetSystem/AssetManager.h"
 
