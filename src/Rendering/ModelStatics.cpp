@@ -1,8 +1,11 @@
 #include "ModelStatics.h"
 #include "tiny_obj_loader.h"
+#include "Core/Profiling.h"
 
 bool omp::ModelImporter::loadModel(omp::Model* model, const std::string& inPath)
 {
+    OMP_STAT_SCOPE("LoadModel");
+
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;

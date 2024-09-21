@@ -1248,6 +1248,8 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
 
 void omp::Renderer::drawFrame()
 {
+    OMP_STAT_SCOPE("DrawFrame");
+
     updateUniformBuffer(m_CurrentImage);
     prepareFrameForImage(m_CurrentImage);
 
@@ -1580,6 +1582,8 @@ void omp::Renderer::createUniformBuffers()
 
 void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
 {
+    OMP_STAT_SCOPE("UpdateUniform");
+
     UniformBufferObject ubo{};
     ubo.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
     ubo.proj = glm::perspective(
@@ -2339,6 +2343,8 @@ void omp::Renderer::prepareCommandBuffer(
         CommandBufferScope& bufferScope,
         VkCommandPool inCommandPool)
 {
+    OMP_STAT_SCOPE("CommandBuffer");
+
     VkCommandBufferAllocateInfo buffer_info{};
     buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     buffer_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;

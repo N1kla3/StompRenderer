@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "imgui.h"
+#include "Core/Profiling.h"
 #include <memory>
 #include "Core/CoreLib.h"
 #include "SceneEntity.h"
@@ -44,6 +45,8 @@ omp::SceneEntity& omp::SceneEntity::operator=(SceneEntity rhs)
 
 void omp::SceneEntity::tryLoadToGpu(const std::shared_ptr<omp::VulkanContext>& context)
 {
+    OMP_STAT_SCOPE("EntityLoadToGPU");
+
     m_ModelInstance->tryLoad(context, false);
 }
 

@@ -47,6 +47,8 @@ omp::Application::Application(const std::string& flags)
 
 void omp::Application::preInit()
 {
+    OMP_STAT_SCOPE("ApplicationPreInit");
+
     if (m_ThreadCount > 0)
     {
         m_ThreadPool = std::make_unique<omp::ThreadPool>(static_cast<unsigned int>(m_ThreadCount));
@@ -59,13 +61,7 @@ void omp::Application::preInit()
     m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get());
     std::future<bool> wait_assets = m_AssetManager->loadProject();
 
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    m_Window = glfwCreateWindow(m_Width, m_Height, "VulkanApplication", nullptr, nullptr);
-
-    glfwSetWindowUserPointer(m_Window, this);
-    glfwSetFramebufferSizeCallback(m_Window, windowResizeCallback);
+    initWindow();
 
     m_Renderer = std::make_unique<omp::Renderer>();
     m_Renderer->initVulkan(m_Window, m_Width, m_Height);
@@ -76,6 +72,7 @@ void omp::Application::preInit()
 
 void omp::Application::init()
 {
+    OMP_STAT_SCOPE("ApplicationInit");
     //debug_createSceneManually();
     //m_CurrentScene->setCurrentCamera(0);
     std::weak_ptr<omp::Asset> scene_weak_ptr = m_AssetManager->loadAsset("../assets/main_scene.json");
@@ -145,6 +142,19 @@ void omp::Application::windowResizeCallback(GLFWwindow* window, int width, int h
     omp::Application* app = reinterpret_cast<omp::Application*>(glfwGetWindowUserPointer(window));
 
     app->m_Renderer->onWindowResize(width, height);
+}
+
+void omp::Application::initWindow()
+{
+    OMP_STAT_SCOPE("ApplicationInitWindow");
+
+    glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    m_Window = glfwCreateWindow(m_Width, m_Height, "VulkanApplication", nullptr, nullptr);
+
+    glfwSetWindowUserPointer(m_Window, this);
+    glfwSetFramebufferSizeCallback(m_Window, windowResizeCallback);
 }
 
 void omp::Application::debug_createSceneManually()

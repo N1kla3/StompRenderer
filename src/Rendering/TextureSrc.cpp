@@ -1,4 +1,5 @@
 #include "Rendering/TextureSrc.h"
+#include "Core/Profiling.h"
 
 void omp::TextureSrc::serialize(JsonParser<>& parser)
 {
@@ -35,6 +36,8 @@ void omp::TextureSrc::tryLoad()
 
 bool omp::TextureSrc::loadTextureFromFile()
 {
+    OMP_STAT_SCOPE("LoadTexture");
+
     if (m_Path.empty())
     {
         VWARN(LogRendering, "Path to load texture is empty");

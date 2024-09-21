@@ -6,10 +6,13 @@
 #include "UI/ScenePanel.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_vulkan.h"
+#include "Core/Profiling.h"
 #include "UI/MainLayer.h"
 
 void omp::UIController::update(const omp::UIData& data, float deltaTime)
 {
+    OMP_STAT_SCOPE("UpdateUI");
+
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
