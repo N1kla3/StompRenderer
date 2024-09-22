@@ -10,17 +10,18 @@ namespace omp
         LightSystem(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrNum);
 
     private:
-        std::unique_ptr<omp::UniformBuffer> m_GlobalBuffer;
-        std::unique_ptr<omp::UniformBuffer> m_PointBuffer;
-        std::unique_ptr<omp::UniformBuffer> m_SpotBuffer;
+        size_t m_GlobalLightNum = 0;
+        size_t m_PointLightNum = 0;
+        size_t m_SpotLightNum = 0;
 
         std::shared_ptr<omp::VulkanContext> m_VulkanContext;
         omp::Scene* m_CurrentScene = nullptr;
         uint32_t m_KHRnum = 0;
 
-        size_t m_GlobalLightNum = 0;
-        size_t m_PointLightNum = 0;
-        size_t m_SpotLightNum = 0;
+        omp::UniformBuffer m_GlobalBuffer;
+        omp::UniformBuffer m_PointBuffer;
+        omp::UniformBuffer m_SpotBuffer;
+
 
         // METHODS //
         // ======= //
@@ -37,7 +38,8 @@ namespace omp
         VkBuffer getPointLightBuffer(uint32_t khr);
         VkBuffer getSpotLightBuffer(uint32_t khr);
 
-        void tryRecreateBuffers();
+        void tryRecreatePointLights();
+        void tryRecreateSpotLights();
         void update();
         void mapMemory(uint32_t khrImage);
         void onSceneChanged(omp::Scene* scene);

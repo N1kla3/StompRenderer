@@ -6,32 +6,30 @@
 omp::LightSystem::LightSystem(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrNum)
     : m_VulkanContext(inVulkanContext)
     , m_KHRnum(khrNum)
+    , m_GlobalBuffer(inVulkanContext, khrNum, sizeof(GlobalLight), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+    , m_PointBuffer(inVulkanContext, khrNum, getPointLightBufferSize(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+    , m_SpotBuffer(inVulkanContext, khrNum, getSpotLightBufferSize(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 {
-    tryRecreateBuffers();
 }
 
-void omp::LightSystem::tryRecreateBuffers()
+void omp::LightSystem::tryRecreatePointLights()
 {
-    m_GlobalBuffer = std::make_unique<omp::UniformBuffer>(
-            m_VulkanContext,
-            m_KHRnum,
-            sizeof(GlobalLight),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
-            );
-
-    m_PointBuffer = std::make_unique<omp::UniformBuffer>(
+    m_PointBuffer = omp::UniformBuffer(
             m_VulkanContext,
             m_KHRnum,
             getPointLightBufferSize(),
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-            );
+    );
+}
 
-    m_SpotBuffer = std::make_unique<omp::UniformBuffer>(
+void omp::LightSystem::tryRecreateSpotLights()
+{
+    m_SpotBuffer = omp::UniformBuffer(
             m_VulkanContext,
             m_KHRnum,
             getSpotLightBufferSize(),
             VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-            );
+    );
 }
 
 void omp::LightSystem::update()
@@ -53,16 +51,16 @@ void omp::LightSystem::mapMemory(uint32_t khrImage)
     {
         if (light->getType() == omp::ELightType::GLOBAL)
         {
-            m_GlobalBuffer->mapMemory(*reinterpret_cast<omp::GlobalLight*>(light->getLight()), khrImage);
+            m_GlobalBuffer.mapMemory(*reinterpret_cast<omp::GlobalLight*>(light->getLight()), khrImage);
         }
         else if (light->getType() == omp::ELightType::POINT)
         {
-            m_PointBuffer->mapMemory(*reinterpret_cast<omp::PointLight*>(light->getLight()), khrImage, offset_p);
+            m_PointBuffer.mapMemory(*reinterpret_cast<omp::PointLight*>(light->getLight()), khrImage, offset_p);
             offset_p += sizeof(PointLight);
         }
         else if (light->getType() == omp::ELightType::SPOT)
         {
-            m_SpotBuffer->mapMemory(*reinterpret_cast<omp::SpotLight*>(light->getLight()), khrImage, offset_s);
+            m_SpotBuffer.mapMemory(*reinterpret_cast<omp::SpotLight*>(light->getLight()), khrImage, offset_s);
             offset_s += sizeof(SpotLight);
         }
     }
@@ -71,6 +69,9 @@ void omp::LightSystem::mapMemory(uint32_t khrImage)
 void omp::LightSystem::onSceneChanged(omp::Scene* scene)
 {
     m_CurrentScene = scene;
+
+    size_t prev_point = m_PointLightNum;
+    size_t prev_spot = m_SpotLightNum;
 
     m_GlobalLightNum = 0;
     m_PointLightNum = 0;
@@ -94,32 +95,28 @@ void omp::LightSystem::onSceneChanged(omp::Scene* scene)
             }
         }
     }
+    if (prev_point != m_PointLightNum)
+    {
+        tryRecreatePointLights();
+    }
+    if (prev_spot != m_SpotLightNum)
+    {
+        tryRecreateSpotLights();
+    }
 }
 
 VkBuffer omp::LightSystem::getGlobalLightBuffer(uint32_t khr)
 {
-    if (m_GlobalBuffer)
-    {
-        return m_GlobalBuffer->getBuffer(khr);
-    }
-    return 0;
+    return m_GlobalBuffer.getBuffer(khr);
 }
 
 VkBuffer omp::LightSystem::getPointLightBuffer(uint32_t khr)
 {
-    if (m_PointBuffer)
-    {
-        return m_PointBuffer->getBuffer(khr);
-    }
-    return 0;
+    return m_PointBuffer.getBuffer(khr);
 }
 
 VkBuffer omp::LightSystem::getSpotLightBuffer(uint32_t khr)
 {
-    if (m_SpotBuffer)
-    {
-        return m_SpotBuffer->getBuffer(khr);
-    }
-    return 0;
+    return m_SpotBuffer.getBuffer(khr);
 }
 

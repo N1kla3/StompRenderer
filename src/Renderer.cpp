@@ -1577,7 +1577,6 @@ void omp::Renderer::createUniformBuffers()
             m_VulkanContext, m_PresentKHRImagesNum, sizeof(OutlineUniformBuffer),
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
-    m_LightSystem->tryRecreateBuffers();
 }
 
 void omp::Renderer::updateUniformBuffer(uint32_t currentImage)

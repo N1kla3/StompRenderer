@@ -16,6 +16,9 @@ namespace omp
 
     public:
         UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrImageCount, VkDeviceSize bufferSize, VkBufferUsageFlagBits flags);
+        UniformBuffer(UniformBuffer&& rhs);
+        UniformBuffer& operator=(UniformBuffer&& rhs);
+        ~UniformBuffer();
 
         VkBuffer getBuffer(uint32_t khr) const { return m_Buffer.at(khr); }
 
@@ -28,6 +31,7 @@ namespace omp
             vkUnmapMemory(m_VulkanContext->logical_device, m_Memory[imageIndex]);
         }
 
-        ~UniformBuffer();
+        UniformBuffer(const UniformBuffer& rhs) = delete;
+        UniformBuffer& operator=(const UniformBuffer& rhs) = delete;
     };
 }

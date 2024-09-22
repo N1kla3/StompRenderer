@@ -180,6 +180,7 @@ if (MINGW)
 else()
   target_link_libraries(renderer stomp_renderer Tracy::TracyClient)
 endif()
+target_compile_definitions(renderer PRIVATE TRACY_ENABLE)
 
 if (renderer_ENABLE_TESTS)
   include(CTest)
