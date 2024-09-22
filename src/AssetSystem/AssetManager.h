@@ -26,7 +26,8 @@ namespace omp
         AssetManager(AssetManager&&) = delete;
         AssetManager& operator=(AssetManager&&) = delete;
 
-        std::future<bool> loadProject(const std::string& inPath = ASSET_FOLDER);
+        void loadProject(const std::string& inPath = ASSET_FOLDER);
+        std::future<bool> loadProjectAsync(const std::string& inPath = ASSET_FOLDER);
         std::future<bool> saveProject();
         std::future<std::weak_ptr<Asset>> loadAssetAsync(AssetHandle assetId);
         std::future<std::weak_ptr<Asset>> loadAssetAsync(const std::string& inPath);

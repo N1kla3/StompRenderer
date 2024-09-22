@@ -101,7 +101,7 @@ TEST_F(AssetSuite, AssetManager__test__LoadingAssets)
 {
     INFO(LogTesting, "Start loading test");
 
-    std::future<bool> wait = manager->loadProject(g_TestProjectPath);
+    std::future<bool> wait = manager->loadProjectAsync(g_TestProjectPath);
     EXPECT_NO_THROW(wait.get());
 
     std::future<bool> result = manager->loadAllAssets();
@@ -113,7 +113,7 @@ TEST_F(AssetSuite, AssetManager__test__LoadingAssets)
 
 TEST_F(AssetSuite, AssetManager__test__SavingProject)
 {
-    std::future<bool> wait = manager->loadProject(g_TestProjectPath);
+    std::future<bool> wait = manager->loadProjectAsync(g_TestProjectPath);
     EXPECT_NO_THROW(wait.get());
 
     std::future<bool> res = manager->saveProject();
@@ -124,7 +124,7 @@ TEST_F(AssetSuite, AssetManager__test__SavingProject)
 
 TEST_F(AssetSuite, AssetManager__test__AssetUnload)
 {
-    std::future<bool> wait = manager->loadProject(g_TestProjectPath);
+    std::future<bool> wait = manager->loadProjectAsync(g_TestProjectPath);
     EXPECT_NO_THROW(wait.get());
 
     std::shared_ptr<omp::Asset> asset = manager->getAsset(g_TestProjectPath + "/main_scene.json").lock();

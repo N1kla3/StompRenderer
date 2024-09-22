@@ -59,7 +59,22 @@ void omp::Application::preInit()
     }
 
     m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get());
-    std::future<bool> wait_assets = m_AssetManager->loadProject();
+    std::future<bool> wait_assets = m_ThreadPool->submit([this]() -> bool
+    {
+        OMP_STAT_SCOPE("LoadSceneInit");
+
+        m_AssetManager->loadProject();
+        std::weak_ptr<omp::Asset> scene_weak_ptr = m_AssetManager->loadAsset("../assets/main_scene.json");
+        if (!scene_weak_ptr.expired())
+        {
+            m_CurrentScene = scene_weak_ptr.lock()->getObjectAs<omp::Scene>();
+        }
+        else
+        {
+            WARN(LogAssetManager, "Application cant load default scene!");
+        }
+        return true;
+    });
 
     initWindow();
 
@@ -75,15 +90,6 @@ void omp::Application::init()
     OMP_STAT_SCOPE("ApplicationInit");
     //debug_createSceneManually();
     //m_CurrentScene->setCurrentCamera(0);
-    std::weak_ptr<omp::Asset> scene_weak_ptr = m_AssetManager->loadAsset("../assets/main_scene.json");
-    if (!scene_weak_ptr.expired())
-    {
-        m_CurrentScene = scene_weak_ptr.lock()->getObjectAs<omp::Scene>();
-    }
-    else
-    {
-        WARN(LogAssetManager, "Application cant load default scene!");
-    }
 
     m_Renderer->loadScene(m_CurrentScene.get());
 }

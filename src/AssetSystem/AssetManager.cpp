@@ -39,7 +39,12 @@ omp::AssetManager::~AssetManager()
     });
 }
 
-std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)
+void omp::AssetManager::loadProject(const std::string& inPath)
+{
+    loadAssetsFromDrive(inPath);
+}
+
+std::future<bool> omp::AssetManager::loadProjectAsync(const std::string& inPath)
 {
     OMP_STAT_SCOPE("LoadProject");
 
@@ -47,7 +52,7 @@ std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)
     {
         return m_ThreadPool->submit([this, inPath]() -> bool
         {
-            loadAssetsFromDrive(inPath);
+            loadProject(inPath);
             return true;
         });
     }
@@ -55,7 +60,7 @@ std::future<bool> omp::AssetManager::loadProject(const std::string& inPath)
     {
         std::promise<bool> prom;
         std::future<bool> res = prom.get_future();
-        loadAssetsFromDrive(inPath);
+        loadProject(inPath);
         prom.set_value(true);
         return res;
     }
