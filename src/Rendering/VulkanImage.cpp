@@ -51,8 +51,8 @@ void omp::VulkanImage::createImage(uint32_t width, uint32_t height, uint32_t mip
 {
     m_ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     m_ImageInfo.imageType = VK_IMAGE_TYPE_2D;
-    m_ImageInfo.extent.width = static_cast<uint32_t>(width);
-    m_ImageInfo.extent.height = static_cast<uint32_t>(height);
+    m_ImageInfo.extent.width = width;
+    m_ImageInfo.extent.height = height;
     m_ImageInfo.extent.depth = 1;
     m_ImageInfo.mipLevels = mipLevels;
     m_ImageInfo.arrayLayers = arrayLayers;
