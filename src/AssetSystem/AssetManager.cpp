@@ -16,6 +16,7 @@ using namespace std::filesystem;
 
 omp::AssetManager::AssetManager(omp::ThreadPool* threadPool)
     : m_AssetRegistry()
+    , m_ProjectSettings()
     , m_ThreadPool(threadPool)
 {
     omp::ObjectFactory::registerClass<omp::TextureSrc>("TextureSrc");
@@ -33,15 +34,20 @@ omp::AssetManager::AssetManager(omp::ThreadPool* threadPool)
 
 omp::AssetManager::~AssetManager()
 {
-    m_AssetRegistry.foreach([](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& pair)
-    {
-        pair.second->resetHierarchy();
-    });
 }
 
 void omp::AssetManager::loadProject(const std::string& inPath)
 {
-    loadAssetsFromDrive(inPath);
+    const bool is_project_exist = tryLoadProjectFile(inPath);
+    if (is_project_exist)
+    {
+        // TODO(kolya): check application and file version
+        loadAssetsFromDrive(inPath);
+    }
+    else
+    {
+        ERROR(LogAssetManager, "Cant load project. No project file!");
+    }
 }
 
 std::future<bool> omp::AssetManager::loadProjectAsync(const std::string& inPath)
@@ -98,7 +104,7 @@ void omp::AssetManager::saveAsset(AssetHandle assetHandle)
             WARN(LogAssetManager, "Cant save unloaded asset with id: {}", assetHandle.id);
             return;
         }
-        // TODO: saving multithreading handling, conflicts
+        // TODO(N1kla3): saving multithreading handling, conflicts
 
         if (m_ThreadPool)
         {
@@ -127,7 +133,7 @@ bool omp::AssetManager::deleteAsset(AssetHandle assetHandle)
         found_asset->unloadAsset();
         m_AssetRegistry.remove_mapping(meta.asset_id);
         m_PathRegistry.erase(meta.path_on_disk);
-        // TODO: delete file
+        // TODO(N1kla3): delete file
         return true;
     }
     else
@@ -201,7 +207,7 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
     OMP_STAT_SCOPE("LoadAssetsFromDrive");
 
     directory_iterator directory{std::filesystem::path(path)};
-    for (auto iter: directory)
+    for (const auto& iter : directory)
     {
         if (iter.is_directory())
         {
@@ -280,7 +286,7 @@ std::future<bool> omp::AssetManager::loadAllAssets()
     {
         return m_ThreadPool->submit([this]() -> bool
         {
-            m_AssetRegistry.foreach([this](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
+            m_AssetRegistry.foreach([](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
             {
                 asset.second->tryLoadObject();
             });
@@ -291,7 +297,7 @@ std::future<bool> omp::AssetManager::loadAllAssets()
     {
         std::promise<bool> prom;
         std::future<bool> res = prom.get_future();
-        m_AssetRegistry.foreach([this](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
+        m_AssetRegistry.foreach([](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
         {
             asset.second->tryLoadObject();
         });
@@ -360,3 +366,23 @@ std::weak_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string& inPath)
     return std::weak_ptr<omp::Asset>();
 }
 
+bool omp::AssetManager::tryLoadProjectFile(const std::string& dirPath)
+{
+    namespace fs = std::filesystem;
+    if (fs::is_directory(fs::status(dirPath)))
+    {
+        directory_iterator directory{fs::path(dirPath)};
+        for (const auto& iter : directory)
+        {
+            if (iter.path().extension().string() == PROJECT_FORMAT)
+            {
+                JsonParser<> file_data{};
+                file_data.populateFromFile(iter.path().string());
+                m_ProjectSettings.deserialize(file_data);
+                return true;
+            }
+        }
+    }
+
+    return false;
+}

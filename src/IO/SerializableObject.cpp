@@ -24,7 +24,7 @@ std::shared_ptr<omp::SerializableObject> omp::SerializableObject::getDependency(
         ERROR(LogAssetManager, "Asset not specialized in serializable object");
         return nullptr;
     }
-    std::shared_ptr<omp::Asset> asset = m_Asset->getChild(id);
+    std::shared_ptr<omp::Asset> asset = m_Asset->getChild(id).lock();
     if (asset)
     {
         return asset->getObject();

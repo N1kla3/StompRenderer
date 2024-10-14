@@ -67,19 +67,33 @@ namespace omp
         {
             using is_transparent = void;
 
-            bool operator()(const std::shared_ptr<Asset>& l, const std::shared_ptr<Asset>& r) const
+            bool operator()(const std::shared_ptr<Asset>& lhs, const std::shared_ptr<Asset>& rhs) const
             {
-                return l->m_Metadata.asset_id == r->m_Metadata.asset_id;
+                return lhs->m_Metadata.asset_id == rhs->m_Metadata.asset_id;
             }
 
-            bool operator()(const std::shared_ptr<Asset>& l, const AssetHandle& r) const
+            bool operator()(const std::shared_ptr<Asset>& lhs, const AssetHandle& rhs) const
             {
-                return l->m_Metadata.asset_id == r.id;
+                return lhs->m_Metadata.asset_id == rhs.id;
             }
 
-            bool operator()(const AssetHandle& l, const std::shared_ptr<Asset>& r) const
+            bool operator()(const AssetHandle& lhs, const std::shared_ptr<Asset>& rhs) const
             {
-                return l.id == r->m_Metadata.asset_id;
+                return lhs.id == rhs->m_Metadata.asset_id;
+            }
+            bool operator()(const std::weak_ptr<Asset>& lhs, const std::weak_ptr<Asset>& rhs) const
+            {
+                return lhs.lock()->m_Metadata.asset_id == rhs.lock()->m_Metadata.asset_id;
+            }
+
+            bool operator()(const std::weak_ptr<Asset>& lhs, const AssetHandle& rhs) const
+            {
+                return lhs.lock()->m_Metadata.asset_id == rhs.id;
+            }
+
+            bool operator()(const AssetHandle& lhs, const std::weak_ptr<Asset>& rhs) const
+            {
+                return lhs.id == rhs.lock()->m_Metadata.asset_id;
             }
         };
 
@@ -88,17 +102,21 @@ namespace omp
             using hash_type = std::hash<omp::AssetHandle::handle_type>;
             using is_transparent = void;
 
-            size_t operator()(const std::shared_ptr<omp::Asset>& r) const
+            size_t operator()(const std::shared_ptr<omp::Asset>& rhs) const
             {
-                return hash_type{}(r->m_Metadata.asset_id);
+                return hash_type{}(rhs->m_Metadata.asset_id);
             }
-            size_t operator()(const AssetHandle& r) const
+            size_t operator()(const AssetHandle& rhs) const
             {
-                return hash_type{}(r.id);
+                return hash_type{}(rhs.id);
+            }
+            size_t operator()(const std::weak_ptr<omp::Asset>& rhs) const
+            {
+                return hash_type{}(rhs.lock()->m_Metadata.asset_id);
             }
         };
 
-        std::unordered_set<std::shared_ptr<omp::Asset>, asset_hash, asset_equal> m_Parents;
+        std::unordered_set<std::weak_ptr<omp::Asset>, asset_hash, asset_equal> m_Parents;
         std::unordered_set<std::shared_ptr<omp::Asset>, asset_hash, asset_equal> m_Children;
         MetaData m_Metadata;
         JsonParser<> m_Parser;
@@ -129,9 +147,8 @@ namespace omp
     public:
         MetaData getMetaData() const;
 
-        std::shared_ptr<omp::Asset> getChild(AssetHandle handle);
-        std::shared_ptr<omp::Asset> getParent(AssetHandle handle);
-        void resetHierarchy();
+        std::weak_ptr<omp::Asset> getChild(AssetHandle handle);
+        std::weak_ptr<omp::Asset> getParent(AssetHandle handle);
 
         std::shared_ptr<SerializableObject> getObject() const;
         template< typename T >
@@ -149,9 +166,8 @@ namespace omp
 
     // Constructors/operators //
     // ====================== //
-    public:
         Asset() = default;
-        Asset(JsonParser<>&& fileData);
+        explicit Asset(JsonParser<>&& fileData);
         Asset(const Asset&) = delete;
         Asset(Asset&&) = delete;
         Asset& operator=(const Asset&) = delete;

@@ -70,10 +70,13 @@ set(SOURCE
         IO/SerializableObject.cpp
         AssetSystem/Asset.h
         AssetSystem/Asset.cpp
-        Camera.h
-        Camera.cpp
         AssetSystem/AssetManager.h
         AssetSystem/AssetManager.cpp
+        AssetSystem/ObjectFactory.h
+        AssetSystem/ObjectFactory.cpp
+        AssetSystem/ProjectSettings.h
+        Camera.h
+        Camera.cpp
         Light.h
         Light.cpp
         LightObject.h
@@ -81,8 +84,6 @@ set(SOURCE
         LightSystem.cpp
         Rendering/GraphicsPipeline.h
         Rendering/GraphicsPipeline.cpp
-        AssetSystem/ObjectFactory.h
-        AssetSystem/ObjectFactory.cpp
         UI/UIController.h
         UI/UIController.cpp
         UI/ImguiUnit.h

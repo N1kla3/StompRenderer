@@ -149,7 +149,7 @@ void omp::Asset::specifyMetaData(omp::MetaData&& metadata)
 
 void omp::Asset::addChild(const std::shared_ptr<omp::Asset>& asset)
 {
-    if (asset.get())
+    if (asset)
     {
         asset->m_Parents.insert(getptr());
         m_Children.insert(asset);
@@ -162,7 +162,7 @@ void omp::Asset::addChild(const std::shared_ptr<omp::Asset>& asset)
 
 void omp::Asset::addParent(const std::shared_ptr<omp::Asset>& asset)
 {
-    if (asset.get())
+    if (asset)
     {
         asset->m_Children.insert(getptr());
         m_Parents.insert(asset);
@@ -173,30 +173,24 @@ void omp::Asset::addParent(const std::shared_ptr<omp::Asset>& asset)
     }
 }
 
-std::shared_ptr<omp::Asset> omp::Asset::getChild(AssetHandle handle)
+std::weak_ptr<omp::Asset> omp::Asset::getChild(AssetHandle handle)
 {
     auto iter = m_Children.find<omp::AssetHandle>(handle);
     if (iter != m_Children.end())
     {
         return *iter;
     }
-    return nullptr;
+    return std::weak_ptr<omp::Asset>();;
 }
 
-std::shared_ptr<omp::Asset> omp::Asset::getParent(AssetHandle handle)
+std::weak_ptr<omp::Asset> omp::Asset::getParent(AssetHandle handle)
 {
     auto iter = m_Parents.find<omp::AssetHandle>(handle);
     if (iter != m_Parents.end())
     {
         return *iter;
     }
-    return nullptr;
-}
-
-void omp::Asset::resetHierarchy()
-{
-    m_Children.clear();
-    m_Parents.clear();
+    return std::weak_ptr<omp::Asset>();;
 }
 
 void omp::Asset::addDependency(AssetHandle::handle_type handle)
