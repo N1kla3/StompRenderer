@@ -12,17 +12,20 @@ namespace omp
     public:
 
         int32_t version = 100;
+        std::string project_name = "None";
         std::string default_map = "/main_scene.json";
 
         virtual void serialize(omp::JsonParser<> &parser) override
         {
             parser.writeValue("ProjectVersion", version);
+            parser.writeValue("ProjectName", project_name);
             parser.writeValue("DefaultMap", default_map);
         }
 
         virtual void deserialize(omp::JsonParser<> &parser) override
         {
             OMP_READ_SETTING(int32_t, version, "ProjectVersion");
+            OMP_READ_SETTING(std::string, project_name, "ProjectName");
             OMP_READ_SETTING(std::string, default_map, "DefaultMap");
         }
     };

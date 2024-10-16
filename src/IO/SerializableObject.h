@@ -26,5 +26,6 @@ namespace omp
         std::shared_ptr<SerializableObject> getDependency(SerializationId);
 
         friend class Asset;
+        friend class AssetManager;
     };
 } // namespace omp

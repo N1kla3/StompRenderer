@@ -59,6 +59,8 @@ bool omp::Asset::unloadAsset()
     std::lock_guard<std::mutex> lock(m_Access);
     if (m_Object)
     {
+        m_Object->m_Asset = nullptr;
+        m_Object->m_SerializationId = 0;
         m_Object.reset();
         m_IsLoaded = false;
         return true;

@@ -7,11 +7,19 @@
 #include "Logs.h"
 #include "Core/Application.h"
 
-int main()
+int main(int argc, char** argv)
 {
+    std::string project_absolute_path{};
+    std::vector<std::string> flags;
+
+    for (size_t index = 0; index < argc; index++)
+    {
+
+    }
+
     omp::InitializeLogs();
     INFO(LogRendering, "=================Create Application=================");
-    omp::Application* application = new omp::Application{ "EMPTY FLAGS" };
+    omp::Application* application = new omp::Application{ project_absolute_path, flags };
 
     //try
     {

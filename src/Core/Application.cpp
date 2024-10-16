@@ -40,7 +40,7 @@ void omp::Application::requestExit()
     m_RequestExit = true;
 }
 
-omp::Application::Application(const std::string& flags)
+omp::Application::Application(const std::string& DirectoryToOpen, const std::vector<std::string>& flags)
 {
     parseFlags(flags);
 }
@@ -64,10 +64,10 @@ void omp::Application::preInit()
         OMP_STAT_SCOPE("LoadSceneInit");
 
         m_AssetManager->loadProject();
-        const std::weak_ptr<omp::Asset> scene_weak_ptr = m_AssetManager->loadAsset("../assets/main_scene.json");
-        if (!scene_weak_ptr.expired())
+        std::shared_ptr<omp::Scene>&& scene_to_load = m_AssetManager->tryLoadProjectDefaultMap();
+        if (scene_to_load)
         {
-            m_CurrentScene = scene_weak_ptr.lock()->getObjectAs<omp::Scene>();
+            m_CurrentScene = scene_to_load;
         }
         else
         {
@@ -118,7 +118,8 @@ void omp::Application::tick(float delta)
     m_RequestExit = m_RequestExit || glfwWindowShouldClose(m_Window);
 
     // Renderer only when not minimized
-    int width, height;
+    int width;
+    int height;
     glfwGetFramebufferSize(m_Window, &width, &height);
     if (width != 0 && height != 0)
     {
@@ -138,9 +139,19 @@ void omp::Application::tick(float delta)
 
 }
 
-void omp::Application::parseFlags(const std::string& /*commands*/)
+void omp::Application::changeProject(const std::string& newProjectPath)
 {
+    //TODO(N1kla3): recreate some system while reloading project
+}
 
+void omp::Application::changeScene(const std::string& relativePath)
+{
+    //TODO(N1kla3): change scene carefully with renderer
+}
+
+void omp::Application::parseFlags(const std::vector<std::string>& /*commands*/)
+{
+    //TODO(N1kla3): Parse flags
 }
 
 void omp::Application::windowResizeCallback(GLFWwindow* window, int width, int height)
@@ -168,29 +179,29 @@ void omp::Application::debug_createSceneManually()
     omp::AssetHandle scene_handle = m_AssetManager->createAsset("main_scene", "../assets/main_scene.json", "Scene");
     m_CurrentScene = m_AssetManager->getAsset(scene_handle).lock()->getObjectAs<omp::Scene>();
 
-    const std::string ModelPath = "../models/cube2.obj";
-    const std::string TexturePath = "../textures/container.png";
-    const std::string TextureSpecular = "../textures/container_specular.png";
+    const std::string model_path = "../models/cube2.obj";
+    const std::string texture_path = "../textures/container.png";
+    const std::string texture_specular = "../textures/container_specular.png";
 
     { // START BLOCK TO REUSE NAME
     omp::AssetHandle texture_handle = m_AssetManager->createAsset("container", "../assets/texture.json", "TextureSrc");
     auto texture = m_AssetManager->getAsset(texture_handle).lock()->getObjectAs<omp::TextureSrc>();
     if (texture)
     {
-        texture->setPath(TexturePath);
+        texture->setPath(texture_path);
     }
     omp::AssetHandle spec_texture_handle = m_AssetManager->createAsset("container_specular", "../assets/texture_specular.json", "TextureSrc");
     auto spec_texture = m_AssetManager->getAsset(spec_texture_handle).lock()->getObjectAs<omp::TextureSrc>();
     if (spec_texture)
     {
-        spec_texture->setPath(TextureSpecular);
+        spec_texture->setPath(texture_specular);
     }
 
     omp::AssetHandle model_handle = m_AssetManager->createAsset("cube_model", "../assets/cube_model.json", "Model");
     auto model = m_AssetManager->getAsset(model_handle).lock()->getObjectAs<omp::Model>();
     if (model)
     {
-        model->setPath(ModelPath);
+        model->setPath(model_path);
     }
 
     omp::AssetHandle material_handle = m_AssetManager->createAsset("def_mat", "../assets/def_material.json", "Material");

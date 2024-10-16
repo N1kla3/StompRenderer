@@ -7,6 +7,7 @@
 #include "AssetSystem/ObjectFactory.h"
 #include "AssetSystem/ProjectSettings.h"
 #include "Async/ThreadPool.h"
+#include "Scene.h"
 
 namespace omp
 {
@@ -45,6 +46,9 @@ namespace omp
         [[nodiscard]] std::weak_ptr<Asset> getAsset(AssetHandle assetHandle) const;
         [[nodiscard]] std::weak_ptr<Asset> getAsset(const std::string& inPath) const;
 
+        [[nodiscard]] std::shared_ptr<omp::Scene> tryLoadProjectDefaultMap();
+        void unloadMap(omp::Scene* scene);
+
     private:
         void saveAssetsToDrive();
         void loadAssetsFromDrive(const std::string& pathDirectory = ASSET_FOLDER);
@@ -62,12 +66,5 @@ namespace omp
         inline static const std::string NAME_MEMBER = "Name";
         inline static const std::string CLASS_MEMBER = "Class";
     }; // Asset Manager
-
-//    {
-//        std::shared_ptr<Asset> asset_ptr = std::make_shared<T>();
-//        asset_ptr->setName(inName);
-//        asset_ptr->saveAssetToFile(inPath, omp::ObjectFactory::getClassString<T>());
-//        m_Assets.insert({inPath, asset_ptr});
-//    }
 }
 

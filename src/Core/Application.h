@@ -11,7 +11,7 @@ namespace omp
     class Application
     {
     public:
-        Application(const std::string& flags);
+        Application(const std::string& DirectoryToOpen, const std::vector<std::string>& flags);
         virtual ~Application() = default;
 
         void start();
@@ -29,9 +29,11 @@ namespace omp
         virtual void preDestroy();
         virtual void tick(float delta);
 
+        void changeProject(const std::string& newProjectPath);
+        void changeScene(const std::string& relativePath);
+
     // Data //
     // ==== //
-    private:
         std::unordered_map<std::string, std::string> m_Flags;
 
         UIController m_UIController{};
@@ -47,10 +49,8 @@ namespace omp
         int m_ThreadCount = 5;//-1;
         bool m_RequestExit = false;
         
-
-    private:
         void initWindow();
-        void parseFlags(const std::string& commands);
+        void parseFlags(const std::vector<std::string>& commands);
         inline static void windowResizeCallback(GLFWwindow* window, int width, int height);
 
         void debug_createSceneManually();

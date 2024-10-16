@@ -366,6 +366,24 @@ std::weak_ptr<omp::Asset> omp::AssetManager::getAsset(const std::string& inPath)
     return std::weak_ptr<omp::Asset>();
 }
 
+std::shared_ptr<omp::Scene> omp::AssetManager::tryLoadProjectDefaultMap()
+{
+    const std::weak_ptr<omp::Asset> scene_weak_ptr = loadAsset(m_ProjectSettings.default_map);
+    if (!scene_weak_ptr.expired())
+    {
+        return scene_weak_ptr.lock()->getObjectAs<omp::Scene>();
+    }
+    return nullptr;
+}
+
+void omp::AssetManager::unloadMap(omp::Scene* scene)
+{
+    if (scene && scene->m_Asset)
+    {
+        scene->m_Asset->unloadAsset();
+    }
+}
+
 bool omp::AssetManager::tryLoadProjectFile(const std::string& dirPath)
 {
     namespace fs = std::filesystem;
