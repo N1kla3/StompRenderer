@@ -46,8 +46,8 @@ namespace omp
         [[nodiscard]] std::weak_ptr<Asset> getAsset(AssetHandle assetHandle) const;
         [[nodiscard]] std::weak_ptr<Asset> getAsset(const std::string& inPath) const;
 
-        [[nodiscard]] std::shared_ptr<omp::Scene> tryLoadProjectDefaultMap();
-        void unloadMap(omp::Scene* scene);
+        std::shared_ptr<omp::Scene> tryLoadProjectDefaultMap();
+        static void unloadMap(const std::shared_ptr<omp::Scene>& scene, bool save);
 
     private:
         void saveAssetsToDrive();

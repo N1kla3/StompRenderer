@@ -13,7 +13,7 @@ namespace omp
 
         int32_t version = 100;
         std::string project_name = "None";
-        std::string default_map = "/main_scene.json";
+        std::string default_map = "../assets/main_scene.json";
 
         virtual void serialize(omp::JsonParser<> &parser) override
         {

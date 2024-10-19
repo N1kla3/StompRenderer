@@ -1,5 +1,5 @@
 {
-	"ProjectVersion": 100
+	"ProjectVersion": 100,
 	"ProjectName": "first",
-	"DefaultMap": "/main_scene.json",
+	"DefaultMap": "../assets/main_scene.json"
 }

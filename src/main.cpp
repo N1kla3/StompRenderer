@@ -12,9 +12,16 @@ int main(int argc, char** argv)
     std::string project_absolute_path{};
     std::vector<std::string> flags;
 
-    for (size_t index = 0; index < argc; index++)
+    for (size_t index = 1; index < argc; index++)
     {
-
+        if (index != 2)
+        {
+            flags.push_back(argv[index]);
+        }
+        else
+        {
+            project_absolute_path = argv[index];
+        }
     }
 
     omp::InitializeLogs();

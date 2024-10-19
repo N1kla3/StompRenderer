@@ -11,11 +11,12 @@ namespace omp
     class Application
     {
     public:
-        Application(const std::string& DirectoryToOpen, const std::vector<std::string>& flags);
+        Application(const std::string& directoryToOpen, const std::vector<std::string>& flags);
         virtual ~Application() = default;
 
         void start();
         void requestExit();
+        void requestSceneChange(const std::string& relativePath);
 
         Renderer* getRenderer() const { return m_Renderer.get(); }
         omp::AssetManager* getAssetManager() const { return m_AssetManager.get(); }
@@ -41,6 +42,8 @@ namespace omp
         std::unique_ptr<omp::AssetManager> m_AssetManager;
         std::unique_ptr<omp::ThreadPool> m_ThreadPool;
         std::shared_ptr<omp::Scene> m_CurrentScene;
+        std::shared_ptr<omp::Scene> m_CurrentlyLoadingScene = nullptr;
+        std::string m_ProjectPath;
         GLFWwindow* m_Window;
 
         int m_Width = 1280;
@@ -48,6 +51,8 @@ namespace omp
         int m_FrameLimit = -1;
         int m_ThreadCount = 5;//-1;
         bool m_RequestExit = false;
+        bool m_RequestSceneLoad = false;
+        std::future<bool> m_SceneLoadRequest;
         
         void initWindow();
         void parseFlags(const std::vector<std::string>& commands);

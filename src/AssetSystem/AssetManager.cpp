@@ -38,15 +38,14 @@ omp::AssetManager::~AssetManager()
 
 void omp::AssetManager::loadProject(const std::string& inPath)
 {
-    const bool is_project_exist = tryLoadProjectFile(inPath);
-    if (is_project_exist)
+    if (!inPath.empty() && tryLoadProjectFile(inPath))
     {
         // TODO(kolya): check application and file version
         loadAssetsFromDrive(inPath);
     }
     else
     {
-        ERROR(LogAssetManager, "Cant load project. No project file!");
+        ERROR(LogAssetManager, "Cant load project. No project file! Or directory does not exist");
     }
 }
 
@@ -206,12 +205,13 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 {
     OMP_STAT_SCOPE("LoadAssetsFromDrive");
 
-    directory_iterator directory{std::filesystem::path(path)};
+    directory_iterator const directory{std::filesystem::path(path)};
+    std::string temp_path;
     for (const auto& iter : directory)
     {
         if (iter.is_directory())
         {
-            std::string temp_path = iter.path().generic_string();
+            temp_path = iter.path().generic_string();
             loadAssetsFromDrive(temp_path);
         }
         if (iter.path().extension().string() == ASSET_FORMAT)
@@ -376,10 +376,14 @@ std::shared_ptr<omp::Scene> omp::AssetManager::tryLoadProjectDefaultMap()
     return nullptr;
 }
 
-void omp::AssetManager::unloadMap(omp::Scene* scene)
+void omp::AssetManager::unloadMap(const std::shared_ptr<omp::Scene>& scene, bool save)
 {
     if (scene && scene->m_Asset)
     {
+        if (save)
+        {
+            scene->m_Asset->saveAsset();
+        }
         scene->m_Asset->unloadAsset();
     }
 }
@@ -389,7 +393,7 @@ bool omp::AssetManager::tryLoadProjectFile(const std::string& dirPath)
     namespace fs = std::filesystem;
     if (fs::is_directory(fs::status(dirPath)))
     {
-        directory_iterator directory{fs::path(dirPath)};
+        const directory_iterator directory{fs::path(dirPath)};
         for (const auto& iter : directory)
         {
             if (iter.path().extension().string() == PROJECT_FORMAT)

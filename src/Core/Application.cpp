@@ -16,11 +16,11 @@ void omp::Application::start()
 
     while (!m_RequestExit)
     {
-        time_point current_time = steady_clock::now();
-        float delta = static_cast<float>(duration_cast<milliseconds>(current_time - previous).count());
+        const time_point current_time = steady_clock::now();
+        const float delta = static_cast<float>(duration_cast<milliseconds>(current_time - previous).count());
         previous = current_time;
 
-        float delta_seconds = delta / 1000.f;
+        const float delta_seconds = delta / 1000.f;
         
         tick(delta_seconds);
 
@@ -40,8 +40,19 @@ void omp::Application::requestExit()
     m_RequestExit = true;
 }
 
-omp::Application::Application(const std::string& DirectoryToOpen, const std::vector<std::string>& flags)
+void omp::Application::requestSceneChange(const std::string& relativePath)
 {
+    m_RequestSceneLoad = true;
+    m_SceneLoadRequest = m_ThreadPool->submit([this, relativePath]() -> bool
+    {
+        changeScene(relativePath);
+        return true;
+    });
+}
+
+omp::Application::Application(const std::string& directoryToOpen, const std::vector<std::string>& flags)
+{
+    m_ProjectPath = directoryToOpen;
     parseFlags(flags);
 }
 
@@ -59,11 +70,11 @@ void omp::Application::preInit()
     }
 
     m_AssetManager = std::make_unique<omp::AssetManager>(m_ThreadPool.get());
-    const std::future<bool> wait_assets = m_ThreadPool->submit([this]() -> bool
+    std::future<bool> wait_assets = m_ThreadPool->submit([this]() -> bool
     {
         OMP_STAT_SCOPE("LoadSceneInit");
 
-        m_AssetManager->loadProject();
+        m_AssetManager->loadProject(/*m_ProjectPath*/);
         std::shared_ptr<omp::Scene>&& scene_to_load = m_AssetManager->tryLoadProjectDefaultMap();
         if (scene_to_load)
         {
@@ -72,6 +83,7 @@ void omp::Application::preInit()
         else
         {
             WARN(LogAssetManager, "Application cant load default scene!");
+            return false;
         }
         return true;
     });
@@ -82,7 +94,14 @@ void omp::Application::preInit()
     m_Renderer->initVulkan(m_Window, m_Width, m_Height);
     m_Renderer->initResources();
 
-    wait_assets.wait();
+    try
+    {
+        wait_assets.get();
+    }
+    catch (std::exception& err)
+    {
+        ERROR(LogRendering, err.what());
+    }
 }
 
 void omp::Application::init()
@@ -97,7 +116,7 @@ void omp::Application::init()
 void omp::Application::preDestroy()
 {
     std::future<bool> wait_save = m_AssetManager->saveProject();
-    wait_save.wait();
+    wait_save.get();
 
     m_ThreadPool.reset();
 
@@ -116,6 +135,16 @@ void omp::Application::tick(float delta)
 
     glfwPollEvents();
     m_RequestExit = m_RequestExit || glfwWindowShouldClose(m_Window);
+
+    if (m_RequestSceneLoad)
+    {
+        if (m_SceneLoadRequest.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+        {
+            m_CurrentScene = m_CurrentlyLoadingScene;
+            m_RequestSceneLoad = false;
+            m_Renderer->loadScene(m_CurrentScene.get());
+        }
+    }
 
     // Renderer only when not minimized
     int width;
@@ -146,7 +175,14 @@ void omp::Application::changeProject(const std::string& newProjectPath)
 
 void omp::Application::changeScene(const std::string& relativePath)
 {
-    //TODO(N1kla3): change scene carefully with renderer
+    m_AssetManager->unloadMap(m_CurrentScene, true);
+
+    std::weak_ptr<omp::Asset> scene_ptr = m_AssetManager->loadAsset(relativePath);
+
+    if (!scene_ptr.expired())
+    {
+        m_CurrentlyLoadingScene = scene_ptr.lock()->getObjectAs<omp::Scene>();
+    }
 }
 
 void omp::Application::parseFlags(const std::vector<std::string>& /*commands*/)
