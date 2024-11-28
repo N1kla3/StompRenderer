@@ -5,19 +5,19 @@
 
 void omp::Application::start()
 {
-    using namespace std::chrono;
+    namespace sc = std::chrono;
 
     preInit();
     init();
 
     //float ms_limit = static_cast<float>(1.f / m_FrameLimit);
 
-    time_point previous = steady_clock::now();
+    sc::time_point previous = sc::steady_clock::now();
 
     while (!m_RequestExit)
     {
-        const time_point current_time = steady_clock::now();
-        const float delta = static_cast<float>(duration_cast<milliseconds>(current_time - previous).count());
+        const sc::time_point current_time = sc::steady_clock::now();
+        const float delta = static_cast<float>(duration_cast<sc::milliseconds>(current_time - previous).count());
         previous = current_time;
 
         const float delta_seconds = delta / 1000.f;
@@ -195,6 +195,11 @@ void omp::Application::windowResizeCallback(GLFWwindow* window, int width, int h
     omp::Application* app = reinterpret_cast<omp::Application*>(glfwGetWindowUserPointer(window));
 
     app->m_Renderer->onWindowResize(width, height);
+}
+
+std::string omp::Application::wrapPath(const std::string& path)
+{
+    return m_ProjectPath + path;
 }
 
 void omp::Application::initWindow()

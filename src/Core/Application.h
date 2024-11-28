@@ -24,6 +24,8 @@ namespace omp
         omp::Scene* getCurrentScene() const { return m_CurrentScene.get(); }
         GLFWwindow* getWindow() const { return m_Window; }
 
+        static std::string wrapPath(const std::string& path);
+
     private:
         virtual void preInit();
         virtual void init();
@@ -43,7 +45,6 @@ namespace omp
         std::unique_ptr<omp::ThreadPool> m_ThreadPool;
         std::shared_ptr<omp::Scene> m_CurrentScene;
         std::shared_ptr<omp::Scene> m_CurrentlyLoadingScene = nullptr;
-        std::string m_ProjectPath;
         GLFWwindow* m_Window;
 
         int m_Width = 1280;
@@ -57,6 +58,7 @@ namespace omp
         void initWindow();
         void parseFlags(const std::vector<std::string>& commands);
         inline static void windowResizeCallback(GLFWwindow* window, int width, int height);
+        static std::string m_ProjectPath;
 
         void debug_createSceneManually();
         void debug_addLightToScene();
