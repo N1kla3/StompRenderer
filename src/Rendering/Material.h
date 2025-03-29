@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <vector>
@@ -55,8 +59,8 @@ namespace omp
         Material();
         explicit Material(const std::string& name);
 
-        virtual void serialize(JsonParser<> &parser) override;
-        virtual void deserialize(JsonParser<> &parser) override;
+        virtual void serialize(JsonParser<>& parser) override;
+        virtual void deserialize(JsonParser<>& parser) override;
 
         void loadToGpu(const std::shared_ptr<omp::VulkanContext>& context);
 
@@ -69,20 +73,40 @@ namespace omp
 
         std::vector<TextureData> getTextureData() const;
 
-        void setShaderName(const std::string& newName) { m_RenderInfo->shader_name = newName; };
+        void setShaderName(const std::string& newName)
+        {
+            m_RenderInfo->shader_name = newName;
+        };
 
-        std::string getShaderName() const { return m_RenderInfo->shader_name; }
+        std::string getShaderName() const
+        {
+            return m_RenderInfo->shader_name;
+        }
 
-        const omp::MaterialRenderInfo* getRenderInfo() const { return m_RenderInfo.get(); }
+        const omp::MaterialRenderInfo* getRenderInfo() const
+        {
+            return m_RenderInfo.get();
+        }
 
         void setDescriptorSet(const std::vector<VkDescriptorSet>& ds);
         std::vector<VkDescriptorSet>& getDescriptorSet();
-        void clearDescriptorSets() { m_DescriptorSets.clear(); }
 
-        bool isPotentiallyReadyForRendering() { return !m_DescriptorSets.empty(); }
+        void clearDescriptorSets()
+        {
+            m_DescriptorSets.clear();
+        }
+
+        bool isPotentiallyReadyForRendering()
+        {
+            return !m_DescriptorSets.empty();
+        }
 
         void enableBlending(bool enable);
-        bool isBlendingEnabled() const { return m_EnableBlending; }
+
+        bool isBlendingEnabled() const
+        {
+            return m_EnableBlending;
+        }
 
         friend MaterialManager;
     };

@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include "IO/SerializableObject.h"
@@ -13,16 +17,21 @@ namespace omp
     class ObjectFactory final
     {
     private:
-        inline static std::unordered_map<std::string, std::function<std::shared_ptr<SerializableObject>()>> m_CreationMap{};
-    public:
+        inline static std::unordered_map<std::string, std::function<std::shared_ptr<SerializableObject>()>>
+        m_CreationMap{};
 
-        template< typename T >
+    public:
+        template<typename T>
         inline static void registerClass(const std::string& inClassName)
         {
-            m_CreationMap.insert( {inClassName, []{ return std::make_shared<T>(); }} );
+            m_CreationMap.insert({inClassName, []
+            {
+                return std::make_shared<T>();
+            }});
         }
 
-        [[nodiscard]] inline static std::shared_ptr<SerializableObject> createSerializableObject(const std::string& inClassName)
+        [[nodiscard]] inline static std::shared_ptr<SerializableObject> createSerializableObject(
+                const std::string& inClassName)
         {
             if (m_CreationMap.find(inClassName) != m_CreationMap.end())
             {
@@ -51,4 +60,3 @@ static std::string getClassString()
     return typeid(std::decay_t<T>).name();
 }
 */
-

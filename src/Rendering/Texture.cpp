@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include <cmath>
 #include <stdexcept>
 #include <memory>
@@ -12,7 +16,7 @@ omp::Texture::Texture(const std::shared_ptr<omp::TextureSrc>& inTexture)
 }
 
 omp::Texture::Texture(const std::shared_ptr<omp::TextureSrc>& inTexture, const std::shared_ptr<VulkanContext>& helper)
-        : Texture(inTexture)
+    : Texture(inTexture)
 {
     m_VulkanContext = helper;
 }
@@ -103,12 +107,19 @@ void omp::Texture::createImage()
     VkDeviceMemory staging_buffer_memory;
     // TODO: Layer amount 
     size_t size_to_alloc = m_TextureSource->getSize();
-    m_VulkanContext.lock()->createBuffer(size_to_alloc, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+    m_VulkanContext.lock()->createBuffer(size_to_alloc,
+                                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                         staging_buffer, staging_buffer_memory);
+                                         staging_buffer,
+                                         staging_buffer_memory);
 
     char* data;
-    vkMapMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory, 0, size_to_alloc, 0, reinterpret_cast<void**>(&data));
+    vkMapMemory(m_VulkanContext.lock()->logical_device,
+                staging_buffer_memory,
+                0,
+                size_to_alloc,
+                0,
+                reinterpret_cast<void**>(&data));
     memcpy(data, m_TextureSource->getPixels(), size_to_alloc);
     vkUnmapMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory);
 
@@ -123,23 +134,34 @@ void omp::Texture::createImage()
     //WARN(LogRendering, "Creating image with mipmaps: {}", mip_levels);
     m_VulkanContext.lock()->createImage(width,
                                         height,
-                                        mip_levels, VK_FORMAT_R8G8B8A8_SRGB,
+                                        mip_levels,
+                                        VK_FORMAT_R8G8B8A8_SRGB,
                                         VK_IMAGE_TILING_OPTIMAL,
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                         VK_IMAGE_USAGE_SAMPLED_BIT,
-                                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory,
+                                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                        m_TextureImage,
+                                        m_TextureImageMemory,
                                         VK_SAMPLE_COUNT_1_BIT,
-                                        flags, array_layers);
+                                        flags,
+                                        array_layers);
 
-    m_VulkanContext.lock()->transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_levels);
+    m_VulkanContext.lock()->transitionImageLayout(m_TextureImage,
+                                                  VK_FORMAT_R8G8B8A8_SRGB,
+                                                  VK_IMAGE_LAYOUT_UNDEFINED,
+                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                                  mip_levels);
 
     m_VulkanContext.lock()->copyBufferToImage(staging_buffer,
                                               m_TextureImage,
                                               width,
                                               height);
 
-    m_VulkanContext.lock()->generateMipmaps(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, static_cast<int32_t>(width), static_cast<int32_t>(height), mip_levels);
+    m_VulkanContext.lock()->generateMipmaps(m_TextureImage,
+                                            VK_FORMAT_R8G8B8A8_SRGB,
+                                            static_cast<int32_t>(width),
+                                            static_cast<int32_t>(height),
+                                            mip_levels);
 
     vkDestroyBuffer(m_VulkanContext.lock()->logical_device, staging_buffer, nullptr);
     vkFreeMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory, nullptr);
@@ -148,9 +170,10 @@ void omp::Texture::createImage()
 void omp::Texture::createImageView()
 {
     m_TextureImageView = m_VulkanContext.lock()->createImageView(
-                m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                VK_IMAGE_ASPECT_COLOR_BIT,
-                m_TextureSource->getMipLevels());
+            m_TextureImage,
+            VK_FORMAT_R8G8B8A8_SRGB,
+            VK_IMAGE_ASPECT_COLOR_BIT,
+            m_TextureSource->getMipLevels());
 }
 
 void omp::Texture::fullLoad()

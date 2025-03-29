@@ -1,19 +1,29 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "VulkanContext.h"
 #include <stdexcept>
 #include <vector>
 
 omp::VulkanContext::VulkanContext(
-        VkDevice device, VkPhysicalDevice physDevice, VkCommandPool pool, VkQueue graphicsQueue)
-        : logical_device(device)
-        , phys_device(physDevice)
-        , command_pools(pool)
-        , graphics_queue(graphicsQueue)
+        VkDevice device,
+        VkPhysicalDevice physDevice,
+        VkCommandPool pool,
+        VkQueue graphicsQueue)
+    : logical_device(device)
+      , phys_device(physDevice)
+      , command_pools(pool)
+      , graphics_queue(graphicsQueue)
 {
 
 }
 
 void omp::VulkanContext::createBuffer(
-        VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
+        VkDeviceSize size,
+        VkBufferUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkBuffer& buffer,
         VkDeviceMemory& bufferMemory)
 {
     VkBufferCreateInfo buffer_info{};
@@ -59,10 +69,15 @@ uint32_t omp::VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropert
 }
 
 void omp::VulkanContext::createImage(
-        uint32_t width, uint32_t height, uint32_t mipLevels,
-        VkFormat format, VkImageTiling tiling,
-        VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-        VkImage& image, VkDeviceMemory& imageMemory,
+        uint32_t width,
+        uint32_t height,
+        uint32_t mipLevels,
+        VkFormat format,
+        VkImageTiling tiling,
+        VkImageUsageFlags usage,
+        VkMemoryPropertyFlags properties,
+        VkImage& image,
+        VkDeviceMemory& imageMemory,
         VkSampleCountFlagBits numSamples,
         VkImageCreateFlags flags,
         uint32_t arrayLayers)
@@ -104,7 +119,10 @@ void omp::VulkanContext::createImage(
     vkBindImageMemory(logical_device, image, imageMemory, 0);
 }
 
-void omp::VulkanContext::createImage(const VkImageCreateInfo& imageInfo, VkImage& image, VkDeviceMemory& imageMemory,VkMemoryPropertyFlags properties)
+void omp::VulkanContext::createImage(const VkImageCreateInfo& imageInfo,
+                                     VkImage& image,
+                                     VkDeviceMemory& imageMemory,
+                                     VkMemoryPropertyFlags properties)
 {
     if (vkCreateImage(logical_device, &imageInfo, nullptr, &image) != VK_SUCCESS)
     {
@@ -128,7 +146,11 @@ void omp::VulkanContext::createImage(const VkImageCreateInfo& imageInfo, VkImage
 }
 
 void omp::VulkanContext::transitionImageLayout(
-        VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
+        VkImage image,
+        VkFormat format,
+        VkImageLayout oldLayout,
+        VkImageLayout newLayout,
+        uint32_t mipLevels)
 {
     VkCommandBuffer command_buffer = beginSingleTimeCommands();
 
@@ -196,8 +218,14 @@ void omp::VulkanContext::transitionImageLayout(
     }
 
     vkCmdPipelineBarrier(command_buffer,
-                         source_stage, destination_stage,
-                         0, 0, nullptr, 0, nullptr, 1,
+                         source_stage,
+                         destination_stage,
+                         0,
+                         0,
+                         nullptr,
+                         0,
+                         nullptr,
+                         1,
                          &barrier);
 
     endSingleTimeCommands(command_buffer);
@@ -225,17 +253,28 @@ void omp::VulkanContext::copyBufferToImage(VkBuffer buffer, VkImage image, uint3
     endSingleTimeCommands(command_buffer);
 }
 
-void omp::VulkanContext::copyBufferToImage(VkBuffer buffer, VkImage image, const std::vector<VkBufferImageCopy>& regions)
+void omp::VulkanContext::copyBufferToImage(VkBuffer buffer,
+                                           VkImage image,
+                                           const std::vector<VkBufferImageCopy>& regions)
 {
     VkCommandBuffer command_buffer = beginSingleTimeCommands();
 
-    vkCmdCopyBufferToImage(command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(regions.size()), regions.data());
+    vkCmdCopyBufferToImage(command_buffer,
+                           buffer,
+                           image,
+                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                           static_cast<uint32_t>(regions.size()),
+                           regions.data());
 
     endSingleTimeCommands(command_buffer);
 }
 
 void omp::VulkanContext::generateMipmaps(
-        VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
+        VkImage image,
+        VkFormat imageFormat,
+        int32_t texWidth,
+        int32_t texHeight,
+        uint32_t mipLevels)
 {
     VkFormatProperties format_properties;
     vkGetPhysicalDeviceFormatProperties(phys_device, imageFormat, &format_properties);
@@ -267,12 +306,17 @@ void omp::VulkanContext::generateMipmaps(
         barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
         barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
-        vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+        vkCmdPipelineBarrier(command_buffer,
+                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+                             VK_PIPELINE_STAGE_TRANSFER_BIT,
                              0,
-                             0, nullptr,
-                             0, nullptr,
-                             1, &barrier
-        );
+                             0,
+                             nullptr,
+                             0,
+                             nullptr,
+                             1,
+                             &barrier
+                );
 
         VkImageBlit blit{};
         blit.srcOffsets[0] = {0, 0, 0};
@@ -290,10 +334,14 @@ void omp::VulkanContext::generateMipmaps(
         blit.dstSubresource.layerCount = 1;
 
         vkCmdBlitImage(command_buffer,
-                       image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                       image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                       1, &blit, VK_FILTER_LINEAR
-        );
+                       image,
+                       VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                       image,
+                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                       1,
+                       &blit,
+                       VK_FILTER_LINEAR
+                );
 
         barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -302,16 +350,24 @@ void omp::VulkanContext::generateMipmaps(
 
         vkCmdPipelineBarrier(command_buffer,
                              VK_PIPELINE_STAGE_TRANSFER_BIT,
-                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-                             0, nullptr,
-                             0, nullptr,
-                             1, &barrier
-        );
+                             VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                             0,
+                             0,
+                             nullptr,
+                             0,
+                             nullptr,
+                             1,
+                             &barrier
+                );
 
         if (mip_width > 1)
-        { mip_width /= 2; }
+        {
+            mip_width /= 2;
+        }
         if (mip_height > 1)
-        { mip_height /= 2; }
+        {
+            mip_height /= 2;
+        }
     }
 
     barrier.subresourceRange.baseMipLevel = mipLevels - 1;
@@ -322,11 +378,15 @@ void omp::VulkanContext::generateMipmaps(
 
     vkCmdPipelineBarrier(command_buffer,
                          VK_PIPELINE_STAGE_TRANSFER_BIT,
-                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-                         0, nullptr,
-                         0, nullptr,
-                         1, &barrier
-    );
+                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                         0,
+                         0,
+                         nullptr,
+                         0,
+                         nullptr,
+                         1,
+                         &barrier
+            );
 
     endSingleTimeCommands(command_buffer);
 }

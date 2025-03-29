@@ -1,7 +1,11 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
-#include <string>
-#include <optional>
 #include <fstream>
+#include <optional>
+#include <string>
 #include "Logs.h"
 #include "nlohmann/json.hpp"
 
@@ -11,17 +15,21 @@ namespace omp
     {
     private:
         nlohmann::json m_Data;
+
     public:
         using ImplementationType = nlohmann::json;
         nlohmannjson() = default;
+
         nlohmannjson(nlohmann::json&& value)
         {
             m_Data = value;
         }
+
         nlohmannjson(nlohmannjson&& other)
         {
             m_Data = std::move(other.m_Data);
         }
+
         nlohmannjson& operator=(nlohmannjson&& other)
         {
             m_Data = std::move(other.m_Data);
@@ -61,7 +69,7 @@ namespace omp
             }
         }
 
-        template< typename T >
+        template<typename T>
         std::optional<T> read(const std::string& inKey) const
         {
             if (m_Data.contains(inKey))
@@ -72,7 +80,7 @@ namespace omp
             return std::nullopt;
         }
 
-        template< typename T >
+        template<typename T>
         void write(const std::string& inKey, T&& inValue)
         {
             m_Data[inKey] = std::forward<T>(inValue);
@@ -103,14 +111,17 @@ namespace omp
 
     public:
         JsonParser() = default;
+
         JsonParser(ParserType&& parser)
         {
             m_Parser = std::move(parser);
         }
+
         JsonParser(JsonParser&& other)
         {
             m_Parser = std::move(other.m_Parser);
         }
+
         JsonParser& operator=(JsonParser&& other)
         {
             m_Parser = std::move(other.m_Parser);
@@ -119,7 +130,6 @@ namespace omp
 
         JsonParser(const JsonParser& other) = delete;
         JsonParser& operator=(const JsonParser& other) = delete;
-
 
     public:
         // Usage //
@@ -140,56 +150,55 @@ namespace omp
         bool contains(const std::string& inKey) const;
 
         std::string to_string() const;
-
     };
 
-    template< typename ParserType >
+    template<typename ParserType>
     bool JsonParser<ParserType>::populateFromFile(const std::string& filePath)
     {
         return m_Parser.readJsonFromFile(filePath);
     }
 
-    template< typename ParserType >
+    template<typename ParserType>
     bool JsonParser<ParserType>::writeToFile(const std::string& filePath)
     {
         return m_Parser.writeJsonToFile(filePath);
     }
 
-    template< typename ParserType >
-    template< typename T >
+    template<typename ParserType>
+    template<typename T>
     std::optional<T> JsonParser<ParserType>::readValue(const std::string& inKey) const
     {
         return m_Parser.template read<T>(inKey);
     }
 
-    template< typename ParserType >
+    template<typename ParserType>
     JsonParser<ParserType> JsonParser<ParserType>::readObject(const std::string& inKey) const
     {
         return JsonParser(ParserType(m_Parser.template read<typename ParserType::ImplementationType>(inKey).value()));
     }
 
-    template< typename ParserType >
-    template< typename T >
+    template<typename ParserType>
+    template<typename T>
     void JsonParser<ParserType>::writeValue(const std::string& inKey, T&& value)
     {
         m_Parser.template write<T>(inKey, std::forward<T>(value));
     }
 
-    template< typename ParserType >
+    template<typename ParserType>
     void JsonParser<ParserType>::writeObject(const std::string& inKey, JsonParser&& parser)
     {
         m_Parser.template write<typename ParserType::ImplementationType>(inKey, parser.m_Parser.getImplementation());
     }
 
-    template< typename ParserType >
+    template<typename ParserType>
     bool JsonParser<ParserType>::contains(const std::string& inKey) const
     {
         return m_Parser.contains(inKey);
     }
 
-    template< typename ParserType >
+    template<typename ParserType>
     std::string JsonParser<ParserType>::to_string() const
     {
         return m_Parser.to_string();
     }
-}
+} // namespace omp

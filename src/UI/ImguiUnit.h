@@ -1,12 +1,16 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <vector>
 
 namespace omp
 {
-/*
- * Base class for ui elements, which is automatically rendered, only need to override renderUI()
- */
+    /*
+     * Base class for ui elements, which is automatically rendered, only need to override renderUI()
+     */
     class ImguiUnit
     {
         inline static std::vector<ImguiUnit*> s_ImguiUnits{};
@@ -18,7 +22,9 @@ namespace omp
         // TODO think about delta time
         virtual void renderUi(float DeltaTime) = 0;
 
-        inline static std::vector<ImguiUnit*> getAllUnits() { return s_ImguiUnits; }
+        inline static std::vector<ImguiUnit*> getAllUnits()
+        {
+            return s_ImguiUnits;
+        }
     };
 } // omp
-

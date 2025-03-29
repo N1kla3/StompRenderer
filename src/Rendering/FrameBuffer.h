@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include "vulkan/vulkan_core.h"
 #include "RenderPass.h"
@@ -11,7 +15,11 @@ namespace omp
     public:
         FrameBuffer() = default;
         FrameBuffer(VkDevice device);
-        FrameBuffer(VkDevice device, const std::vector<VkImageView>& imagesViews, const std::shared_ptr<omp::RenderPass>& renderPass, uint32_t width, uint32_t height);
+        FrameBuffer(VkDevice device,
+                    const std::vector<VkImageView>& imagesViews,
+                    const std::shared_ptr<omp::RenderPass>& renderPass,
+                    uint32_t width,
+                    uint32_t height);
         ~FrameBuffer();
 
         void destroyInnerState();
@@ -25,8 +33,10 @@ namespace omp
 
         // Accessors //
         // ========= //
-        VkFramebuffer getVulkanFrameBuffer() const { return m_VulkanBuffer; }
-
+        VkFramebuffer getVulkanFrameBuffer() const
+        {
+            return m_VulkanBuffer;
+        }
 
     private:
         // State //
@@ -36,7 +46,6 @@ namespace omp
         VkFramebuffer m_VulkanBuffer;
         VkFramebufferCreateInfo m_CreateInfo{};
         std::vector<VkImageView> m_ImageAttachments;
-
 
     public:
         // Configuration //

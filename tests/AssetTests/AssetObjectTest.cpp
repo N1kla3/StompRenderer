@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "gtest/gtest.h"
 #include "AssetSystem/Asset.h"
 #include "SceneEntity.h"
@@ -20,6 +24,7 @@ protected:
 
         pool = std::make_unique<omp::ThreadPool>(4);
     }
+
     static void TearDownTestSuite()
     {
         pool.reset(nullptr);
@@ -65,4 +70,3 @@ TEST_F(AssetObjectSuite, TestAssetSamePathCreation_Model)
     omp::AssetHandle wrong_handle = manager->createAsset("wrongtest", "../someAsset.json", "Model");
     ASSERT_TRUE(wrong_handle == omp::AssetHandle::INVALID_HANDLE);
 }
-

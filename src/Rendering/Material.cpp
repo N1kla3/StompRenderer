@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "Material.h"
 #include "Logs.h"
 #include "UI/MaterialRepresentation.h"
@@ -31,11 +35,11 @@ void omp::Material::loadToGpu(const std::shared_ptr<omp::VulkanContext>& context
 void omp::Material::addTexture(ETextureType type, const std::shared_ptr<Texture>& texture)
 {
     const static std::array<std::string, static_cast<size_t>(ETextureType::Max)> names
-            {
-             "texture",
-             "diffusive_map",
-             "Specular_map"
-            };
+    {
+            "texture",
+            "diffusive_map",
+            "Specular_map"
+    };
 
     clearDescriptorSets();
 
@@ -56,18 +60,18 @@ void omp::Material::removeTexture(const TextureData& data)
 }
 
 void omp::Material::addTexture(const std::shared_ptr<omp::TextureSrc>& texture)
-{ 
+{
     std::shared_ptr<omp::Texture> texture_inst = std::make_shared<omp::Texture>(texture);
     addTexture(ETextureType::Texture, texture_inst);
 }
 
-void omp::Material::addDiffusiveTexture(const std::shared_ptr<omp::TextureSrc>& texture) 
+void omp::Material::addDiffusiveTexture(const std::shared_ptr<omp::TextureSrc>& texture)
 {
     std::shared_ptr<omp::Texture> texture_inst = std::make_shared<omp::Texture>(texture);
     addTexture(ETextureType::DiffusiveMap, texture_inst);
 }
 
-void omp::Material::addSpecularTexture(const std::shared_ptr<omp::TextureSrc>& texture) 
+void omp::Material::addSpecularTexture(const std::shared_ptr<omp::TextureSrc>& texture)
 {
     std::shared_ptr<omp::Texture> texture_inst = std::make_shared<omp::Texture>(texture);
     addTexture(ETextureType::SpecularMap, texture_inst);
@@ -99,7 +103,7 @@ omp::Material::Material(const std::string& /*name*/)
 
 }
 
-void omp::Material::serialize(JsonParser<> &parser)
+void omp::Material::serialize(JsonParser<>& parser)
 {
     auto texture = m_RenderInfo->textures[static_cast<size_t>(ETextureType::Texture)].texture;
     if (texture)
@@ -122,20 +126,23 @@ void omp::Material::serialize(JsonParser<> &parser)
     parser.writeValue("enable_blending", m_EnableBlending);
 }
 
-void omp::Material::deserialize(JsonParser<> &parser)
+void omp::Material::deserialize(JsonParser<>& parser)
 {
     using id_type = omp::SerializableObject::SerializationId;
-    auto texture = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<id_type>("texture").value()));
+    auto texture = std::dynamic_pointer_cast<omp::TextureSrc>(
+            getDependency(parser.readValue<id_type>("texture").value()));
     if (texture)
     {
         addTexture(texture);
     }
-    auto diffusive_map = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<id_type>("diffuse_map").value()));
+    auto diffusive_map = std::dynamic_pointer_cast<omp::TextureSrc>(
+            getDependency(parser.readValue<id_type>("diffuse_map").value()));
     if (diffusive_map)
     {
         addDiffusiveTexture(diffusive_map);
     }
-    auto specular_map = std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(parser.readValue<id_type>("specular_map").value()));
+    auto specular_map = std::dynamic_pointer_cast<omp::TextureSrc>(
+            getDependency(parser.readValue<id_type>("specular_map").value()));
     if (specular_map)
     {
         addSpecularTexture(specular_map);

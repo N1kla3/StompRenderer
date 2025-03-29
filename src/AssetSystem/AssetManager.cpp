@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "AssetSystem/AssetManager.h"
 #include "AssetSystem/Asset.h"
 #include "Logs.h"
@@ -16,8 +20,8 @@ using namespace std::filesystem;
 
 omp::AssetManager::AssetManager(omp::ThreadPool* threadPool)
     : m_AssetRegistry()
-    , m_ProjectSettings()
-    , m_ThreadPool(threadPool)
+      , m_ProjectSettings()
+      , m_ThreadPool(threadPool)
 {
     omp::ObjectFactory::registerClass<omp::TextureSrc>("TextureSrc");
     omp::ObjectFactory::registerClass<omp::Model>("Model");
@@ -61,7 +65,7 @@ std::future<bool> omp::AssetManager::loadProjectAsync(const std::string& inPath)
             return true;
         });
     }
-    else 
+    else
     {
         std::promise<bool> prom;
         std::future<bool> res = prom.get_future();
@@ -142,7 +146,9 @@ bool omp::AssetManager::deleteAsset(AssetHandle assetHandle)
     }
 }
 
-omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const std::string& inPath, const std::string& inClass)
+omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName,
+                                                const std::string& inPath,
+                                                const std::string& inClass)
 {
     OMP_STAT_SCOPE("CreateAsset");
 
@@ -159,7 +165,7 @@ omp::AssetHandle omp::AssetManager::createAsset(const std::string& inName, const
     {
         ERROR(LogAssetManager, "Trying to create asset with existing id!! ID: {}", id);
         id = omp::CoreLib::generateId64();
-    } 
+    }
 
     AssetHandle handle(id);
     init_metadata.asset_id = id;
@@ -188,15 +194,24 @@ void omp::AssetManager::saveAssetsToDrive()
 
     m_AssetRegistry.foreach([](std::pair<AssetHandle, std::shared_ptr<omp::Asset>>& asset)
     {
-        INFO(LogAssetManager, "Starting to Save asset: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
+        INFO(LogAssetManager,
+             "Starting to Save asset: id-{}, path: {}",
+             asset.second->m_Metadata.asset_id,
+             asset.second->m_Metadata.path_on_disk);
         bool suc = asset.second->saveAsset();
         if (suc)
         {
-            INFO(LogAssetManager, "Asset Saved: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
+            INFO(LogAssetManager,
+                 "Asset Saved: id-{}, path: {}",
+                 asset.second->m_Metadata.asset_id,
+                 asset.second->m_Metadata.path_on_disk);
         }
         else
         {
-            WARN(LogAssetManager, "Asset cant be Saved: id-{}, path: {}", asset.second->m_Metadata.asset_id, asset.second->m_Metadata.path_on_disk);
+            WARN(LogAssetManager,
+                 "Asset cant be Saved: id-{}, path: {}",
+                 asset.second->m_Metadata.asset_id,
+                 asset.second->m_Metadata.path_on_disk);
         }
     });
 }
@@ -207,7 +222,7 @@ void omp::AssetManager::loadAssetsFromDrive(const std::string& path)
 
     directory_iterator const directory{std::filesystem::path(path)};
     std::string temp_path;
-    for (const auto& iter : directory)
+    for (const auto& iter: directory)
     {
         if (iter.is_directory())
         {
@@ -334,9 +349,12 @@ std::weak_ptr<omp::Asset> omp::AssetManager::loadAsset(const std::string& inPath
 std::weak_ptr<omp::Asset> omp::AssetManager::loadAssetInternal(const std::shared_ptr<omp::Asset>& asset)
 {
     auto metadata = asset->getMetaData();
-    for (auto dependency_id : metadata.dependencies)
+    for (auto dependency_id: metadata.dependencies)
     {
-        INFO(LogAssetManager, "Start loading dependency for asset {}, dependency: {}", metadata.asset_id, dependency_id);
+        INFO(LogAssetManager,
+             "Start loading dependency for asset {}, dependency: {}",
+             metadata.asset_id,
+             dependency_id);
 
         std::weak_ptr<omp::Asset> child = loadAsset(dependency_id);
         asset->addChild(child.lock());
@@ -394,7 +412,7 @@ bool omp::AssetManager::tryLoadProjectFile(const std::string& dirPath)
     if (fs::is_directory(fs::status(dirPath)))
     {
         const directory_iterator directory{fs::path(dirPath)};
-        for (const auto& iter : directory)
+        for (const auto& iter: directory)
         {
             if (iter.path().extension().string() == PROJECT_FORMAT)
             {

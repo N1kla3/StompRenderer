@@ -1,9 +1,13 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <cstdint>
 #include <string>
-#include "UI/IDrawable.h"
 #include "Rendering/ModelInstance.h"
+#include "UI/IDrawable.h"
 
 namespace omp
 {
@@ -12,6 +16,7 @@ namespace omp
     {
     private:
         uint32_t m_Id;
+
     protected:
         std::string m_Name;
         std::shared_ptr<omp::ModelInstance> m_ModelInstance = nullptr;
@@ -26,19 +31,32 @@ namespace omp
 
         friend bool operator==(const SceneEntity& lhs, const SceneEntity& rhs)
         {
-            return lhs.m_Id == rhs.m_Id
-                    && lhs.m_Name == rhs.m_Name
-                    && lhs.m_ModelInstance == rhs.m_ModelInstance;
+            return lhs.m_Id == rhs.m_Id && lhs.m_Name == rhs.m_Name && lhs.m_ModelInstance == rhs.m_ModelInstance;
         }
 
-        uint32_t getId() const { return m_Id; }
+        uint32_t getId() const
+        {
+            return m_Id;
+        }
         void tryLoadToGpu(const std::shared_ptr<omp::VulkanContext>& context);
 
-        std::string getName() const { return m_Name; }
-        void setName(const std::string& inName) { m_Name = inName; }
+        std::string getName() const
+        {
+            return m_Name;
+        }
+        void setName(const std::string& inName)
+        {
+            m_Name = inName;
+        }
 
-        std::shared_ptr<omp::ModelInstance> getModelInstance() const { return m_ModelInstance; }
-        void setModelInstance(const std::shared_ptr<omp::ModelInstance>& instance) { m_ModelInstance = instance; }
+        std::shared_ptr<omp::ModelInstance> getModelInstance() const
+        {
+            return m_ModelInstance;
+        }
+        void setModelInstance(const std::shared_ptr<omp::ModelInstance>& instance)
+        {
+            m_ModelInstance = instance;
+        }
 
         void setTranslation(const glm::vec3& trans);
         void setRotation(const glm::vec3& rot);
@@ -48,6 +66,9 @@ namespace omp
 
         virtual void onSceneSave(JsonParser<>& parser, omp::Scene* scene);
         virtual void onSceneLoad(JsonParser<>& parser, omp::Scene* scene);
-        virtual std::string getClassName() const { return "SceneEntity"; }
+        virtual std::string getClassName() const
+        {
+            return "SceneEntity";
+        }
     };
-}
+} // namespace omp

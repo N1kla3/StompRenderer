@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include <fstream>
 #include <optional>
 #include "Shader.h"
@@ -7,10 +11,10 @@ omp::Shader::Shader(
         const std::shared_ptr<VulkanContext>& context,
         const std::string& vertexPath,
         const std::string& fragmentPath
-)
-        : m_Context(context)
-        , m_VertexPath(vertexPath)
-        , m_FragmentPath(fragmentPath)
+        )
+    : m_Context(context)
+      , m_VertexPath(vertexPath)
+      , m_FragmentPath(fragmentPath)
 {
     load();
 }
@@ -105,4 +109,3 @@ void omp::Shader::deserialize(JsonParser<>& parser)
     m_VertexPath = parser.readValue<std::string>("vertex_path").value();
     m_VertexPath = parser.readValue<std::string>("fragment_path").value();
 }
-

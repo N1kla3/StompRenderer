@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <memory>
@@ -14,18 +18,25 @@ namespace omp
         handle_type id;
 
         AssetHandle(handle_type newId)
-            : id(newId){}
+            : id(newId)
+        {
+        }
 
         bool operator==(const AssetHandle& other) const
         {
             return id == other.id;
         }
+
         AssetHandle& operator=(handle_type other)
         {
             id = other;
             return *this;
         }
-        bool isValid() const { return id != INVALID_HANDLE; }
+
+        bool isValid() const
+        {
+            return id != INVALID_HANDLE;
+        }
 
         static const AssetHandle INVALID_HANDLE;
     };
@@ -54,6 +65,7 @@ namespace omp
         {
             return asset_id != 0 && !path_on_disk.empty() && !class_id.empty() && !asset_name.empty();
         }
+
         operator bool() const
         {
             return IsValid();
@@ -81,6 +93,7 @@ namespace omp
             {
                 return lhs.id == rhs->m_Metadata.asset_id;
             }
+
             bool operator()(const std::weak_ptr<Asset>& lhs, const std::weak_ptr<Asset>& rhs) const
             {
                 return lhs.lock()->m_Metadata.asset_id == rhs.lock()->m_Metadata.asset_id;
@@ -106,10 +119,12 @@ namespace omp
             {
                 return hash_type{}(rhs->m_Metadata.asset_id);
             }
+
             size_t operator()(const AssetHandle& rhs) const
             {
                 return hash_type{}(rhs.id);
             }
+
             size_t operator()(const std::weak_ptr<omp::Asset>& rhs) const
             {
                 return hash_type{}(rhs.lock()->m_Metadata.asset_id);
@@ -125,8 +140,8 @@ namespace omp
 
         bool m_IsLoaded = false;
 
-    // Methods //
-    // ======= //
+        // Methods //
+        // ======= //
     private:
         bool loadMetadata();
         bool tryLoadObject();
@@ -151,21 +166,27 @@ namespace omp
         std::weak_ptr<omp::Asset> getParent(AssetHandle handle);
 
         std::shared_ptr<SerializableObject> getObject() const;
-        template< typename T >
+
+        template<typename T>
         std::shared_ptr<T> getObjectAs() const
         {
             return std::dynamic_pointer_cast<T>(m_Object);
         }
+
         std::shared_ptr<Asset> getptr()
         {
             return shared_from_this();
         }
+
         void addDependency(AssetHandle::handle_type handle);
 
-        bool isLoaded() const { return m_IsLoaded; }
+        bool isLoaded() const
+        {
+            return m_IsLoaded;
+        }
 
-    // Constructors/operators //
-    // ====================== //
+        // Constructors/operators //
+        // ====================== //
         Asset() = default;
         explicit Asset(JsonParser<>&& fileData);
         Asset(const Asset&) = delete;
@@ -178,8 +199,8 @@ namespace omp
         bool operator!=(const Asset& inOther);
 
         friend class AssetManager;
-    private:
 
+    private:
         inline static const std::string ID_KEY = "ObjectID";
         inline static const std::string PATH_KEY = "DiscPath";
         inline static const std::string CLASS_NAME_KEY = "ClassName";

@@ -1,9 +1,13 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "Renderer.h"
-#include "imgui.h"
 #include <algorithm>
 #include <optional>
 #include <set>
 #include <vector>
+#include "imgui.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -13,13 +17,13 @@
 
 #include <chrono>
 
-#include "IO/stb_image.h"
-#include "backends/imgui_impl_vulkan.h"
-#include "Rendering/Shader.h"
-#include "Core/Profiling.h"
-#include "backends/imgui_impl_glfw.h"
 #include <tiny_obj_loader.h>
+#include "Core/Profiling.h"
+#include "IO/stb_image.h"
 #include "Logs.h"
+#include "Rendering/Shader.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
 
 #ifdef NDEBUG
 const bool g_EnableValidationLayers = false;
@@ -29,11 +33,9 @@ const bool g_EnableValidationLayers = true;
 
 namespace
 {
-    const std::vector<const char*> g_ValidationLayers{
-            "VK_LAYER_KHRONOS_validation"};
+    const std::vector<const char*> g_ValidationLayers{"VK_LAYER_KHRONOS_validation"};
 
-    const std::vector<const char*> g_DeviceExtensions{
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    const std::vector<const char*> g_DeviceExtensions{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 } // namespace
 
 omp::Renderer::Renderer()
@@ -78,7 +80,6 @@ void omp::Renderer::initResources()
     m_CommandBuffers.resize(m_PresentKHRImagesNum);
     m_ImguiCommandBuffers.resize(m_PresentKHRImagesNum);
     createSyncObjects();
-
 }
 
 void omp::Renderer::loadScene(omp::Scene* scene)
@@ -91,20 +92,22 @@ void omp::Renderer::loadScene(omp::Scene* scene)
 
     m_LightSystem->onSceneChanged(scene);
     recreateSwapChain();
-    // TODO: add request to update pipelines and 
+    // TODO: add request to update pipelines and
 }
 
 bool omp::Renderer::prepareFrame()
 {
     OMP_STAT_SCOPE("PrepareFrame");
 
-    vkWaitForFences(m_LogicalDevice, 1, &m_InFlightFences[m_CurrentFrame],
-                    VK_TRUE, UINT64_MAX);
+    vkWaitForFences(m_LogicalDevice, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t image_index;
-    VkResult result = vkAcquireNextImageKHR(
-            m_LogicalDevice, m_SwapChain, UINT64_MAX,
-            m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &image_index);
+    VkResult result = vkAcquireNextImageKHR(m_LogicalDevice,
+                                            m_SwapChain,
+                                            UINT64_MAX,
+                                            m_ImageAvailableSemaphores[m_CurrentFrame],
+                                            VK_NULL_HANDLE,
+                                            &image_index);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || m_FramebufferResized)
     {
@@ -121,8 +124,7 @@ bool omp::Renderer::prepareFrame()
 
     if (m_ImagesInFlight[image_index] != VK_NULL_HANDLE)
     {
-        vkWaitForFences(m_LogicalDevice, 1, &m_ImagesInFlight[image_index], VK_TRUE,
-                        UINT64_MAX);
+        vkWaitForFences(m_LogicalDevice, 1, &m_ImagesInFlight[image_index], VK_TRUE, UINT64_MAX);
     }
     m_ImagesInFlight[image_index] = m_InFlightFences[m_CurrentFrame];
 
@@ -139,7 +141,7 @@ void omp::Renderer::requestDrawFrame(float deltaTime)
     OMP_STAT_SCOPE("RequestDrawFrame");
 
     drawFrame();
-    //TODO: remove
+    // TODO: remove
     tick(deltaTime);
 
     vkDeviceWaitIdle(m_LogicalDevice);
@@ -160,9 +162,12 @@ void omp::Renderer::cleanup()
     }
 
     cleanupSwapChain();
-    
-    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool, static_cast<uint32_t>(m_MaterialSets.size()),
-                         m_MaterialSets.data());
+
+    vkFreeDescriptorSets(
+            m_LogicalDevice,
+            m_DescriptorPool,
+            static_cast<uint32_t>(m_MaterialSets.size()),
+            m_MaterialSets.data());
     m_MaterialSets.clear();
 
     destroyAllCommandBuffers();
@@ -179,12 +184,10 @@ void omp::Renderer::cleanup()
     m_OutlineBuffer.reset();
     m_LightSystem.reset();
 
-    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_UboDescriptorSetLayout,
-                                 nullptr);
+    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_UboDescriptorSetLayout, nullptr);
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_OutlineSetLayout, nullptr);
     vkDestroyDescriptorSetLayout(m_LogicalDevice, m_SkyboxSetLayout, nullptr);
-    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_TexturesDescriptorSetLayout,
-                                 nullptr);
+    vkDestroyDescriptorSetLayout(m_LogicalDevice, m_TexturesDescriptorSetLayout, nullptr);
     vkDestroyDescriptorPool(m_LogicalDevice, m_DescriptorPool, nullptr);
 
     ImGui_ImplVulkan_Shutdown();
@@ -197,7 +200,6 @@ void omp::Renderer::cleanup()
     vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
 
     vkDestroyInstance(m_Instance, nullptr);
-
 }
 
 void omp::Renderer::createInstance()
@@ -216,8 +218,7 @@ void omp::Renderer::createInstance()
     VkDebugUtilsMessengerCreateInfoEXT debug_create_info;
     if (g_EnableValidationLayers)
     {
-        create_info.enabledLayerCount =
-                static_cast<uint32_t>(g_ValidationLayers.size());
+        create_info.enabledLayerCount = static_cast<uint32_t>(g_ValidationLayers.size());
         create_info.ppEnabledLayerNames = g_ValidationLayers.data();
         populateDebugMessengerCreateInfo(debug_create_info);
         create_info.pNext = &debug_create_info;
@@ -228,8 +229,7 @@ void omp::Renderer::createInstance()
         create_info.pNext = nullptr;
     }
     auto required_extensions = getRequiredExtensions();
-    create_info.enabledExtensionCount =
-            static_cast<uint32_t>(required_extensions.size());
+    create_info.enabledExtensionCount = static_cast<uint32_t>(required_extensions.size());
     create_info.ppEnabledExtensionNames = required_extensions.data();
 
     VkResult result = vkCreateInstance(&create_info, nullptr, &m_Instance);
@@ -242,8 +242,7 @@ void omp::Renderer::createInstance()
     vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, nullptr);
 
     std::vector<VkExtensionProperties> extensions(ext_count);
-    vkEnumerateInstanceExtensionProperties(nullptr, &ext_count,
-                                           extensions.data());
+    vkEnumerateInstanceExtensionProperties(nullptr, &ext_count, extensions.data());
 
     INFO(LogRendering, "Available extensions");
     for (const auto& ext: extensions)
@@ -291,8 +290,7 @@ std::vector<const char*> omp::Renderer::getRequiredExtensions()
     const char** glfw_extensions;
 
     glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extensions_count);
-    std::vector<const char*> extensions(glfw_extensions,
-                                        glfw_extensions + glfw_extensions_count);
+    std::vector<const char*> extensions(glfw_extensions, glfw_extensions + glfw_extensions_count);
     if (g_EnableValidationLayers)
     {
         extensions.push_back("VK_EXT_debug_utils");
@@ -310,22 +308,19 @@ void omp::Renderer::setupDebugMessenger()
     VkDebugUtilsMessengerCreateInfoEXT create_info{};
     populateDebugMessengerCreateInfo(create_info);
 
-    if (CreateDebugUtilsMessengerEXT(m_Instance, &create_info, nullptr,
-                                     &m_DebugMessenger) != VK_SUCCESS)
+    if (CreateDebugUtilsMessengerEXT(m_Instance, &create_info, nullptr, &m_DebugMessenger) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to setup debug messenger");
     }
 }
 
-void omp::Renderer::populateDebugMessengerCreateInfo(
-        VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+void omp::Renderer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 {
     createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-                                 VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+    createInfo.messageSeverity =
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
+            VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
     createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
                              VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                              VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
@@ -376,30 +371,24 @@ bool omp::Renderer::isDeviceSuitable(VkPhysicalDevice device)
     if (extensions_supported)
     {
         SwapChainSupportDetails swap_chain_support = querySwapChainSupport(device);
-        swap_chain_adequate = !swap_chain_support.formats.empty() &&
-                              !swap_chain_support.present_modes.empty();
+        swap_chain_adequate = !swap_chain_support.formats.empty() && !swap_chain_support.present_modes.empty();
     }
 
     VkPhysicalDeviceFeatures supported_features;
     vkGetPhysicalDeviceFeatures(device, &supported_features);
 
-    return properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-           features.geometryShader && indices.IsComplete() &&
-           extensions_supported && swap_chain_adequate &&
-           supported_features.samplerAnisotropy;
+    return properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && features.geometryShader &&
+           indices.IsComplete() && extensions_supported && swap_chain_adequate && supported_features.samplerAnisotropy;
 }
 
-omp::Renderer::QueueFamilyIndices
-omp::Renderer::findQueueFamilies(VkPhysicalDevice device)
+omp::Renderer::QueueFamilyIndices omp::Renderer::findQueueFamilies(VkPhysicalDevice device)
 {
     QueueFamilyIndices indices{};
     uint32_t queue_family_count = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count,
-                                             nullptr);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
 
     std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count,
-                                             queue_families.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_families.data());
 
     uint32_t i = 0;
     for (const auto& queue: queue_families)
@@ -429,8 +418,7 @@ void omp::Renderer::createLogicalDevice()
     QueueFamilyIndices indices = findQueueFamilies(m_PhysDevice);
 
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
-    std::set<uint32_t> unique_queue_families = {indices.graphics_family.value(),
-                                                indices.present_family.value()};
+    std::set<uint32_t> unique_queue_families = {indices.graphics_family.value(), indices.present_family.value()};
 
     float queue_priority = 1.f;
     for (uint32_t queue_family: unique_queue_families)
@@ -448,19 +436,16 @@ void omp::Renderer::createLogicalDevice()
 
     VkDeviceCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    create_info.queueCreateInfoCount =
-            static_cast<uint32_t>(queue_create_infos.size());
+    create_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
     create_info.pQueueCreateInfos = queue_create_infos.data();
     create_info.pEnabledFeatures = &device_features;
 
-    create_info.enabledExtensionCount =
-            static_cast<uint32_t>(g_DeviceExtensions.size());
+    create_info.enabledExtensionCount = static_cast<uint32_t>(g_DeviceExtensions.size());
     create_info.ppEnabledExtensionNames = g_DeviceExtensions.data();
 
     if (g_EnableValidationLayers)
     {
-        create_info.enabledLayerCount =
-                static_cast<uint32_t>(g_ValidationLayers.size());
+        create_info.enabledLayerCount = static_cast<uint32_t>(g_ValidationLayers.size());
         create_info.ppEnabledLayerNames = g_ValidationLayers.data();
     }
     else
@@ -468,20 +453,17 @@ void omp::Renderer::createLogicalDevice()
         create_info.enabledLayerCount = 0;
     }
 
-    if (vkCreateDevice(m_PhysDevice, &create_info, nullptr, &m_LogicalDevice) !=
-        VK_SUCCESS)
+    if (vkCreateDevice(m_PhysDevice, &create_info, nullptr, &m_LogicalDevice) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create logical device");
     }
 
-    vkGetDeviceQueue(m_LogicalDevice, indices.graphics_family.value(), 0,
-                     &m_GraphicsQueue);
-    vkGetDeviceQueue(m_LogicalDevice, indices.present_family.value(), 0,
-                     &m_PresentQueue);
+    vkGetDeviceQueue(m_LogicalDevice, indices.graphics_family.value(), 0, &m_GraphicsQueue);
+    vkGetDeviceQueue(m_LogicalDevice, indices.present_family.value(), 0, &m_PresentQueue);
 
     createCommandPool();
-    m_VulkanContext = std::make_shared<omp::VulkanContext>(
-            m_LogicalDevice, m_PhysDevice, m_CommandPool, m_GraphicsQueue);
+    m_VulkanContext =
+            std::make_shared<omp::VulkanContext>(m_LogicalDevice, m_PhysDevice, m_CommandPool, m_GraphicsQueue);
     m_ViewportImage = std::make_unique<omp::VulkanImage>(m_VulkanContext);
     m_RenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
     m_ImguiRenderPass = std::make_shared<omp::RenderPass>(m_LogicalDevice);
@@ -489,8 +471,7 @@ void omp::Renderer::createLogicalDevice()
 
 void omp::Renderer::createSurface(GLFWwindow* window)
 {
-    if (glfwCreateWindowSurface(m_Instance, window, nullptr, &m_Surface) !=
-        VK_SUCCESS)
+    if (glfwCreateWindowSurface(m_Instance, window, nullptr, &m_Surface) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create window surface!");
     }
@@ -499,14 +480,11 @@ void omp::Renderer::createSurface(GLFWwindow* window)
 bool omp::Renderer::checkDeviceExtensionSupport(VkPhysicalDevice device)
 {
     uint32_t extension_count;
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count,
-                                         nullptr);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, nullptr);
     std::vector<VkExtensionProperties> available_extensions(extension_count);
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count,
-                                         available_extensions.data());
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, available_extensions.data());
 
-    std::set<std::string> required_extensions(g_DeviceExtensions.begin(),
-                                              g_DeviceExtensions.end());
+    std::set<std::string> required_extensions(g_DeviceExtensions.begin(), g_DeviceExtensions.end());
 
     for (const auto& extension: available_extensions)
     {
@@ -515,41 +493,34 @@ bool omp::Renderer::checkDeviceExtensionSupport(VkPhysicalDevice device)
     return required_extensions.empty();
 }
 
-omp::Renderer::SwapChainSupportDetails
-omp::Renderer::querySwapChainSupport(VkPhysicalDevice device)
+omp::Renderer::SwapChainSupportDetails omp::Renderer::querySwapChainSupport(VkPhysicalDevice device)
 {
     SwapChainSupportDetails details;
 
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_Surface,
-                                              &details.capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, m_Surface, &details.capabilities);
 
     uint32_t format_count;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_Surface, &format_count,
-                                         nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_Surface, &format_count, nullptr);
 
     if (format_count != 0)
     {
         details.formats.resize(format_count);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_Surface, &format_count,
-                                             details.formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, m_Surface, &format_count, details.formats.data());
     }
 
     uint32_t present_mode_count;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_Surface,
-                                              &present_mode_count, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_Surface, &present_mode_count, nullptr);
 
     if (present_mode_count != 0)
     {
         details.present_modes.resize(present_mode_count);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(
-                device, m_Surface, &present_mode_count, details.present_modes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_Surface, &present_mode_count, details.present_modes.data());
     }
 
     return details;
 }
 
-VkSurfaceFormatKHR omp::Renderer::chooseSwapSurfaceFormat(
-        const std::vector<VkSurfaceFormatKHR>& availableFormats)
+VkSurfaceFormatKHR omp::Renderer::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
     for (const auto& available_format: availableFormats)
     {
@@ -563,8 +534,7 @@ VkSurfaceFormatKHR omp::Renderer::chooseSwapSurfaceFormat(
     return availableFormats[0];
 }
 
-VkPresentModeKHR omp::Renderer::chooseSwapPresentMode(
-        const std::vector<VkPresentModeKHR>& availablePresentModes)
+VkPresentModeKHR omp::Renderer::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
     for (const auto& available_presentation_mode: availablePresentModes)
     {
@@ -577,11 +547,10 @@ VkPresentModeKHR omp::Renderer::chooseSwapPresentMode(
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D
-omp::Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR&)
+VkExtent2D omp::Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR&)
 {
     // TODO: this is strange and possibly incorrect
-    
+
     /* if (capabilities.currentExtent.width !=
         std::numeric_limits<uint32_t>::max())
     {
@@ -608,20 +577,16 @@ omp::Renderer::chooseSwapExtent(const VkSurfaceCapabilitiesKHR&)
         return actual_extent_sec;
     } */
 
-    VkExtent2D actual_extent_sec = {static_cast<uint32_t>(m_CurrentWidth),
-                                    static_cast<uint32_t>(m_CurrentHeight)};
+    VkExtent2D actual_extent_sec = {static_cast<uint32_t>(m_CurrentWidth), static_cast<uint32_t>(m_CurrentHeight)};
     return actual_extent_sec;
 }
 
 void omp::Renderer::createSwapChain()
 {
-    SwapChainSupportDetails swap_chain_support =
-            querySwapChainSupport(m_PhysDevice);
+    SwapChainSupportDetails swap_chain_support = querySwapChainSupport(m_PhysDevice);
 
-    VkSurfaceFormatKHR surface_format =
-            chooseSwapSurfaceFormat(swap_chain_support.formats);
-    VkPresentModeKHR present_mode =
-            chooseSwapPresentMode(swap_chain_support.present_modes);
+    VkSurfaceFormatKHR surface_format = chooseSwapSurfaceFormat(swap_chain_support.formats);
+    VkPresentModeKHR present_mode = chooseSwapPresentMode(swap_chain_support.present_modes);
     VkExtent2D extent = chooseSwapExtent(swap_chain_support.capabilities);
 
     m_PresentKHRImagesNum = swap_chain_support.capabilities.minImageCount + 1;
@@ -642,8 +607,7 @@ void omp::Renderer::createSwapChain()
     create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     QueueFamilyIndices indices = findQueueFamilies(m_PhysDevice);
-    uint32_t queue_family_indices[] = {indices.graphics_family.value(),
-                                       indices.present_family.value()};
+    uint32_t queue_family_indices[] = {indices.graphics_family.value(), indices.present_family.value()};
 
     if (indices.graphics_family != indices.present_family)
     {
@@ -663,17 +627,14 @@ void omp::Renderer::createSwapChain()
     create_info.clipped = VK_TRUE;
     create_info.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(m_LogicalDevice, &create_info, nullptr,
-                             &m_SwapChain) != VK_SUCCESS)
+    if (vkCreateSwapchainKHR(m_LogicalDevice, &create_info, nullptr, &m_SwapChain) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create swap chain!");
     }
 
-    vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &m_PresentKHRImagesNum,
-                            nullptr);
+    vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &m_PresentKHRImagesNum, nullptr);
     m_SwapChainImages.resize(m_PresentKHRImagesNum);
-    vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &m_PresentKHRImagesNum,
-                            m_SwapChainImages.data());
+    vkGetSwapchainImagesKHR(m_LogicalDevice, m_SwapChain, &m_PresentKHRImagesNum, m_SwapChainImages.data());
 
     m_SwapChainImageFormat = surface_format.format;
     m_SwapChainExtent = extent;
@@ -681,20 +642,19 @@ void omp::Renderer::createSwapChain()
 
 void omp::Renderer::postSwapChainInitialize()
 {
-    m_LightSystem = std::make_unique<omp::LightSystem>(m_VulkanContext,
-                                                       m_PresentKHRImagesNum);
+    m_LightSystem = std::make_unique<omp::LightSystem>(m_VulkanContext, m_PresentKHRImagesNum);
 
     m_VulkanContext->createBuffer(sizeof(int32_t),
                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                   VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                  m_PixelReadBuffer, m_PixelReadMemory);
+                                  m_PixelReadBuffer,
+                                  m_PixelReadMemory);
 }
 
 void omp::Renderer::prepareSceneForRendering()
 {
     if (m_CurrentScene)
     {
-
     }
     else
     {
@@ -708,8 +668,7 @@ void omp::Renderer::createImageViews()
     for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
         m_SwapChainImageViews[i] = m_VulkanContext->createImageView(
-                m_SwapChainImages[i], m_SwapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT,
-                1);
+                m_SwapChainImages[i], m_SwapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
     }
 }
 
@@ -717,12 +676,10 @@ void omp::Renderer::createGraphicsPipeline()
 {
     VkPipelineColorBlendAttachmentState color_blend_attachment{};
     color_blend_attachment.colorWriteMask =
-            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-            VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+            VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     color_blend_attachment.blendEnable = VK_FALSE;
     color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-    color_blend_attachment.dstColorBlendFactor =
-            VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
     color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
     color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
@@ -738,8 +695,7 @@ void omp::Renderer::createGraphicsPipeline()
     stencil_state.reference = 1;
 
     VkPipelineDepthStencilStateCreateInfo depth_stencil{};
-    depth_stencil.sType =
-            VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depth_stencil.depthTestEnable = VK_TRUE;
     depth_stencil.depthWriteEnable = VK_TRUE;
     depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
@@ -752,29 +708,25 @@ void omp::Renderer::createGraphicsPipeline()
 
     // Light pipeline
     std::shared_ptr<omp::Shader> light_shader = std::make_shared<omp::Shader>(
-            m_VulkanContext, "../SPRV/shaderLightvert.spv",
-            "../SPRV/shaderLightfrag.spv");
+            m_VulkanContext, "../SPRV/shaderLightvert.spv", "../SPRV/shaderLightfrag.spv");
 
-    std::unique_ptr<omp::GraphicsPipeline> light_pipe =
-            std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    std::unique_ptr<omp::GraphicsPipeline> light_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     light_pipe->startDefaultCreation();
     light_pipe->addColorBlendingAttachment(color_blend_attachment);
     light_pipe->addColorBlendingAttachment(color_blend_attachment);
     light_pipe->createMultisamplingInfo(m_MSAASamples);
     light_pipe->createViewport(m_SwapChainExtent);
-    light_pipe->definePushConstant<omp::ModelPushConstant>(
-            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    light_pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
     light_pipe->addPipelineSetLayout(m_UboDescriptorSetLayout);
     light_pipe->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
     light_pipe->createShaders(light_shader);
     light_pipe->setDepthStencil(depth_stencil);
     light_pipe->confirmCreation(m_RenderPass);
 
-    std::shared_ptr<omp::Shader> skybox_shader = std::make_shared<omp::Shader>(
-            m_VulkanContext, "../SPRV/skyboxvert.spv", "../SPRV/skyboxfrag.spv");
+    std::shared_ptr<omp::Shader> skybox_shader =
+            std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/skyboxvert.spv", "../SPRV/skyboxfrag.spv");
 
-    std::unique_ptr<omp::GraphicsPipeline> skybox_pipe =
-            std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    std::unique_ptr<omp::GraphicsPipeline> skybox_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     skybox_pipe->startDefaultCreation();
     skybox_pipe->addColorBlendingAttachment(color_blend_attachment);
     skybox_pipe->addColorBlendingAttachment(color_blend_attachment);
@@ -792,18 +744,16 @@ void omp::Renderer::createGraphicsPipeline()
     depth_stencil.depthTestEnable = VK_FALSE;
 
     // Simple pipeline
-    std::shared_ptr<omp::Shader> shader = std::make_shared<omp::Shader>(
-            m_VulkanContext, "../SPRV/shadervert.spv", "../SPRV/shaderfrag.spv");
+    std::shared_ptr<omp::Shader> shader =
+            std::make_shared<omp::Shader>(m_VulkanContext, "../SPRV/shadervert.spv", "../SPRV/shaderfrag.spv");
 
-    std::unique_ptr<omp::GraphicsPipeline> pipe =
-            std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    std::unique_ptr<omp::GraphicsPipeline> pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     pipe->startDefaultCreation();
     pipe->addColorBlendingAttachment(color_blend_attachment);
     pipe->addColorBlendingAttachment(color_blend_attachment);
     pipe->createMultisamplingInfo(m_MSAASamples);
     pipe->createViewport(m_SwapChainExtent);
-    pipe->definePushConstant<omp::ModelPushConstant>(
-            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
     pipe->addPipelineSetLayout(m_UboDescriptorSetLayout);
     pipe->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
     pipe->setDepthStencil(depth_stencil);
@@ -811,11 +761,9 @@ void omp::Renderer::createGraphicsPipeline()
     pipe->confirmCreation(m_RenderPass);
 
     std::shared_ptr<omp::Shader> blend_shader = std::make_shared<omp::Shader>(
-            m_VulkanContext, "../SPRV/shaderLightBlendvert.spv",
-            "../SPRV/shaderLightBlendfrag.spv");
+            m_VulkanContext, "../SPRV/shaderLightBlendvert.spv", "../SPRV/shaderLightBlendfrag.spv");
     VkPipelineRasterizationStateCreateInfo rasterization_state{};
-    rasterization_state.sType =
-            VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterization_state.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterization_state.depthClampEnable = VK_FALSE;
     rasterization_state.rasterizerDiscardEnable = VK_FALSE;
     rasterization_state.polygonMode = VK_POLYGON_MODE_FILL;
@@ -826,8 +774,7 @@ void omp::Renderer::createGraphicsPipeline()
     rasterization_state.depthBiasConstantFactor = 0.0f;
     rasterization_state.depthBiasClamp = 0.0f;
     rasterization_state.depthBiasSlopeFactor = 0.0f;
-    std::unique_ptr<omp::GraphicsPipeline> grass_pipe =
-            std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    std::unique_ptr<omp::GraphicsPipeline> grass_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     grass_pipe->startDefaultCreation();
     color_blend_attachment.blendEnable = VK_TRUE;
     grass_pipe->addColorBlendingAttachment(color_blend_attachment);
@@ -836,8 +783,7 @@ void omp::Renderer::createGraphicsPipeline()
     grass_pipe->createMultisamplingInfo(m_MSAASamples);
     grass_pipe->createViewport(m_SwapChainExtent);
     grass_pipe->createRasterizer(rasterization_state);
-    grass_pipe->definePushConstant<omp::ModelPushConstant>(
-            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    grass_pipe->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
     grass_pipe->addPipelineSetLayout(m_UboDescriptorSetLayout);
     grass_pipe->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
     grass_pipe->setDepthStencil(depth_stencil);
@@ -846,15 +792,14 @@ void omp::Renderer::createGraphicsPipeline()
 
     // LIGHT STENCIL
     color_blend_attachment.blendEnable = VK_FALSE;
-    std::unique_ptr<omp::GraphicsPipeline> light_stencil =
-            std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    std::unique_ptr<omp::GraphicsPipeline> light_stencil = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     light_stencil->startDefaultCreation();
     light_stencil->addColorBlendingAttachment(color_blend_attachment);
     light_stencil->addColorBlendingAttachment(color_blend_attachment);
     light_stencil->createMultisamplingInfo(m_MSAASamples);
     light_stencil->createViewport(m_SwapChainExtent);
-    light_stencil->definePushConstant<omp::ModelPushConstant>(
-            VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    light_stencil->definePushConstant<omp::ModelPushConstant>(VK_SHADER_STAGE_VERTEX_BIT |
+                                                              VK_SHADER_STAGE_FRAGMENT_BIT);
     light_stencil->addPipelineSetLayout(m_UboDescriptorSetLayout);
     light_stencil->addPipelineSetLayout(m_TexturesDescriptorSetLayout);
     light_stencil->createShaders(light_shader);
@@ -863,10 +808,9 @@ void omp::Renderer::createGraphicsPipeline()
     light_stencil->confirmCreation(m_RenderPass);
 
     // Outline pipeline
-    std::shared_ptr<omp::Shader> outline_shader = std::make_unique<omp::Shader>(
-            m_VulkanContext, "../SPRV/outlinevert.spv", "../SPRV/outlinefrag.spv");
-    std::unique_ptr<omp::GraphicsPipeline> outline_pipe =
-            std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
+    std::shared_ptr<omp::Shader> outline_shader =
+            std::make_unique<omp::Shader>(m_VulkanContext, "../SPRV/outlinevert.spv", "../SPRV/outlinefrag.spv");
+    std::unique_ptr<omp::GraphicsPipeline> outline_pipe = std::make_unique<omp::GraphicsPipeline>(m_LogicalDevice);
     outline_pipe->startDefaultCreation();
     outline_pipe->addColorBlendingAttachment(color_blend_attachment);
     outline_pipe->addColorBlendingAttachment(color_blend_attachment);
@@ -931,8 +875,7 @@ void omp::Renderer::createRenderPass()
     depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depth_attachment.finalLayout =
-            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference depth_attach_ref{};
     depth_attach_ref.attachment = 2;
@@ -946,13 +889,11 @@ void omp::Renderer::createRenderPass()
     color_attachment_resolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment_resolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     color_attachment_resolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    color_attachment_resolve.finalLayout =
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkAttachmentReference color_attachment_resolve_ref{};
     color_attachment_resolve_ref.attachment = 3;
-    color_attachment_resolve_ref.layout =
-            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    color_attachment_resolve_ref.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     VkAttachmentDescription pick_resolve{};
     pick_resolve.format = VK_FORMAT_R32_SINT;
@@ -968,10 +909,8 @@ void omp::Renderer::createRenderPass()
     pick_resolve_ref.attachment = 4;
     pick_resolve_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    std::array<VkAttachmentReference, 2> refs{color_attachment_ref,
-                                              picking_attach_ref};
-    std::array<VkAttachmentReference, 2> resolve_refs{
-            color_attachment_resolve_ref, pick_resolve_ref};
+    std::array<VkAttachmentReference, 2> refs{color_attachment_ref, picking_attach_ref};
+    std::array<VkAttachmentReference, 2> resolve_refs{color_attachment_resolve_ref, pick_resolve_ref};
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -1026,13 +965,12 @@ void omp::Renderer::createFramebuffers()
 
 void omp::Renderer::createFramebufferAtImage(size_t index)
 {
-    std::vector<VkImageView> attachments{m_ColorImageView, m_PickingImageView,
-                                         m_DepthImageView, m_ViewportImage->getImageView(),
+    std::vector<VkImageView> attachments{m_ColorImageView,
+                                         m_PickingImageView,
+                                         m_DepthImageView,
+                                         m_ViewportImage->getImageView(),
                                          m_PickingResolveView};
-    omp::FrameBuffer frame_buffer(
-            m_LogicalDevice, attachments, m_RenderPass,
-            m_ViewportSize[0],
-            m_ViewportSize[1]);
+    omp::FrameBuffer frame_buffer(m_LogicalDevice, attachments, m_RenderPass, m_ViewportSize[0], m_ViewportSize[1]);
     m_SwapChainFramebuffers[index] = frame_buffer;
 
     // test
@@ -1048,8 +986,7 @@ void omp::Renderer::createCommandPool()
     pool_info.queueFamilyIndex = queue_family_indices.graphics_family.value();
     pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if (vkCreateCommandPool(m_LogicalDevice, &pool_info, nullptr,
-                            &m_CommandPool) != VK_SUCCESS)
+    if (vkCreateCommandPool(m_LogicalDevice, &pool_info, nullptr, &m_CommandPool) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create command pool");
     }
@@ -1058,9 +995,8 @@ void omp::Renderer::createCommandPool()
 void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
 {
     OMP_STAT_SCOPE("PrepareFrameForImage");
-    
-    prepareCommandBuffer(m_ImguiCommandBuffers[KHRImageIndex],
-                         m_ImguiCommandPool);
+
+    prepareCommandBuffer(m_ImguiCommandBuffers[KHRImageIndex], m_ImguiCommandPool);
 
     std::vector<VkClearValue> clear_value{1};
     clear_value[0].color = g_ClearColor;
@@ -1079,44 +1015,29 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
     rect.offset.y = 0;
     rect.extent.width = m_ViewportSize[0];
     rect.extent.height = m_ViewportSize[1];
-    beginRenderPass(m_RenderPass.get(), main_buffer,
-                    m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
+    beginRenderPass(m_RenderPass.get(), main_buffer, m_SwapChainFramebuffers[KHRImageIndex], clear_values, rect);
     setViewport(main_buffer);
 
     omp::SceneEntity* outline_entity = nullptr;
     VkDeviceSize offsets[] = {0};
 
-    std::vector<omp::SceneEntity*> scene_copy =
-            m_CurrentScene->getEntitiesCopy();
+    std::vector<omp::SceneEntity*> scene_copy = m_CurrentScene->getEntitiesCopy();
     std::sort(
-            scene_copy.begin(), scene_copy.end(),
-            [this](
-                    const omp::SceneEntity* inEnt,
-                    const omp::SceneEntity* inEnt2) -> bool
+            scene_copy.begin(),
+            scene_copy.end(),
+            [this](const omp::SceneEntity* inEnt, const omp::SceneEntity* inEnt2) -> bool
             {
-                if (inEnt->getModelInstance()
-                            ->getMaterialInstance()
-                            ->getStaticMaterial()
-                            .lock()
-                            ->isBlendingEnabled() &&
-                    !inEnt2->getModelInstance()
-                            ->getMaterialInstance()
-                            ->getStaticMaterial()
-                            .lock()
-                            ->isBlendingEnabled())
+                if (inEnt->getModelInstance()->getMaterialInstance()->getStaticMaterial().lock()->isBlendingEnabled() &&
+                    !inEnt2->getModelInstance()->getMaterialInstance()->getStaticMaterial().lock()->isBlendingEnabled())
                 {
                     return false;
                 }
                 if (!inEnt->getModelInstance()
-                        ->getMaterialInstance()
-                        ->getStaticMaterial()
-                        .lock()
-                        ->isBlendingEnabled() &&
-                    inEnt2->getModelInstance()
-                            ->getMaterialInstance()
-                            ->getStaticMaterial()
-                            .lock()
-                            ->isBlendingEnabled())
+                             ->getMaterialInstance()
+                             ->getStaticMaterial()
+                             .lock()
+                             ->isBlendingEnabled() &&
+                    inEnt2->getModelInstance()->getMaterialInstance()->getStaticMaterial().lock()->isBlendingEnabled())
                 {
                     return true;
                 }
@@ -1144,88 +1065,103 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
             // TODO check this for valid shader, because light have simple shader, and
             // should not have lightstencil layouts
             outline_entity = scene_entity;
-            model_pipeline =
-                    findGraphicsPipeline("LightStencil")->getGraphicsPipeline();
-            model_pipeline_layout =
-                    findGraphicsPipeline("LightStencil")->getPipelineLayout();
+            model_pipeline = findGraphicsPipeline("LightStencil")->getGraphicsPipeline();
+            model_pipeline_layout = findGraphicsPipeline("LightStencil")->getPipelineLayout();
         }
         else
         {
-            model_pipeline = findGraphicsPipeline(material->getShaderName())
-                    ->getGraphicsPipeline();
-            model_pipeline_layout =
-                    findGraphicsPipeline(material->getShaderName())->getPipelineLayout();
+            model_pipeline = findGraphicsPipeline(material->getShaderName())->getGraphicsPipeline();
+            model_pipeline_layout = findGraphicsPipeline(material->getShaderName())->getPipelineLayout();
         }
-        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          model_pipeline);
+        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 
-        vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                model_pipeline_layout, 0, 1,
-                                &m_UboDescriptorSets[KHRImageIndex], 0, nullptr);
+        vkCmdBindDescriptorSets(main_buffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                model_pipeline_layout,
+                                0,
+                                1,
+                                &m_UboDescriptorSets[KHRImageIndex],
+                                0,
+                                nullptr);
 
         vkCmdBindVertexBuffers(
-                main_buffer, 0, 1,
-                &scene_entity->getModelInstance()->getModel().lock()->getVertexBuffer(),
-                offsets);
-        vkCmdBindIndexBuffer(
-                main_buffer,
-                scene_entity->getModelInstance()->getModel().lock()->getIndexBuffer(), 0,
-                VK_INDEX_TYPE_UINT32);
+                main_buffer, 0, 1, &scene_entity->getModelInstance()->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer,
+                             scene_entity->getModelInstance()->getModel().lock()->getIndexBuffer(),
+                             0,
+                             VK_INDEX_TYPE_UINT32);
 
-        omp::ModelPushConstant constant{
-                scene_entity->getModelInstance()->getTransform(),
-                material_instance->getAmbient(), material_instance->getDiffusive(),
-                material_instance->getSpecular(), scene_entity->getId()};
-        vkCmdPushConstants(main_buffer, model_pipeline_layout,
-                           VK_SHADER_STAGE_VERTEX_BIT |
-                           VK_SHADER_STAGE_FRAGMENT_BIT,
-                           0, sizeof(omp::ModelPushConstant), &constant);
+        omp::ModelPushConstant constant{scene_entity->getModelInstance()->getTransform(),
+                                        material_instance->getAmbient(),
+                                        material_instance->getDiffusive(),
+                                        material_instance->getSpecular(),
+                                        scene_entity->getId()};
+        vkCmdPushConstants(main_buffer,
+                           model_pipeline_layout,
+                           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                           0,
+                           sizeof(omp::ModelPushConstant),
+                           &constant);
 
         // TODO: MATERIALS ARE TOTAL SHIT
         if (material)
         {
             retrieveMaterialRenderState(material);
-            vkCmdBindDescriptorSets(
-                    main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline_layout,
-                    1, 1, &material->getDescriptorSet()[KHRImageIndex], 0, nullptr);
+            vkCmdBindDescriptorSets(main_buffer,
+                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    model_pipeline_layout,
+                                    1,
+                                    1,
+                                    &material->getDescriptorSet()[KHRImageIndex],
+                                    0,
+                                    nullptr);
         }
         else
         {
             // default material
-            vkCmdBindDescriptorSets(
-                    main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline_layout,
-                    1, 1, &m_DefaultMaterial->getDescriptorSet()[KHRImageIndex], 0,
-                    nullptr);
+            vkCmdBindDescriptorSets(main_buffer,
+                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    model_pipeline_layout,
+                                    1,
+                                    1,
+                                    &m_DefaultMaterial->getDescriptorSet()[KHRImageIndex],
+                                    0,
+                                    nullptr);
         }
         vkCmdDrawIndexed(
                 main_buffer,
-                static_cast<uint32_t>(
-                        scene_entity->getModelInstance()->getModel().lock()->getIndices().size()),
-                1, 0, 0, 0);
+                static_cast<uint32_t>(scene_entity->getModelInstance()->getModel().lock()->getIndices().size()),
+                1,
+                0,
+                0,
+                0);
     }
 
     if (outline_entity)
     {
         auto outline_pipeline = findGraphicsPipeline("Outline");
         vkCmdBindVertexBuffers(
-                main_buffer, 0, 1,
-                &outline_entity->getModelInstance()->getModel().lock()->getVertexBuffer(),
-                offsets);
-        vkCmdBindIndexBuffer(
-                main_buffer,
-                outline_entity->getModelInstance()->getModel().lock()->getIndexBuffer(), 0,
-                VK_INDEX_TYPE_UINT32);
-        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          outline_pipeline->getGraphicsPipeline());
-        vkCmdBindDescriptorSets(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                outline_pipeline->getPipelineLayout(), 0, 1,
-                                &m_OutlineDescriptorSets[KHRImageIndex], 0,
+                main_buffer, 0, 1, &outline_entity->getModelInstance()->getModel().lock()->getVertexBuffer(), offsets);
+        vkCmdBindIndexBuffer(main_buffer,
+                             outline_entity->getModelInstance()->getModel().lock()->getIndexBuffer(),
+                             0,
+                             VK_INDEX_TYPE_UINT32);
+        vkCmdBindPipeline(main_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, outline_pipeline->getGraphicsPipeline());
+        vkCmdBindDescriptorSets(main_buffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                outline_pipeline->getPipelineLayout(),
+                                0,
+                                1,
+                                &m_OutlineDescriptorSets[KHRImageIndex],
+                                0,
                                 nullptr);
         vkCmdDrawIndexed(
                 main_buffer,
-                static_cast<uint32_t>(
-                        outline_entity->getModelInstance()->getModel().lock()->getIndices().size()),
-                1, 0, 0, 0);
+                static_cast<uint32_t>(outline_entity->getModelInstance()->getModel().lock()->getIndices().size()),
+                1,
+                0,
+                0,
+                0);
     }
 
     endRenderPass(m_RenderPass.get(), main_buffer);
@@ -1237,13 +1173,13 @@ void omp::Renderer::prepareFrameForImage(size_t KHRImageIndex)
     rect.offset.y = 0;
     beginRenderPass(m_ImguiRenderPass.get(),
                     m_ImguiCommandBuffers[KHRImageIndex].buffer,
-                    m_ImguiFramebuffers[KHRImageIndex], clear_value, rect);
+                    m_ImguiFramebuffers[KHRImageIndex],
+                    clear_value,
+                    rect);
 
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),
-                                    m_ImguiCommandBuffers[KHRImageIndex].buffer);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ImguiCommandBuffers[KHRImageIndex].buffer);
 
-    endRenderPass(m_ImguiRenderPass.get(),
-                  m_ImguiCommandBuffers[KHRImageIndex].buffer);
+    endRenderPass(m_ImguiRenderPass.get(), m_ImguiCommandBuffers[KHRImageIndex].buffer);
 }
 
 void omp::Renderer::drawFrame()
@@ -1257,28 +1193,23 @@ void omp::Renderer::drawFrame()
     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
     VkSemaphore wait_semaphores[] = {m_ImageAvailableSemaphores[m_CurrentFrame]};
-    VkPipelineStageFlags wait_stages[] = {
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    VkPipelineStageFlags wait_stages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submit_info.waitSemaphoreCount = 1;
     submit_info.pWaitSemaphores = wait_semaphores;
     submit_info.pWaitDstStageMask = wait_stages;
 
-    std::array<VkCommandBuffer, 2> command_buffers{
-            m_CommandBuffers[m_CurrentImage].buffer,
-            m_ImguiCommandBuffers[m_CurrentImage].buffer};
-    submit_info.commandBufferCount =
-            static_cast<uint32_t>(command_buffers.size());
+    std::array<VkCommandBuffer, 2> command_buffers{m_CommandBuffers[m_CurrentImage].buffer,
+                                                   m_ImguiCommandBuffers[m_CurrentImage].buffer};
+    submit_info.commandBufferCount = static_cast<uint32_t>(command_buffers.size());
     submit_info.pCommandBuffers = command_buffers.data();
 
-    VkSemaphore signal_semaphores[] = {
-            m_RenderFinishedSemaphores[m_CurrentFrame]};
+    VkSemaphore signal_semaphores[] = {m_RenderFinishedSemaphores[m_CurrentFrame]};
     submit_info.signalSemaphoreCount = 1;
     submit_info.pSignalSemaphores = signal_semaphores;
 
     vkResetFences(m_LogicalDevice, 1, &m_InFlightFences[m_CurrentFrame]);
 
-    if (vkQueueSubmit(m_GraphicsQueue, 1, &submit_info,
-                      m_InFlightFences[m_CurrentFrame]) != VK_SUCCESS)
+    if (vkQueueSubmit(m_GraphicsQueue, 1, &submit_info, m_InFlightFences[m_CurrentFrame]) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to submit draw command buffer");
     }
@@ -1320,12 +1251,11 @@ void omp::Renderer::createSyncObjects()
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        if ((vkCreateSemaphore(m_LogicalDevice, &semaphore_info, nullptr,
-                               &m_ImageAvailableSemaphores[i]) != VK_SUCCESS) ||
-            (vkCreateSemaphore(m_LogicalDevice, &semaphore_info, nullptr,
-                               &m_RenderFinishedSemaphores[i]) != VK_SUCCESS) ||
-            (vkCreateFence(m_LogicalDevice, &fence_info, nullptr,
-                           &m_InFlightFences[i]) != VK_SUCCESS))
+        if ((vkCreateSemaphore(m_LogicalDevice, &semaphore_info, nullptr, &m_ImageAvailableSemaphores[i]) !=
+             VK_SUCCESS) ||
+            (vkCreateSemaphore(m_LogicalDevice, &semaphore_info, nullptr, &m_RenderFinishedSemaphores[i]) !=
+             VK_SUCCESS) ||
+            (vkCreateFence(m_LogicalDevice, &fence_info, nullptr, &m_InFlightFences[i]) != VK_SUCCESS))
         {
             throw std::runtime_error("failed to create sync objects for a frame");
         }
@@ -1395,18 +1325,19 @@ void omp::Renderer::cleanupSwapChain()
         material->clearDescriptorSets();
     } */
 
-    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool,
-                         static_cast<uint32_t>(m_UboDescriptorSets.size()), m_UboDescriptorSets.data());
-    vkFreeDescriptorSets(m_LogicalDevice, m_DescriptorPool,
+    vkFreeDescriptorSets(m_LogicalDevice,
+                         m_DescriptorPool,
+                         static_cast<uint32_t>(m_UboDescriptorSets.size()),
+                         m_UboDescriptorSets.data());
+    vkFreeDescriptorSets(m_LogicalDevice,
+                         m_DescriptorPool,
                          static_cast<uint32_t>(m_OutlineDescriptorSets.size()),
                          m_OutlineDescriptorSets.data());
 
     m_ImguiRenderPass->destroyInnerState();
 }
 
-void omp::Renderer::onWindowResize(
-        int width,
-        int height)
+void omp::Renderer::onWindowResize(int width, int height)
 {
     m_CurrentWidth = width;
     m_CurrentHeight = height;
@@ -1432,15 +1363,13 @@ void omp::Renderer::createDescriptorSetLayout()
         cubemap_layout.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
         cubemap_layout.pImmutableSamplers = nullptr;
 
-        std::array<VkDescriptorSetLayoutBinding, 2> bindings = {
-                skybox_layout_binding, cubemap_layout};
+        std::array<VkDescriptorSetLayoutBinding, 2> bindings = {skybox_layout_binding, cubemap_layout};
         VkDescriptorSetLayoutCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         info.bindingCount = static_cast<uint32_t>(bindings.size());
         info.pBindings = bindings.data();
 
-        if (vkCreateDescriptorSetLayout(m_LogicalDevice, &info, nullptr,
-                                        &m_SkyboxSetLayout) != VK_SUCCESS)
+        if (vkCreateDescriptorSetLayout(m_LogicalDevice, &info, nullptr, &m_SkyboxSetLayout) != VK_SUCCESS)
         {
             throw std::runtime_error("Cant create skybox set layout");
         }
@@ -1464,11 +1393,9 @@ void omp::Renderer::createDescriptorSetLayout()
         ubo_layout_info.bindingCount = static_cast<uint32_t>(ubo_bindings.size());
         ubo_layout_info.pBindings = ubo_bindings.data();
 
-        if (vkCreateDescriptorSetLayout(m_LogicalDevice, &ubo_layout_info, nullptr,
-                                        &m_OutlineSetLayout) != VK_SUCCESS)
+        if (vkCreateDescriptorSetLayout(m_LogicalDevice, &ubo_layout_info, nullptr, &m_OutlineSetLayout) != VK_SUCCESS)
         {
-            throw std::runtime_error(
-                    "Failed to create outline descriptor set layout!");
+            throw std::runtime_error("Failed to create outline descriptor set layout!");
         }
     }
 
@@ -1478,45 +1405,40 @@ void omp::Renderer::createDescriptorSetLayout()
         ubo_layout_binding.binding = 0;
         ubo_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         ubo_layout_binding.descriptorCount = 1;
-        ubo_layout_binding.stageFlags =
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        ubo_layout_binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         ubo_layout_binding.pImmutableSamplers = nullptr;
 
         VkDescriptorSetLayoutBinding global_light_layout_binding{};
         global_light_layout_binding.binding = 1;
-        global_light_layout_binding.descriptorType =
-                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        global_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         global_light_layout_binding.descriptorCount = 1;
         global_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
         global_light_layout_binding.pImmutableSamplers = nullptr;
 
         VkDescriptorSetLayoutBinding point_light_layout_binding{};
         point_light_layout_binding.binding = 2;
-        point_light_layout_binding.descriptorType =
-                VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        point_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         point_light_layout_binding.descriptorCount = 1;
         point_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
         point_light_layout_binding.pImmutableSamplers = nullptr;
 
         VkDescriptorSetLayoutBinding spot_light_layout_binding{};
         spot_light_layout_binding.binding = 3;
-        spot_light_layout_binding.descriptorType =
-                VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        spot_light_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         spot_light_layout_binding.descriptorCount = 1;
         spot_light_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
         spot_light_layout_binding.pImmutableSamplers = nullptr;
 
         std::array<VkDescriptorSetLayoutBinding, 4> ubo_bindings = {
-                ubo_layout_binding, global_light_layout_binding,
-                point_light_layout_binding, spot_light_layout_binding};
+                ubo_layout_binding, global_light_layout_binding, point_light_layout_binding, spot_light_layout_binding};
 
         VkDescriptorSetLayoutCreateInfo ubo_layout_info{};
         ubo_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         ubo_layout_info.bindingCount = static_cast<uint32_t>(ubo_bindings.size());
         ubo_layout_info.pBindings = ubo_bindings.data();
 
-        if (vkCreateDescriptorSetLayout(m_LogicalDevice, &ubo_layout_info, nullptr,
-                                        &m_UboDescriptorSetLayout) != VK_SUCCESS)
+        if (vkCreateDescriptorSetLayout(m_LogicalDevice, &ubo_layout_info, nullptr, &m_UboDescriptorSetLayout) !=
+            VK_SUCCESS)
         {
             throw std::runtime_error("Failed to create ubo descriptor set layout!");
         }
@@ -1526,40 +1448,33 @@ void omp::Renderer::createDescriptorSetLayout()
     VkDescriptorSetLayoutBinding sampler_layout_binding{};
     sampler_layout_binding.binding = 0;
     sampler_layout_binding.descriptorCount = 1;
-    sampler_layout_binding.descriptorType =
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    sampler_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     sampler_layout_binding.pImmutableSamplers = nullptr;
     sampler_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutBinding diffusive_layout_binding{};
     diffusive_layout_binding.binding = 1;
     diffusive_layout_binding.descriptorCount = 1;
-    diffusive_layout_binding.descriptorType =
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    diffusive_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     diffusive_layout_binding.pImmutableSamplers = nullptr;
     diffusive_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutBinding specular_layout_binding{};
     specular_layout_binding.binding = 2;
     specular_layout_binding.descriptorCount = 1;
-    specular_layout_binding.descriptorType =
-            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    specular_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     specular_layout_binding.pImmutableSamplers = nullptr;
     specular_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     std::array<VkDescriptorSetLayoutBinding, 3> texture_bindings = {
-            sampler_layout_binding, diffusive_layout_binding,
-            specular_layout_binding};
+            sampler_layout_binding, diffusive_layout_binding, specular_layout_binding};
 
     VkDescriptorSetLayoutCreateInfo texture_layout_info{};
-    texture_layout_info.sType =
-            VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    texture_layout_info.bindingCount =
-            static_cast<uint32_t>(texture_bindings.size());
+    texture_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    texture_layout_info.bindingCount = static_cast<uint32_t>(texture_bindings.size());
     texture_layout_info.pBindings = texture_bindings.data();
 
-    if (vkCreateDescriptorSetLayout(m_LogicalDevice, &texture_layout_info,
-                                    nullptr, &m_TexturesDescriptorSetLayout) !=
+    if (vkCreateDescriptorSetLayout(m_LogicalDevice, &texture_layout_info, nullptr, &m_TexturesDescriptorSetLayout) !=
         VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create texture descriptor set layout!");
@@ -1570,13 +1485,10 @@ void omp::Renderer::createUniformBuffers()
 {
     VkDeviceSize buffer_size = sizeof(UniformBufferObject);
     m_UboBuffer = std::make_unique<omp::UniformBuffer>(
-            m_VulkanContext, m_PresentKHRImagesNum, buffer_size,
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+            m_VulkanContext, m_PresentKHRImagesNum, buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 
     m_OutlineBuffer = std::make_unique<omp::UniformBuffer>(
-            m_VulkanContext, m_PresentKHRImagesNum, sizeof(OutlineUniformBuffer),
-            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-
+            m_VulkanContext, m_PresentKHRImagesNum, sizeof(OutlineUniformBuffer), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 }
 
 void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
@@ -1585,11 +1497,10 @@ void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
 
     UniformBufferObject ubo{};
     ubo.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
-    ubo.proj = glm::perspective(
-            glm::radians(m_CurrentScene->getCurrentCamera()->getViewAngle()),
-            static_cast<float>(m_ViewportSize[0]) / m_ViewportSize[1],
-            m_CurrentScene->getCurrentCamera()->getNearClipping(),
-            m_CurrentScene->getCurrentCamera()->getFarClipping());
+    ubo.proj = glm::perspective(glm::radians(m_CurrentScene->getCurrentCamera()->getViewAngle()),
+                                static_cast<float>(m_ViewportSize[0]) / m_ViewportSize[1],
+                                m_CurrentScene->getCurrentCamera()->getNearClipping(),
+                                m_CurrentScene->getCurrentCamera()->getFarClipping());
     ubo.proj[1][1] *= -1;
     ubo.view_position = m_CurrentScene->getCurrentCamera()->getPosition();
     ubo.global_light_enabled = m_LightSystem->getGlobalLightSize() > 0;
@@ -1602,8 +1513,7 @@ void omp::Renderer::updateUniformBuffer(uint32_t currentImage)
     auto entity = m_CurrentScene->getEntity(m_CurrentScene->getCurrentId());
     if (entity)
     {
-        outline_buffer.model =
-                glm::scale(entity->getModelInstance()->getTransform(), glm::vec3{1.2f});
+        outline_buffer.model = glm::scale(entity->getModelInstance()->getTransform(), glm::vec3{1.2f});
     }
     outline_buffer.view = m_CurrentScene->getCurrentCamera()->getViewMatrix();
     m_OutlineBuffer->mapMemory(outline_buffer, currentImage);
@@ -1629,8 +1539,7 @@ void omp::Renderer::createDescriptorPool()
     pool_info.maxSets = 1000;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
-    if (vkCreateDescriptorPool(m_LogicalDevice, &pool_info, nullptr,
-                               &m_DescriptorPool) != VK_SUCCESS)
+    if (vkCreateDescriptorPool(m_LogicalDevice, &pool_info, nullptr, &m_DescriptorPool) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create descriptor pool!");
     }
@@ -1640,8 +1549,7 @@ void omp::Renderer::createDescriptorSets()
 {
     // Skybox
     {
-        std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum,
-                                                   m_SkyboxSetLayout);
+        std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_SkyboxSetLayout);
 
         VkDescriptorSetAllocateInfo allocate_info{};
         allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1650,8 +1558,7 @@ void omp::Renderer::createDescriptorSets()
         allocate_info.pSetLayouts = layouts.data();
 
         m_SkyboxDescriptorSets.resize(m_PresentKHRImagesNum);
-        if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info,
-                                     m_SkyboxDescriptorSets.data()) != VK_SUCCESS)
+        if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, m_SkyboxDescriptorSets.data()) != VK_SUCCESS)
         {
             throw std::runtime_error("Failed to allocate descriptor sets!");
         }
@@ -1673,14 +1580,15 @@ void omp::Renderer::createDescriptorSets()
             descriptor_writes[0].pBufferInfo = &buffer_info;
             vkUpdateDescriptorSets(m_LogicalDevice,
                                    static_cast<uint32_t>(descriptor_writes.size()),
-                                   descriptor_writes.data(), 0, nullptr);
+                                   descriptor_writes.data(),
+                                   0,
+                                   nullptr);
         }
     }
 
     // OUTLINE
     {
-        std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum,
-                                                   m_OutlineSetLayout);
+        std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_OutlineSetLayout);
 
         VkDescriptorSetAllocateInfo allocate_info{};
         allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1689,9 +1597,7 @@ void omp::Renderer::createDescriptorSets()
         allocate_info.pSetLayouts = layouts.data();
 
         m_OutlineDescriptorSets.resize(m_PresentKHRImagesNum);
-        if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info,
-                                     m_OutlineDescriptorSets.data()) !=
-            VK_SUCCESS)
+        if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, m_OutlineDescriptorSets.data()) != VK_SUCCESS)
         {
             throw std::runtime_error("Failed to allocate descriptor sets!");
         }
@@ -1712,12 +1618,13 @@ void omp::Renderer::createDescriptorSets()
             descriptor_writes[0].pBufferInfo = &buffer_info;
             vkUpdateDescriptorSets(m_LogicalDevice,
                                    static_cast<uint32_t>(descriptor_writes.size()),
-                                   descriptor_writes.data(), 0, nullptr);
+                                   descriptor_writes.data(),
+                                   0,
+                                   nullptr);
         }
     }
     // UBO
-    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum,
-                                               m_UboDescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_UboDescriptorSetLayout);
 
     VkDescriptorSetAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1726,8 +1633,7 @@ void omp::Renderer::createDescriptorSets()
     allocate_info.pSetLayouts = layouts.data();
 
     m_UboDescriptorSets.resize(m_PresentKHRImagesNum);
-    if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info,
-                                 m_UboDescriptorSets.data()) != VK_SUCCESS)
+    if (vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, m_UboDescriptorSets.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to allocate descriptor sets!");
     }
@@ -1787,14 +1693,12 @@ void omp::Renderer::createDescriptorSets()
         descriptor_writes[3].descriptorCount = 1;
         descriptor_writes[3].pBufferInfo = &spot_light_info;
 
-        vkUpdateDescriptorSets(m_LogicalDevice,
-                               static_cast<uint32_t>(descriptor_writes.size()),
-                               descriptor_writes.data(), 0, nullptr);
+        vkUpdateDescriptorSets(
+                m_LogicalDevice, static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
     }
 }
 
-void omp::Renderer::retrieveMaterialRenderState(
-        const std::shared_ptr<omp::Material>& material)
+void omp::Renderer::retrieveMaterialRenderState(const std::shared_ptr<omp::Material>& material)
 {
     if (!material)
     {
@@ -1807,8 +1711,7 @@ void omp::Renderer::retrieveMaterialRenderState(
     }
 
     std::vector<VkDescriptorSet> ds;
-    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum,
-                                               m_TexturesDescriptorSetLayout);
+    std::vector<VkDescriptorSetLayout> layouts(m_PresentKHRImagesNum, m_TexturesDescriptorSetLayout);
 
     VkDescriptorSetAllocateInfo allocate_info{};
     allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -1817,15 +1720,13 @@ void omp::Renderer::retrieveMaterialRenderState(
     allocate_info.pSetLayouts = layouts.data();
 
     ds.resize(m_PresentKHRImagesNum);
-    auto err =
-            vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, ds.data());
+    auto err = vkAllocateDescriptorSets(m_LogicalDevice, &allocate_info, ds.data());
     if (err != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to allocate descriptor sets!");
     }
 
-    const omp::MaterialRenderInfo* const material_render_info =
-            material->getRenderInfo();
+    const omp::MaterialRenderInfo* const material_render_info = material->getRenderInfo();
 
     // TODO performance
     for (size_t index = 0; index < ds.size(); index++)
@@ -1850,17 +1751,15 @@ void omp::Renderer::retrieveMaterialRenderState(
             descriptor_write.dstSet = ds[index];
             descriptor_write.dstBinding = data.binding_index;
             descriptor_write.dstArrayElement = 0;
-            descriptor_write.descriptorType =
-                    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptor_write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
             descriptor_write.descriptorCount = 1;
             descriptor_write.pImageInfo = &image_infos.at(data.binding_index);
 
             descriptor_writes.push_back(descriptor_write);
         }
 
-        vkUpdateDescriptorSets(m_LogicalDevice,
-                               static_cast<uint32_t>(descriptor_writes.size()),
-                               descriptor_writes.data(), 0, nullptr);
+        vkUpdateDescriptorSets(
+                m_LogicalDevice, static_cast<uint32_t>(descriptor_writes.size()), descriptor_writes.data(), 0, nullptr);
     }
     m_MaterialSets.insert(m_MaterialSets.begin(), ds.begin(), ds.end());
 
@@ -1903,37 +1802,36 @@ void omp::Renderer::endSingleTimeCommands(VkCommandBuffer commandBuffer)
 void omp::Renderer::createDepthResources()
 {
     VkFormat depth_format = findDepthFormat();
-    m_VulkanContext->createImage(
-            m_ViewportSize[0],
-            m_ViewportSize[1], 1, depth_format,
-            VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImage, m_DepthImageMemory,
-            m_MSAASamples);
+    m_VulkanContext->createImage(m_ViewportSize[0],
+                                 m_ViewportSize[1],
+                                 1,
+                                 depth_format,
+                                 VK_IMAGE_TILING_OPTIMAL,
+                                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                 m_DepthImage,
+                                 m_DepthImageMemory,
+                                 m_MSAASamples);
     m_DepthImageView = m_VulkanContext->createImageView(
-            m_DepthImage, depth_format,
-            VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, 1);
+            m_DepthImage, depth_format, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT, 1);
 
     m_VulkanContext->transitionImageLayout(
-            m_DepthImage, depth_format, VK_IMAGE_LAYOUT_UNDEFINED,
-            VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+            m_DepthImage, depth_format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
 }
 
-VkFormat omp::Renderer::findSupportedFormat(
-        const std::vector<VkFormat>& candidates,
-        VkImageTiling tiling,
-        VkFormatFeatureFlags features)
+VkFormat omp::Renderer::findSupportedFormat(const std::vector<VkFormat>& candidates,
+                                            VkImageTiling tiling,
+                                            VkFormatFeatureFlags features)
 {
     for (VkFormat format: candidates)
     {
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties(m_PhysDevice, format, &props);
-        if (tiling == VK_IMAGE_TILING_LINEAR &&
-            (props.linearTilingFeatures & features) == features)
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
         {
             return format;
         }
-        else if (tiling == VK_IMAGE_TILING_OPTIMAL &&
-                 (props.optimalTilingFeatures & features) == features)
+        else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
         {
             return format;
         }
@@ -1943,10 +1841,9 @@ VkFormat omp::Renderer::findSupportedFormat(
 
 VkFormat omp::Renderer::findDepthFormat()
 {
-    return findSupportedFormat(
-            {VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT,
-             VK_FORMAT_D32_SFLOAT},
-            VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    return findSupportedFormat({VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT},
+                               VK_IMAGE_TILING_OPTIMAL,
+                               VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
 void omp::Renderer::createImguiContext()
@@ -1955,17 +1852,15 @@ void omp::Renderer::createImguiContext()
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     (void) io;
-    io.ConfigFlags |=
-            ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |=
-            ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     // io.Fonts->Build();
     ImGui::StyleColorsDark();
 
     if (!std::filesystem::exists("imgui.ini"))
     {
-        // Use default layout first time 
+        // Use default layout first time
         ImGui::LoadIniSettingsFromDisk("../default_imgui.ini");
         ImGui::SaveIniSettingsToDisk("imgui.ini");
     }
@@ -1976,34 +1871,31 @@ void omp::Renderer::initializeImgui(GLFWwindow* window)
     createImguiContext();
     createImguiRenderPass();
 
-    VkDescriptorPoolSize pool_sizes[] = {
-            {VK_DESCRIPTOR_TYPE_SAMPLER,                1000},
-            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
-            {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          1000},
-            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          1000},
-            {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,   1000},
-            {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,   1000},
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         1000},
-            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         1000},
-            {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
-            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
-            {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,       1000}};
+    VkDescriptorPoolSize pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+                                         {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+                                         {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+                                         {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+                                         {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
     VkDescriptorPoolCreateInfo pool_info = {};
     pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
     pool_info.poolSizeCount = (uint32_t) IM_ARRAYSIZE(pool_sizes);
     pool_info.pPoolSizes = pool_sizes;
-    vkCreateDescriptorPool(m_LogicalDevice, &pool_info, nullptr,
-                           &m_ImguiDescriptorPool);
+    vkCreateDescriptorPool(m_LogicalDevice, &pool_info, nullptr, &m_ImguiDescriptorPool);
 
     ImGui_ImplGlfw_InitForVulkan(window, true);
     ImGui_ImplVulkan_InitInfo init_info = {};
     init_info.Instance = m_Instance;
     init_info.PhysicalDevice = m_PhysDevice;
     init_info.Device = m_LogicalDevice;
-    init_info.QueueFamily =
-            findQueueFamilies(m_PhysDevice).graphics_family.value();
+    init_info.QueueFamily = findQueueFamilies(m_PhysDevice).graphics_family.value();
     init_info.Queue = m_GraphicsQueue;
     init_info.PipelineCache = VK_NULL_HANDLE;
     init_info.DescriptorPool = m_ImguiDescriptorPool;
@@ -2060,12 +1952,10 @@ void omp::Renderer::createImguiCommandPools()
 {
     VkCommandPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    pool_info.queueFamilyIndex =
-            findQueueFamilies(m_PhysDevice).graphics_family.value();
+    pool_info.queueFamilyIndex = findQueueFamilies(m_PhysDevice).graphics_family.value();
     pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if (vkCreateCommandPool(m_LogicalDevice, &pool_info, nullptr,
-                            &m_ImguiCommandPool))
+    if (vkCreateCommandPool(m_LogicalDevice, &pool_info, nullptr, &m_ImguiCommandPool))
     {
         throw std::runtime_error("Failed to create imgui command pool");
     }
@@ -2076,8 +1966,10 @@ void omp::Renderer::createImguiFramebuffers()
     m_ImguiFramebuffers.resize(m_PresentKHRImagesNum);
     for (size_t i = 0; i < m_PresentKHRImagesNum; i++)
     {
-        omp::FrameBuffer frame_buffer(m_LogicalDevice, {m_SwapChainImageViews[i]},
-                                      m_ImguiRenderPass, m_SwapChainExtent.width,
+        omp::FrameBuffer frame_buffer(m_LogicalDevice,
+                                      {m_SwapChainImageViews[i]},
+                                      m_ImguiRenderPass,
+                                      m_SwapChainExtent.width,
                                       m_SwapChainExtent.height);
         m_ImguiFramebuffers[i] = frame_buffer;
     }
@@ -2088,9 +1980,8 @@ VkSampleCountFlagBits omp::Renderer::getMaxUsableSampleCount()
     VkPhysicalDeviceProperties physical_device_properties;
     vkGetPhysicalDeviceProperties(m_PhysDevice, &physical_device_properties);
 
-    VkSampleCountFlags counts =
-            physical_device_properties.limits.framebufferColorSampleCounts &
-            physical_device_properties.limits.framebufferDepthSampleCounts;
+    VkSampleCountFlags counts = physical_device_properties.limits.framebufferColorSampleCounts &
+                                physical_device_properties.limits.framebufferDepthSampleCounts;
 
     if (counts & VK_SAMPLE_COUNT_64_BIT)
     {
@@ -2123,28 +2014,33 @@ void omp::Renderer::createColorResources()
 {
     VkFormat color_format = m_SwapChainImageFormat;
 
-    m_VulkanContext->createImage(
-            m_ViewportSize[0],
-            m_ViewportSize[1], 1, color_format,
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ColorImage, m_ColorImageMemory,
-            m_MSAASamples);
-    m_ColorImageView = m_VulkanContext->createImageView(
-            m_ColorImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    m_VulkanContext->createImage(m_ViewportSize[0],
+                                 m_ViewportSize[1],
+                                 1,
+                                 color_format,
+                                 VK_IMAGE_TILING_OPTIMAL,
+                                 VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                 m_ColorImage,
+                                 m_ColorImageMemory,
+                                 m_MSAASamples);
+    m_ColorImageView = m_VulkanContext->createImageView(m_ColorImage, color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
 
 void omp::Renderer::createViewportResources()
 {
     VkFormat color_format = m_SwapChainImageFormat;
 
-    m_ViewportImage->createImage(
-            m_ViewportSize[0],
-            m_ViewportSize[1], 1, color_format,
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_SAMPLE_COUNT_1_BIT, 0, 1);
+    m_ViewportImage->createImage(m_ViewportSize[0],
+                                 m_ViewportSize[1],
+                                 1,
+                                 color_format,
+                                 VK_IMAGE_TILING_OPTIMAL,
+                                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                 VK_SAMPLE_COUNT_1_BIT,
+                                 0,
+                                 1);
     m_ViewportImage->createImageView(color_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
     VkSamplerCreateInfo sampler_info{};
@@ -2168,24 +2064,30 @@ void omp::Renderer::createPickingResources()
 {
     VkFormat image_format = VK_FORMAT_R32_SINT;
 
-    m_VulkanContext->createImage(
-            m_ViewportSize[0],
-            m_ViewportSize[1], 1, image_format,
-            VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_PickingImage, m_PickingMemory,
-            m_MSAASamples);
-    m_PickingImageView = m_VulkanContext->createImageView(
-            m_PickingImage, image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    m_VulkanContext->createImage(m_ViewportSize[0],
+                                 m_ViewportSize[1],
+                                 1,
+                                 image_format,
+                                 VK_IMAGE_TILING_OPTIMAL,
+                                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                 m_PickingImage,
+                                 m_PickingMemory,
+                                 m_MSAASamples);
+    m_PickingImageView = m_VulkanContext->createImageView(m_PickingImage, image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
-    m_VulkanContext->createImage(
-            m_ViewportSize[0],
-            m_ViewportSize[1], 1, image_format,
-            VK_IMAGE_TILING_LINEAR,
-            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, m_PickingResolve,
-            m_PickingResolveMemory, VK_SAMPLE_COUNT_1_BIT);
-    m_PickingResolveView = m_VulkanContext->createImageView(
-            m_PickingResolve, image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    m_VulkanContext->createImage(m_ViewportSize[0],
+                                 m_ViewportSize[1],
+                                 1,
+                                 image_format,
+                                 VK_IMAGE_TILING_LINEAR,
+                                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+                                 m_PickingResolve,
+                                 m_PickingResolveMemory,
+                                 VK_SAMPLE_COUNT_1_BIT);
+    m_PickingResolveView =
+            m_VulkanContext->createImageView(m_PickingResolve, image_format, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
 
 void omp::Renderer::destroyMainRenderPassResources()
@@ -2253,47 +2155,46 @@ void omp::Renderer::resizeInternal()
 
 void omp::Renderer::setClickedEntity(uint32_t x, uint32_t y)
 {
-        VkImageSubresourceLayers subres{};
-        subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        subres.mipLevel = 0;
-        subres.baseArrayLayer = 0;
-        subres.layerCount = 1;
-        VkBufferImageCopy region{};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 1;
-        region.bufferImageHeight = 1;
-        region.imageSubresource = subres;
-        VkOffset3D offset{};
-        offset.x = static_cast<int32_t>(x);
-        offset.y = static_cast<int32_t>(y);
-        offset.z = 0;
-        region.imageOffset = offset;
-        VkExtent3D extent{};
-        extent.height = 1;
-        extent.width = 1;
-        extent.depth = 1;
-        region.imageExtent = extent;
+    VkImageSubresourceLayers subres{};
+    subres.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subres.mipLevel = 0;
+    subres.baseArrayLayer = 0;
+    subres.layerCount = 1;
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 1;
+    region.bufferImageHeight = 1;
+    region.imageSubresource = subres;
+    VkOffset3D offset{};
+    offset.x = static_cast<int32_t>(x);
+    offset.y = static_cast<int32_t>(y);
+    offset.z = 0;
+    region.imageOffset = offset;
+    VkExtent3D extent{};
+    extent.height = 1;
+    extent.width = 1;
+    extent.depth = 1;
+    region.imageExtent = extent;
 
-        m_VulkanContext->transitionImageLayout(
-                m_PickingResolve, VK_FORMAT_R32_SINT,
-                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 1);
+    m_VulkanContext->transitionImageLayout(m_PickingResolve,
+                                           VK_FORMAT_R32_SINT,
+                                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                           VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                           1);
 
-        VkCommandBuffer buffer = beginSingleTimeCommands();
-        vkCmdCopyImageToBuffer(buffer, m_PickingResolve,
-                               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                               m_PixelReadBuffer, 1, &region);
-        endSingleTimeCommands(buffer);
+    VkCommandBuffer buffer = beginSingleTimeCommands();
+    vkCmdCopyImageToBuffer(
+            buffer, m_PickingResolve, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, m_PixelReadBuffer, 1, &region);
+    endSingleTimeCommands(buffer);
 
-        uint32_t pixel_value = 1;
-        void* data;
-        vkMapMemory(m_VulkanContext->logical_device, m_PixelReadMemory, 0,
-                    sizeof(uint32_t), 0, &data);
-        memcpy(&pixel_value, data, sizeof(uint32_t));
-        vkUnmapMemory(m_VulkanContext->logical_device, m_PixelReadMemory);
+    uint32_t pixel_value = 1;
+    void* data;
+    vkMapMemory(m_VulkanContext->logical_device, m_PixelReadMemory, 0, sizeof(uint32_t), 0, &data);
+    memcpy(&pixel_value, data, sizeof(uint32_t));
+    vkUnmapMemory(m_VulkanContext->logical_device, m_PixelReadMemory);
 
-        m_CurrentScene->setCurrentId(pixel_value);
-        INFO(LogRendering, "value {}", pixel_value);
+    m_CurrentScene->setCurrentId(pixel_value);
+    INFO(LogRendering, "value {}", pixel_value);
 }
 
 omp::GraphicsPipeline* omp::Renderer::findGraphicsPipeline(const std::string& name)
@@ -2306,12 +2207,11 @@ omp::GraphicsPipeline* omp::Renderer::findGraphicsPipeline(const std::string& na
     throw "No shader with such name";
 }
 
-void omp::Renderer::beginRenderPass(
-        omp::RenderPass* inRenderPass,
-        VkCommandBuffer inCommandBuffer,
-        omp::FrameBuffer& inFrameBuffer,
-        const std::vector<VkClearValue>& clearValues,
-        VkRect2D rect)
+void omp::Renderer::beginRenderPass(omp::RenderPass* inRenderPass,
+                                    VkCommandBuffer inCommandBuffer,
+                                    omp::FrameBuffer& inFrameBuffer,
+                                    const std::vector<VkClearValue>& clearValues,
+                                    VkRect2D rect)
 {
     VkRenderPassBeginInfo render_pass_begin_info{};
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -2319,17 +2219,13 @@ void omp::Renderer::beginRenderPass(
     render_pass_begin_info.framebuffer = inFrameBuffer.getVulkanFrameBuffer();
     render_pass_begin_info.renderArea = rect;
 
-    render_pass_begin_info.clearValueCount =
-            static_cast<uint32_t>(clearValues.size());
+    render_pass_begin_info.clearValueCount = static_cast<uint32_t>(clearValues.size());
     render_pass_begin_info.pClearValues = clearValues.data();
 
-    vkCmdBeginRenderPass(inCommandBuffer, &render_pass_begin_info,
-                         VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(inCommandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void omp::Renderer::endRenderPass(
-        omp::RenderPass* /*inRenderPass*/,
-        VkCommandBuffer inCommandBuffer)
+void omp::Renderer::endRenderPass(omp::RenderPass* /*inRenderPass*/, VkCommandBuffer inCommandBuffer)
 {
     vkCmdEndRenderPass(inCommandBuffer);
     if (vkEndCommandBuffer(inCommandBuffer) != VK_SUCCESS)
@@ -2338,9 +2234,7 @@ void omp::Renderer::endRenderPass(
     }
 }
 
-void omp::Renderer::prepareCommandBuffer(
-        CommandBufferScope& bufferScope,
-        VkCommandPool inCommandPool)
+void omp::Renderer::prepareCommandBuffer(CommandBufferScope& bufferScope, VkCommandPool inCommandPool)
 {
     OMP_STAT_SCOPE("CommandBuffer");
 
@@ -2391,4 +2285,3 @@ void omp::Renderer::tick(float deltaTime)
 {
     m_CurrentScene->getCurrentCamera()->applyInputs(deltaTime);
 }
-

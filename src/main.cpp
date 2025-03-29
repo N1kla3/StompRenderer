@@ -1,11 +1,15 @@
 
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-#include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
-#include "Logs.h"
+#include <glm/vec4.hpp>
 #include "Core/Application.h"
+#include "Logs.h"
 
 int main(int argc, char** argv)
 {
@@ -26,17 +30,17 @@ int main(int argc, char** argv)
 
     omp::InitializeLogs();
     INFO(LogRendering, "=================Create Application=================");
-    omp::Application* application = new omp::Application{ project_absolute_path, flags };
+    omp::Application* application = new omp::Application{project_absolute_path, flags};
 
-    //try
+    // try
     {
         application->start();
     }
-    //catch (const std::exception& e)
+    // catch (const std::exception& e)
     //{
-    //    ERROR(LogRendering, e.what());
-    //    return EXIT_FAILURE;
-    //}
+    //     ERROR(LogRendering, e.what());
+    //     return EXIT_FAILURE;
+    // }
     delete application;
     INFO(LogRendering, "================Destroy Application=================");
     return EXIT_SUCCESS;

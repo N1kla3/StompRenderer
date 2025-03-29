@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include <thread>
 #include <vector>
@@ -17,13 +21,17 @@ namespace omp
             virtual void Call() = 0;
             virtual ~ImplBase() = default;
         };
+
         std::unique_ptr<ImplBase> m_Callable;
 
-        template< class Functor >
+        template<class Functor>
         struct Impl : ImplBase
         {
             Functor functor;
-            explicit Impl(Functor&& inF) : functor(std::move(inF)) {}
+
+            explicit Impl(Functor&& inF) : functor(std::move(inF))
+            {
+            }
 
             Impl() = delete;
             Impl(Impl&& other) = delete;
@@ -38,16 +46,20 @@ namespace omp
         };
 
     public:
-        template< class F >
+        template<class F>
         FunctionWrapper(F&& f)
-                : m_Callable(std::make_unique<Impl<F>>(std::move(f)))
-        {}
+            : m_Callable(std::make_unique<Impl<F>>(std::move(f)))
+        {
+        }
+
         FunctionWrapper() = default;
+
         FunctionWrapper(FunctionWrapper&& other)
-                : m_Callable(std::move(other.m_Callable))
+            : m_Callable(std::move(other.m_Callable))
         {
 
         }
+
         FunctionWrapper& operator=(FunctionWrapper&& other)
         {
             m_Callable = std::move(other.m_Callable);
@@ -71,6 +83,7 @@ namespace omp
         using DataType = FunctionWrapper;
         std::deque<DataType> m_Queue;
         mutable std::mutex m_Mutex;
+
     public:
         WorkStealingQueue() = default;
         WorkStealingQueue(const WorkStealingQueue&) = delete;
@@ -119,13 +132,15 @@ namespace omp
 
     public:
         explicit JoinThreads(std::vector<std::thread>& inThreads)
-                : m_Threads(inThreads)
-        {}
+            : m_Threads(inThreads)
+        {
+        }
+
         ~JoinThreads()
         {
-            for(size_t index = 0; index < m_Threads.size(); index++)
+            for (size_t index = 0; index < m_Threads.size(); index++)
             {
-                if(m_Threads[index].joinable())
+                if (m_Threads[index].joinable())
                     m_Threads[index].join();
             }
         }
@@ -137,9 +152,11 @@ namespace omp
     {
     public:
         InterruptFlag()
-                : m_ThreadCond(nullptr)
-                , m_ThreadCondAny(nullptr)
-        {}
+            : m_ThreadCond(nullptr)
+              , m_ThreadCondAny(nullptr)
+        {
+        }
+
         void set()
         {
             m_Flag.store(true, std::memory_order_relaxed);
@@ -153,12 +170,13 @@ namespace omp
                 m_ThreadCondAny->notify_all();
             }
         }
+
         bool isSet() const
         {
             return m_Flag.load(std::memory_order_relaxed);
         }
 
-        template< typename Lockable >
+        template<typename Lockable>
         void wait(std::condition_variable_any& conditionVar, Lockable& lockable)
         {
             struct CustomLock
@@ -167,8 +185,8 @@ namespace omp
                 Lockable& m_lock;
 
                 CustomLock(InterruptFlag* inSelf, std::condition_variable_any& cond, Lockable& inLock)
-                        : self(inSelf)
-                        , m_lock(inLock)
+                    : self(inSelf)
+                      , m_lock(inLock)
                 {
                     self->m_SetClearMutex.lock();
                     self->m_ThreadCondAny = &cond;
@@ -221,23 +239,26 @@ namespace omp
     };
 
 
-    template< typename Lockable >
+    template<typename Lockable>
     void InterruptibleWait(std::condition_variable_any& cond, Lockable& lockable);
 
     class InterruptibleThread
     {
     public:
-        template< typename FunctionType >
-        InterruptibleThread(FunctionType &&function)
+        template<typename FunctionType>
+        InterruptibleThread(FunctionType&& function)
         {
             std::promise<InterruptFlag*> interrupt_flag_promise;
             // Packaged task issue, because it does not have non-const call
-            m_InternalThread = std::thread([func = std::forward<FunctionType>(function), &interrupt_flag_promise]() mutable {
-                interrupt_flag_promise.set_value(&Helper::g_ThisThreadInterruptFlag);
-                func();
-            });
+            m_InternalThread = std::thread(
+                    [func = std::forward<FunctionType>(function), &interrupt_flag_promise]() mutable
+                    {
+                        interrupt_flag_promise.set_value(&Helper::g_ThisThreadInterruptFlag);
+                        func();
+                    });
             m_Flag = interrupt_flag_promise.get_future().get();
         }
+
         void interrupt()
         {
             if (m_Flag)
@@ -245,24 +266,29 @@ namespace omp
                 m_Flag->set();
             }
         }
+
         void join()
         {
             m_InternalThread.join();
         }
+
         bool joinable() const noexcept
         {
             return m_InternalThread.joinable();
         }
+
         void detach()
         {
             m_InternalThread.detach();
         }
+
     private:
         std::thread m_InternalThread;
         InterruptFlag* m_Flag;
     };
 
-    class ThreadPool {
+    class ThreadPool
+    {
     private:
         // Data //
         // ==== //
@@ -316,8 +342,8 @@ namespace omp
 
     public:
         ThreadPool()
-                : m_Done{ false }
-                , m_Joiner(m_Threads)
+            : m_Done{false}
+              , m_Joiner(m_Threads)
         {
             unsigned const thread_count = std::thread::hardware_concurrency();
             try
@@ -336,12 +362,13 @@ namespace omp
                 m_Done = true;
             }
         }
+
         ThreadPool(const unsigned threadCount)
-            : m_Done{ false }
-            , m_Joiner(m_Threads)
+            : m_Done{false}
+              , m_Joiner(m_Threads)
         {
             unsigned const thread_count_max = std::thread::hardware_concurrency();
-            
+
             const unsigned threads_to_create = threadCount > thread_count_max ? thread_count_max : threadCount;
             try
             {
@@ -365,11 +392,12 @@ namespace omp
             m_Done = true;
         }
 
-        template< typename FunctionType, typename ...Args >
+        template<typename FunctionType, typename... Args>
         std::future<typename std::invoke_result_t<FunctionType, Args...>> submit(FunctionType&& f, Args&&... args)
         {
             using ResultType = std::invoke_result_t<FunctionType, Args...>;
-            std::packaged_task < ResultType() > task(std::bind(std::forward<FunctionType>(f), std::forward<Args>(args)...));
+            std::packaged_task<ResultType()>
+                    task(std::bind(std::forward<FunctionType>(f), std::forward<Args>(args)...));
             std::future<ResultType> result(task.get_future());
             if (s_LocalQueue)
             {

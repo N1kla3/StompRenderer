@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include "IO/SerializableObject.h"
 
@@ -10,19 +14,18 @@ namespace omp
     class ProjectSettings : public omp::SerializableObject
     {
     public:
-
         int32_t version = 100;
         std::string project_name = "None";
         std::string default_map = "../assets/main_scene.json";
 
-        virtual void serialize(omp::JsonParser<> &parser) override
+        virtual void serialize(omp::JsonParser<>& parser) override
         {
             parser.writeValue("ProjectVersion", version);
             parser.writeValue("ProjectName", project_name);
             parser.writeValue("DefaultMap", default_map);
         }
 
-        virtual void deserialize(omp::JsonParser<> &parser) override
+        virtual void deserialize(omp::JsonParser<>& parser) override
         {
             OMP_READ_SETTING(int32_t, version, "ProjectVersion");
             OMP_READ_SETTING(std::string, project_name, "ProjectName");

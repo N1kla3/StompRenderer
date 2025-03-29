@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "UIController.h"
 #include "Scene.h"
 #include "UI/CameraPanel.h"
@@ -24,11 +28,13 @@ void omp::UIController::update(const omp::UIData& data, float deltaTime)
     m_Viewport.updateUi(data.scene, data.scene->getCurrentCamera(), data.renderer->getViewportDescriptor());
     if (m_Viewport.isResized())
     {
-        data.renderer->resizeViewport(static_cast<uint32_t>(m_Viewport.getSize().x), static_cast<uint32_t>(m_Viewport.getSize().y));
+        data.renderer->resizeViewport(static_cast<uint32_t>(m_Viewport.getSize().x),
+                                      static_cast<uint32_t>(m_Viewport.getSize().y));
     }
     if (m_Viewport.isEntityClicked())
     {
-        data.renderer->setClickedEntity(static_cast<uint32_t>(m_Viewport.getLocalCursorPos().x), static_cast<uint32_t>(m_Viewport.getLocalCursorPos().y));
+        data.renderer->setClickedEntity(static_cast<uint32_t>(m_Viewport.getLocalCursorPos().x),
+                                        static_cast<uint32_t>(m_Viewport.getLocalCursorPos().y));
     }
     if (data.scene)
     {

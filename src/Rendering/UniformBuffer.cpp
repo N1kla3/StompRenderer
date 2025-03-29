@@ -1,18 +1,28 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "UniformBuffer.h"
 
-omp::UniformBuffer::UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrImageCount, VkDeviceSize bufferSize, VkBufferUsageFlagBits flags)
+omp::UniformBuffer::UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext,
+                                  uint32_t khrImageCount,
+                                  VkDeviceSize bufferSize,
+                                  VkBufferUsageFlagBits flags)
     : m_VulkanContext(inVulkanContext)
-    , m_KHRNum(khrImageCount)
+      , m_KHRNum(khrImageCount)
 {
     m_Buffer.resize(khrImageCount);
     m_Memory.resize(khrImageCount);
     for (size_t i = 0; i < khrImageCount; i++)
     {
-        m_VulkanContext->createBuffer(bufferSize, flags,
-                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                     m_Buffer[i], m_Memory[i]);
+        m_VulkanContext->createBuffer(bufferSize,
+                                      flags,
+                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                      m_Buffer[i],
+                                      m_Memory[i]);
     }
 }
+
 omp::UniformBuffer::UniformBuffer(UniformBuffer&& rhs)
 {
     m_VulkanContext = std::move(rhs.m_VulkanContext);
@@ -20,6 +30,7 @@ omp::UniformBuffer::UniformBuffer(UniformBuffer&& rhs)
     m_Buffer = std::move(rhs.m_Buffer);
     m_Memory = std::move(rhs.m_Memory);
 }
+
 omp::UniformBuffer& omp::UniformBuffer::operator=(UniformBuffer&& rhs)
 {
     m_VulkanContext = std::move(rhs.m_VulkanContext);

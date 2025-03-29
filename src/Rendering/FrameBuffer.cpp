@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include <stdexcept>
 #include "Logs.h"
 #include "FrameBuffer.h"
@@ -14,7 +18,7 @@ omp::FrameBuffer::FrameBuffer(
         const std::shared_ptr<omp::RenderPass>& renderPass,
         uint32_t width,
         uint32_t height)
-        : m_LogicalDevice(device)
+    : m_LogicalDevice(device)
 {
     m_CreateInfo.renderPass = renderPass->getRenderPass();
     m_CreateInfo.attachmentCount = static_cast<uint32_t>(imagesViews.size());

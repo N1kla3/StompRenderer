@@ -1,34 +1,38 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "Camera.h"
 #include "SceneEntity.h"
-#include "imgui.h"
 #include "glm/ext/matrix_transform.hpp"
+#include "imgui.h"
 
 omp::Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-        : SceneEntity()
-        , m_Position(position)
-        , m_Up(up)
-        , m_WorldUp(up)
-        , m_Yaw(yaw)
-        , m_Pitch(pitch)
-        , m_Front(glm::vec3(0.f, 0.f, -1.f))
-        , m_MovementSpeed(SPEED)
-        , m_MouseSensitivity(SENSITIVITY)
-        , m_Zoom(ZOOM)
+    : SceneEntity()
+    , m_Position(position)
+    , m_Up(up)
+    , m_WorldUp(up)
+    , m_Yaw(yaw)
+    , m_Pitch(pitch)
+    , m_Front(glm::vec3(0.f, 0.f, -1.f))
+    , m_MovementSpeed(SPEED)
+    , m_MouseSensitivity(SENSITIVITY)
+    , m_Zoom(ZOOM)
 {
     updateCameraVectors();
 }
 
 omp::Camera::Camera(float posx, float posy, float posz, float upx, float upy, float upz, float yaw, float pitch)
-        : SceneEntity()
-        , m_Position(posx, posy, posz)
-        , m_Up(upx, upy, upz)
-        , m_WorldUp(upx, upy, upz)
-        , m_Yaw(yaw)
-        , m_Pitch(pitch)
-        , m_Front(glm::vec3(0.f, 0.f, -1.f))
-        , m_MovementSpeed(SPEED)
-        , m_MouseSensitivity(SENSITIVITY)
-        , m_Zoom(ZOOM)
+    : SceneEntity()
+    , m_Position(posx, posy, posz)
+    , m_Up(upx, upy, upz)
+    , m_WorldUp(upx, upy, upz)
+    , m_Yaw(yaw)
+    , m_Pitch(pitch)
+    , m_Front(glm::vec3(0.f, 0.f, -1.f))
+    , m_MovementSpeed(SPEED)
+    , m_MouseSensitivity(SENSITIVITY)
+    , m_Zoom(ZOOM)
 {
     updateCameraVectors();
 }
@@ -72,7 +76,7 @@ void omp::Camera::processMouseMovement(float xOffset, float yOffset, bool constr
     yOffset *= m_MouseSensitivity;
 
     m_InputData.yaw += xOffset;
-    m_InputData.pitch+= yOffset;
+    m_InputData.pitch += yOffset;
 
     if (constrainPitch)
     {
@@ -87,10 +91,7 @@ void omp::Camera::processMouseMovement(float xOffset, float yOffset, bool constr
     }
 }
 
-void omp::Camera::processMouseScroll(float /*yOffset*/)
-{
-
-}
+void omp::Camera::processMouseScroll(float /*yOffset*/) {}
 
 void omp::Camera::onSceneSave(omp::JsonParser<>& parser, omp::Scene* scene)
 {
@@ -120,7 +121,7 @@ void omp::Camera::onSceneSave(omp::JsonParser<>& parser, omp::Scene* scene)
     parser.writeValue("pitch", m_Pitch);
 
     parser.writeValue("view_angle", m_ViewAngle);
-    parser.writeValue("near_clipping",  m_NearClipping);
+    parser.writeValue("near_clipping", m_NearClipping);
     parser.writeValue("far_clipping", m_FarClipping);
 }
 

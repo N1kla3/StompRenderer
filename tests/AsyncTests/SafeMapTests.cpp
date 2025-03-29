@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "gtest/gtest.h"
 #include <future>
 #include "Logs.h"
@@ -7,7 +11,6 @@
 class SafeMapSuite : public ::testing::Test
 {
 protected:
-
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
@@ -22,11 +25,14 @@ struct test_value
     std::vector<std::string> array;
 
     test_value() = default;
+
     test_value(const std::string& inname)
         : a(1)
-        , b(2.f)
-        , name(inname)
-        , array({}){}
+          , b(2.f)
+          , name(inname)
+          , array({})
+    {
+    }
 };
 
 
@@ -34,12 +40,13 @@ TEST_F(SafeMapSuite, SafeMap_one)
 {
     std::unique_ptr<omp::ThreadPool> pool = std::make_unique<omp::ThreadPool>(5);
     omp::threadsafe_map<std::string, test_value> registry{};
-    
+
     std::promise<void> start, prom_a, prom_b, prom_c;
     std::shared_future<void> ready = start.get_future();
     std::future<bool> res1, res2, res3;
 
-    res1 = pool->submit([&registry, ready, &prom_a]() -> bool{
+    res1 = pool->submit([&registry, ready, &prom_a]() -> bool
+    {
         prom_a.set_value();
         ready.wait();
 
@@ -51,7 +58,8 @@ TEST_F(SafeMapSuite, SafeMap_one)
         return true;
     });
 
-    res2 = pool->submit([&registry, ready, &prom_b]() -> bool{
+    res2 = pool->submit([&registry, ready, &prom_b]() -> bool
+    {
         prom_b.set_value();
         ready.wait();
 
@@ -66,7 +74,8 @@ TEST_F(SafeMapSuite, SafeMap_one)
         return true;
     });
 
-    res3 = pool->submit([&registry, ready, &prom_c]() -> bool{
+    res3 = pool->submit([&registry, ready, &prom_c]() -> bool
+    {
         prom_c.set_value();
         ready.wait();
 
@@ -104,12 +113,13 @@ TEST_F(SafeMapSuite, SafeMap_two)
 {
     std::unique_ptr<omp::ThreadPool> pool = std::make_unique<omp::ThreadPool>(5);
     omp::threadsafe_map<std::string, test_value> registry{};
-    
+
     std::promise<void> start, prom_a, prom_b, prom_c;
     std::shared_future<void> ready = start.get_future();
     std::future<bool> res1, res2, res3;
 
-    res1 = pool->submit([&registry, ready, &prom_a]() -> bool{
+    res1 = pool->submit([&registry, ready, &prom_a]() -> bool
+    {
         prom_a.set_value();
         ready.wait();
 
@@ -125,7 +135,8 @@ TEST_F(SafeMapSuite, SafeMap_two)
         return true;
     });
 
-    res2 = pool->submit([&registry, ready, &prom_b]() -> bool{
+    res2 = pool->submit([&registry, ready, &prom_b]() -> bool
+    {
         prom_b.set_value();
         ready.wait();
 
@@ -147,12 +158,19 @@ TEST_F(SafeMapSuite, SafeMap_two)
         return true;
     });
 
-    res3 = pool->submit([&registry, ready, &prom_c]() -> bool{
+    res3 = pool->submit([&registry, ready, &prom_c]() -> bool
+    {
         prom_c.set_value();
         ready.wait();
 
-        registry.foreach([](std::pair<std::string, test_value>& val){ val.second.name = "each"; });
-        registry.foreach([](std::pair<std::string, test_value>& val){ val.second.name = "each"; });
+        registry.foreach([](std::pair<std::string, test_value>& val)
+        {
+            val.second.name = "each";
+        });
+        registry.foreach([](std::pair<std::string, test_value>& val)
+        {
+            val.second.name = "each";
+        });
 
         return true;
     });
@@ -173,12 +191,13 @@ TEST_F(SafeMapSuite, SafeMap_three)
 {
     std::shared_ptr<omp::ThreadPool> pool = std::make_shared<omp::ThreadPool>(5);
     omp::threadsafe_map<std::string, std::shared_ptr<test_value>> registry{};
-    
+
     std::promise<void> start, prom_a, prom_b, prom_c;
     std::shared_future<void> ready = start.get_future();
     std::future<bool> res1, res2, res3;
 
-    res1 = pool->submit([&registry, ready, &prom_a]() -> bool{
+    res1 = pool->submit([&registry, ready, &prom_a]() -> bool
+    {
         prom_a.set_value();
         ready.wait();
 
@@ -202,7 +221,8 @@ TEST_F(SafeMapSuite, SafeMap_three)
         return true;
     });
 
-    res2 = pool->submit([&registry, ready, &prom_b]() -> bool{
+    res2 = pool->submit([&registry, ready, &prom_b]() -> bool
+    {
         prom_b.set_value();
         ready.wait();
 
@@ -227,7 +247,8 @@ TEST_F(SafeMapSuite, SafeMap_three)
         return true;
     });
 
-    res3 = pool->submit([&registry, ready, &prom_c]() -> bool{
+    res3 = pool->submit([&registry, ready, &prom_c]() -> bool
+    {
         prom_c.set_value();
         ready.wait();
 

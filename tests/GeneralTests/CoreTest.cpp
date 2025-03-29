@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "gtest/gtest.h"
 #include "Logs.h"
 #include "Core/ICommand.h"
@@ -5,7 +9,7 @@
 
 class CoreTestSuite : public ::testing::Test
 {
-protected: 
+protected:
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
@@ -15,18 +19,22 @@ protected:
 class TestICommand : public omp::ICommand
 {
 public:
-    TestICommand(int& data) : test_data(&data){}
+    TestICommand(int& data) : test_data(&data)
+    {
+    }
+
     virtual void execute() override
     {
         prev_data = *test_data;
         *test_data = 8;
     }
+
     virtual void undo() override
     {
         *test_data = prev_data;
     }
 
-private: 
+private:
     int* test_data;
     int prev_data;
 };

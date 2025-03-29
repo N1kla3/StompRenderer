@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "Cubemap.h"
 #include <memory>
 #include "Logs.h"
@@ -10,9 +14,10 @@ omp::Cubemap::Cubemap(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTex
     m_LayerAmount = m_Textures.size();
 }
 
-omp::Cubemap::Cubemap(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures, const std::shared_ptr<VulkanContext>& helper)
+omp::Cubemap::Cubemap(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures,
+                      const std::shared_ptr<VulkanContext>& helper)
     : m_Textures(inTextures)
-    , m_VulkanContext(helper)
+      , m_VulkanContext(helper)
 {
     m_LayerAmount = m_Textures.size();
 }
@@ -101,15 +106,21 @@ void omp::Cubemap::createImage()
     uint32_t height = getFirstTextureHeight();
 
     size_t size_to_alloc = getFirstTextureSize() * m_LayerAmount;
-    m_VulkanContext.lock()->createBuffer(size_to_alloc, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+    m_VulkanContext.lock()->createBuffer(size_to_alloc,
+                                         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                         staging_buffer, staging_buffer_memory);
+                                         staging_buffer,
+                                         staging_buffer_memory);
 
     char* data;
-    vkMapMemory(m_VulkanContext.lock()->logical_device, staging_buffer_memory, 0, size_to_alloc, 0,
+    vkMapMemory(m_VulkanContext.lock()->logical_device,
+                staging_buffer_memory,
+                0,
+                size_to_alloc,
+                0,
                 reinterpret_cast<void**>(&data));
     size_t offset = 0;
-    for (auto& texture : m_Textures)
+    for (auto& texture: m_Textures)
     {
         memcpy(data + offset, texture->getPixels(), size);
         offset += size;
@@ -123,16 +134,25 @@ void omp::Cubemap::createImage()
     // faces of cubemap
     array_layers = static_cast<uint32_t>(m_LayerAmount);
 
-    m_VulkanContext.lock()->createImage(width, height, mip_level, VK_FORMAT_R8G8B8A8_SRGB,
+    m_VulkanContext.lock()->createImage(width,
+                                        height,
+                                        mip_level,
+                                        VK_FORMAT_R8G8B8A8_SRGB,
                                         VK_IMAGE_TILING_OPTIMAL,
                                         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                                         VK_IMAGE_USAGE_SAMPLED_BIT,
-                                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_TextureImage, m_TextureImageMemory,
+                                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                        m_TextureImage,
+                                        m_TextureImageMemory,
                                         VK_SAMPLE_COUNT_1_BIT,
-                                        flags, array_layers);
+                                        flags,
+                                        array_layers);
 
-    m_VulkanContext.lock()->transitionImageLayout(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_level);
+    m_VulkanContext.lock()->transitionImageLayout(m_TextureImage,
+                                                  VK_FORMAT_R8G8B8A8_SRGB,
+                                                  VK_IMAGE_LAYOUT_UNDEFINED,
+                                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                                  mip_level);
 
     offset = 0;
     std::vector<VkBufferImageCopy> buffer_copy_regions{};
@@ -163,8 +183,10 @@ void omp::Cubemap::createImage()
 
 void omp::Cubemap::createImageView()
 {
-    m_TextureImageView = m_VulkanContext.lock()->createImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB,
-                                                                 VK_IMAGE_ASPECT_COLOR_BIT, getFirstTextureMipMap());
+    m_TextureImageView = m_VulkanContext.lock()->createImageView(m_TextureImage,
+                                                                 VK_FORMAT_R8G8B8A8_SRGB,
+                                                                 VK_IMAGE_ASPECT_COLOR_BIT,
+                                                                 getFirstTextureMipMap());
 }
 
 void omp::Cubemap::serialize(JsonParser<>& parser)
@@ -174,7 +196,7 @@ void omp::Cubemap::serialize(JsonParser<>& parser)
     std::vector<id_type> textures_ids;
     textures_ids.reserve(m_Textures.size());
 
-    for (auto& texture : m_Textures)
+    for (auto& texture: m_Textures)
     {
         textures_ids.push_back(serializeDependency(texture.get()));
     }
@@ -188,7 +210,7 @@ void omp::Cubemap::deserialize(JsonParser<>& parser)
     std::vector<omp::SerializableObject::SerializationId> textures_ids;
     textures_ids = parser.readValue<std::vector<id_type>>("textures").value();
 
-    for (id_type id : textures_ids)
+    for (id_type id: textures_ids)
     {
         m_Textures.push_back(std::dynamic_pointer_cast<omp::TextureSrc>(getDependency(id)));
     }
@@ -207,7 +229,7 @@ bool omp::Cubemap::isLoadedToMemory() const
 {
     if (!m_Textures.empty())
     {
-        for (auto& texture : m_Textures)
+        for (auto& texture: m_Textures)
         {
             if (!texture->isLoaded())
             {
@@ -311,9 +333,9 @@ void omp::Cubemap::specifyVulkanContext(const std::shared_ptr<VulkanContext>& in
 {
     m_VulkanContext = inHelper;
 }
+
 void omp::Cubemap::setTextures(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures)
 {
     m_Textures = inTextures;
     m_LayerAmount = m_Textures.size();
 }
-

@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "gtest/gtest.h"
 #include "AssetSystem/AssetManager.h"
 #include "IO/JsonParser.h"
@@ -10,11 +14,11 @@ public:
     std::unique_ptr<omp::AssetManager> manager;
 
 protected:
-
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
     }
+
     static void TearDownTestSuite()
     {
     }
@@ -123,13 +127,12 @@ TEST_F(SceneAssetSuite, SceneAsset__Test__Entities)
     uint32_t test_id = entity.getId();
     scene.setCurrentId(test_id);
     EXPECT_EQ(scene.getCurrentId(), test_id);
-    
+
     scene.addEntityToScene(entity);
     scene.addEntityToScene(omp::SceneEntity{});
-    
+
     EXPECT_EQ(scene.getEntities().size(), 2);
     EXPECT_EQ(*scene.getEntity("ent"), entity);
     EXPECT_EQ(*scene.getEntity(test_id), entity);
     ASSERT_EQ(*scene.getCurrentEntity(), entity);
 }
-

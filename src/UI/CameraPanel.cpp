@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "CameraPanel.h"
 #include "Camera.h"
 #include "imgui.h"
@@ -13,27 +17,33 @@ void omp::CameraPanel::update(omp::Camera* camera)
 
         float val = camera->getSpeed();
         bool res = ImGui::DragFloat("Speed", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        if (res) camera->setSpeed(val);
+        if (res)
+            camera->setSpeed(val);
 
         val = camera->getSens();
         res = ImGui::DragFloat("Sensitivity", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        if (res) camera->setSens(val);
+        if (res)
+            camera->setSens(val);
 
         glm::vec3 pos = camera->getPosition();
         res = ImGui::DragFloat3("Position", &pos[0], 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        if (res) camera->setPosition(pos);
+        if (res)
+            camera->setPosition(pos);
 
         val = camera->getViewAngle();
         res = ImGui::DragFloat("View angle", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        if (res) camera->setViewAngle(val);
+        if (res)
+            camera->setViewAngle(val);
 
         val = camera->getNearClipping();
         res = ImGui::DragFloat("Near clip distance", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        if (res) camera->setNearClip(val);
+        if (res)
+            camera->setNearClip(val);
 
         val = camera->getFarClipping();
         res = ImGui::DragFloat("Far clip distance", &val, 0.1f, 0.0f, 0.0f, "%.2f", 0);
-        if (res) camera->setFarClip(val);
+        if (res)
+            camera->setFarClip(val);
 
         ImGui::PopStyleColor(1);
     }
@@ -44,4 +54,3 @@ void omp::CameraPanel::update(omp::Camera* camera)
 
     ImGui::End();
 }
-

@@ -1,10 +1,14 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include <memory>
 #include <mutex>
 
 namespace omp
 {
-    template< class T >
+    template<class T>
     class ThreadSafeQueue
     {
     private:
@@ -13,19 +17,22 @@ namespace omp
             std::shared_ptr<T> data;
             std::unique_ptr<Node> next;
         };
+
         std::mutex m_HeadMutex;
         std::mutex m_TailMutex;
 
         std::unique_ptr<Node> m_Head;
 
-        Node *m_Tail;
+        Node* m_Tail;
+
     public:
         ThreadSafeQueue()
-                : m_Head(std::make_unique<Node>()), m_Tail(m_Head.get())
+            : m_Head(std::make_unique<Node>()), m_Tail(m_Head.get())
         {
         }
-        ThreadSafeQueue(const ThreadSafeQueue &other) = delete;
-        ThreadSafeQueue &operator=(const ThreadSafeQueue &other) = delete;
+
+        ThreadSafeQueue(const ThreadSafeQueue& other) = delete;
+        ThreadSafeQueue& operator=(const ThreadSafeQueue& other) = delete;
 
     private:
         Node* getTail()
@@ -33,6 +40,7 @@ namespace omp
             std::lock_guard<std::mutex> tail_lock(m_TailMutex);
             return m_Tail;
         }
+
         std::unique_ptr<Node> popHead()
         {
             std::unique_ptr<Node> old_head = std::move(m_Head);
@@ -49,6 +57,7 @@ namespace omp
             }
             return popHead();
         }
+
         std::unique_ptr<Node> tryPopHead(T& value)
         {
             std::lock_guard<std::mutex> head_lock(m_HeadMutex);
@@ -68,11 +77,13 @@ namespace omp
             std::unique_ptr<Node> old_head = tryPopHead();
             return old_head ? old_head->data : std::shared_ptr<T>();
         }
+
         bool tryPop(T& value)
         {
             std::unique_ptr<Node> const old_head = tryPopHead(value);
             return static_cast<bool>(old_head);
         }
+
         bool empty()
         {
             std::lock_guard<std::mutex> head_lock(m_HeadMutex);
@@ -80,7 +91,7 @@ namespace omp
         }
     };
 
-    template< class T >
+    template<class T>
     void ThreadSafeQueue<T>::push(T newValue)
     {
         std::shared_ptr<T> new_data(std::make_shared<T>(std::move(newValue)));

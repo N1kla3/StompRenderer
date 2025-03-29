@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "ScenePanel.h"
 #include "Scene.h"
 #include "imgui.h"
@@ -11,7 +15,7 @@ void omp::ScenePanel::update(omp::Scene* scene)
     {
         if (ImGui::TreeNode("Scene items"))
         {
-            for (auto& entity_ref : scene->getEntities())
+            for (auto& entity_ref: scene->getEntities())
             {
                 int32_t id = entity_ref->getId();
                 int32_t current_id = scene->getCurrentId();
@@ -41,4 +45,3 @@ void omp::ScenePanel::update(omp::Scene* scene)
 
     ImGui::End();
 }
-

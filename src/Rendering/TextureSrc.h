@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include "IO/SerializableObject.h"
@@ -9,21 +13,47 @@ namespace omp
     {
     public:
         TextureSrc() = default;
+
         TextureSrc(const std::string& path)
             : m_Path(path)
         {
             m_IsLoaded = loadTextureFromFile();
         }
+
         ~TextureSrc();
 
         void setPath(const std::string& path);
         void tryLoad();
-        int getSize() const { return m_Size; }
-        int getWidth() const { return m_Width; }
-        int getHeight() const { return m_Height; }
-        uint32_t getMipLevels() const { return m_MipLevels; }
-        bool isLoaded() const { return m_IsLoaded; }
-        stbi_uc* getPixels() const { return m_Pixels; }
+
+        int getSize() const
+        {
+            return m_Size;
+        }
+
+        int getWidth() const
+        {
+            return m_Width;
+        }
+
+        int getHeight() const
+        {
+            return m_Height;
+        }
+
+        uint32_t getMipLevels() const
+        {
+            return m_MipLevels;
+        }
+
+        bool isLoaded() const
+        {
+            return m_IsLoaded;
+        }
+
+        stbi_uc* getPixels() const
+        {
+            return m_Pixels;
+        }
 
     private:
         std::string m_Path;
@@ -35,7 +65,8 @@ namespace omp
 
         virtual void serialize(JsonParser<>& parser) override;
         virtual void deserialize(JsonParser<>& parser) override;
+
     private:
         bool loadTextureFromFile();
     };
-}
+} // namespace omp

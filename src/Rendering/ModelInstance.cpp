@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "ModelInstance.h"
 #include "glm/gtx/quaternion.hpp"
 
@@ -45,16 +49,17 @@ omp::ModelInstance::ModelInstance(const std::shared_ptr<omp::MaterialInstance>& 
 omp::ModelInstance::ModelInstance(
         const std::shared_ptr<omp::Model>& inModel,
         const std::shared_ptr<omp::MaterialInstance>& inInstance)
-        : m_Model(inModel)
-        , m_MaterialInstance(inInstance)
+    : m_Model(inModel)
+      , m_MaterialInstance(inInstance)
 {
 
 }
+
 omp::ModelInstance::ModelInstance(
         const std::shared_ptr<omp::Model>& inModel,
         const std::shared_ptr<omp::Material>& inMat)
-        : m_Model(inModel)
-        , m_MaterialInstance(std::make_shared<omp::MaterialInstance>(inMat))
+    : m_Model(inModel)
+      , m_MaterialInstance(std::make_shared<omp::MaterialInstance>(inMat))
 {
 
 }

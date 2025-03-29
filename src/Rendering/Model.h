@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <vulkan/vulkan.h>
@@ -26,12 +30,16 @@ struct omp::ModelPushConstant
 
     uint32_t id = 4;
 
-    ModelPushConstant(const glm::mat4& inModel, const glm::vec4& inAmbient, const glm::vec4& inDiffusive, const glm::vec4& inSpecular, uint32_t inId)
+    ModelPushConstant(const glm::mat4& inModel,
+                      const glm::vec4& inAmbient,
+                      const glm::vec4& inDiffusive,
+                      const glm::vec4& inSpecular,
+                      uint32_t inId)
         : model(inModel)
-        , ambient(inAmbient)
-        , diffusive(inDiffusive)
-        , specular(inSpecular)
-        , id(inId)
+          , ambient(inAmbient)
+          , diffusive(inDiffusive)
+          , specular(inSpecular)
+          , id(inId)
     {
 
     }
@@ -94,7 +102,7 @@ namespace std
         {
             return ((hash<glm::vec3>()(vertex.pos) ^
                      (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-                   (hash<glm::vec2>()(vertex.tex_coord) << 1);//TODO add normal
+                   (hash<glm::vec2>()(vertex.tex_coord) << 1); //TODO add normal
         }
     };
 }
@@ -144,23 +152,52 @@ private:
 public:
     // Methods //
     // ======= //
-    void setName(const std::string& inName) { m_Name = inName; }
-    void setPath(const std::string& inPath) { m_Path = inPath; }
+    void setName(const std::string& inName)
+    {
+        m_Name = inName;
+    }
+
+    void setPath(const std::string& inPath)
+    {
+        m_Path = inPath;
+    }
 
     void loadToGpuMemory(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate);
 
-    const std::string& getName() const { return m_Name; }
-    const std::string& getPath() const { return m_Path; }
-    bool isLoaded() const { return m_Loaded; }
+    const std::string& getName() const
+    {
+        return m_Name;
+    }
 
-    const std::vector<Vertex>& getVertices() const { return m_Vertices; }
+    const std::string& getPath() const
+    {
+        return m_Path;
+    }
 
-    const std::vector<uint32_t>& getIndices() const { return m_Indices; }
+    bool isLoaded() const
+    {
+        return m_Loaded;
+    }
 
-    VkBuffer& getVertexBuffer() { return m_VertexBuffer; }
-    VkBuffer& getIndexBuffer() { return m_IndexBuffer; }
+    const std::vector<Vertex>& getVertices() const
+    {
+        return m_Vertices;
+    }
+
+    const std::vector<uint32_t>& getIndices() const
+    {
+        return m_Indices;
+    }
+
+    VkBuffer& getVertexBuffer()
+    {
+        return m_VertexBuffer;
+    }
+
+    VkBuffer& getIndexBuffer()
+    {
+        return m_IndexBuffer;
+    }
 
     friend class ModelImporter;
 };
-
-

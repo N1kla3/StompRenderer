@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include <cstdint>
 #include <memory>
@@ -19,8 +23,8 @@ namespace omp
         omp::ProjectSettings m_ProjectSettings;
 
         omp::ThreadPool* m_ThreadPool = nullptr;
-    public:
 
+    public:
         explicit AssetManager(omp::ThreadPool* threadPool);
         ~AssetManager();
         AssetManager(const AssetManager&) = delete;
@@ -67,4 +71,3 @@ namespace omp
         inline static const std::string CLASS_MEMBER = "Class";
     }; // Asset Manager
 }
-

@@ -1,7 +1,11 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
-#include "glm/glm.hpp"
 #include "SceneEntity.h"
+#include "glm/glm.hpp"
 
 enum class ECameraMovement
 {
@@ -40,26 +44,27 @@ namespace omp
 
     public:
         // TODO: constructors to scene entity with name etc
-        explicit Camera(
-                glm::vec3 position = glm::vec3(0.f, 0.f, 0.f),
-                glm::vec3 up = glm::vec3(0.f, 1.f, 0.f),
-                float yaw = YAW,
-                float pitch = PITCH);
-        Camera(
-                float posx,
-                float posy,
-                float posz,
-                float upx,
-                float upy,
-                float upz,
-                float yaw = YAW,
-                float pitch = PITCH);
+        explicit Camera(glm::vec3 position = glm::vec3(0.f, 0.f, 0.f),
+                        glm::vec3 up = glm::vec3(0.f, 1.f, 0.f),
+                        float yaw = YAW,
+                        float pitch = PITCH);
+        Camera(float posx,
+               float posy,
+               float posz,
+               float upx,
+               float upy,
+               float upz,
+               float yaw = YAW,
+               float pitch = PITCH);
 
         virtual ~Camera() = default;
 
         glm::mat4 getViewMatrix() const;
 
-        glm::vec3 getPosition() const { return m_Position; }
+        glm::vec3 getPosition() const
+        {
+            return m_Position;
+        }
 
         void processKeyboard(ECameraMovement direction);
         void processMouseMovement(float xOffset, float yOffset, bool constrainPitch = true);
@@ -67,15 +72,38 @@ namespace omp
 
         void applyInputs(float deltaTime);
 
-        float getSpeed() const { return m_MovementSpeed; }
-        float getSens() const { return m_MouseSensitivity; }
-        float getViewAngle() const { return m_ViewAngle; }
-        float getNearClipping() const { return m_NearClipping; }
-        float getFarClipping() const { return m_FarClipping; }
+        float getSpeed() const
+        {
+            return m_MovementSpeed;
+        }
+
+        float getSens() const
+        {
+            return m_MouseSensitivity;
+        }
+
+        float getViewAngle() const
+        {
+            return m_ViewAngle;
+        }
+
+        float getNearClipping() const
+        {
+            return m_NearClipping;
+        }
+
+        float getFarClipping() const
+        {
+            return m_FarClipping;
+        }
 
         virtual void onSceneSave(JsonParser<>& parser, omp::Scene* scene) override;
         virtual void onSceneLoad(JsonParser<>& parser, omp::Scene* scene) override;
-        virtual std::string getClassName() const override { return "Camera"; }
+
+        virtual std::string getClassName() const override
+        {
+            return "Camera";
+        }
 
         void setSpeed(float speed);
         void setSens(float sens);
@@ -106,4 +134,4 @@ namespace omp
 
         void updateCameraVectors();
     };
-}
+} // namespace omp

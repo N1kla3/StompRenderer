@@ -1,14 +1,16 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include "Light.h"
 #include "Rendering/ModelInstance.h"
-#include "imgui.h"
 #include "SceneEntity.h"
+#include "imgui.h"
 
 template<typename T>
-concept LightClassReq =
-std::is_base_of_v<omp::GlobalLight, T> ||
-std::is_base_of_v<omp::PointLight, T> ||
-std::is_base_of_v<omp::SpotLight, T>;
+concept LightClassReq = std::is_base_of_v<omp::GlobalLight, T> || std::is_base_of_v<omp::PointLight, T> ||
+                        std::is_base_of_v<omp::SpotLight, T>;
 
 namespace omp
 {
@@ -22,16 +24,23 @@ namespace omp
     class LightBase : public omp::SceneEntity
     {
     public:
-        LightBase() : omp::SceneEntity(){};
-        LightBase(const std::string& inName) : omp::SceneEntity(inName, nullptr){};
+        LightBase()
+            : omp::SceneEntity() {};
+        LightBase(const std::string& inName)
+            : omp::SceneEntity(inName, nullptr) {};
         LightBase(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel)
-            : omp::SceneEntity(inName, inModel){}
+            : omp::SceneEntity(inName, inModel)
+        {
+        }
         virtual ~LightBase() = default;
 
         inline virtual void* getLight() = 0;
         inline virtual ELightType getType() const = 0;
         inline virtual void updateLightObject() = 0;
-        void setModel(const std::shared_ptr<ModelInstance>& inModel) { m_ModelInstance = inModel; }
+        void setModel(const std::shared_ptr<ModelInstance>& inModel)
+        {
+            m_ModelInstance = inModel;
+        }
     };
 
     template<LightClassReq LightType>
@@ -47,21 +56,36 @@ namespace omp
         LightObject(const std::string& inName);
         LightObject(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel);
         virtual ~LightObject() = default;
-        
-        virtual void* getLight() override { return &m_Light; }
-        inline virtual ELightType getType() const override { return LightType::NONE; }
+
+        virtual void* getLight() override
+        {
+            return &m_Light;
+        }
+        inline virtual ELightType getType() const override
+        {
+            return LightType::NONE;
+        }
 
         inline virtual void updateLightObject() override {};
-        inline virtual void draw() override { SceneEntity::draw(); };
-        inline virtual void onSceneSave(JsonParser<>& a, omp::Scene* b) override { SceneEntity::onSceneSave(a, b); };
-        inline virtual void onSceneLoad(JsonParser<>& a, omp::Scene* b) override { SceneEntity::onSceneLoad(a, b); };
+        inline virtual void draw() override
+        {
+            SceneEntity::draw();
+        };
+        inline virtual void onSceneSave(JsonParser<>& a, omp::Scene* b) override
+        {
+            SceneEntity::onSceneSave(a, b);
+        };
+        inline virtual void onSceneLoad(JsonParser<>& a, omp::Scene* b) override
+        {
+            SceneEntity::onSceneLoad(a, b);
+        };
         inline virtual std::string getClassName() const override;
     };
-}
+} // namespace omp
 
 template<LightClassReq LightType>
 omp::LightObject<LightType>::LightObject()
-        : omp::LightBase()
+    : omp::LightBase()
 {
 }
 
@@ -73,7 +97,7 @@ omp::LightObject<LightType>::LightObject(const std::string& inName)
 
 template<LightClassReq LightType>
 omp::LightObject<LightType>::LightObject(const std::string& inName, const std::shared_ptr<omp::ModelInstance>& inModel)
-        : omp::LightBase(inName, inModel)
+    : omp::LightBase(inName, inModel)
 {
 }
 
@@ -150,7 +174,10 @@ inline void omp::LightObject<omp::GlobalLight>::onSceneLoad(JsonParser<>& parser
 }
 
 template<>
-inline std::string omp::LightObject<omp::GlobalLight>::getClassName() const { return "GlobalLight"; }
+inline std::string omp::LightObject<omp::GlobalLight>::getClassName() const
+{
+    return "GlobalLight";
+}
 
 template<>
 inline void omp::LightObject<omp::PointLight>::updateLightObject()
@@ -238,7 +265,10 @@ inline void omp::LightObject<omp::PointLight>::onSceneLoad(JsonParser<>& parser,
 }
 
 template<>
-inline std::string omp::LightObject<omp::PointLight>::getClassName() const { return "PointLight"; }
+inline std::string omp::LightObject<omp::PointLight>::getClassName() const
+{
+    return "PointLight";
+}
 
 template<>
 inline void omp::LightObject<omp::SpotLight>::updateLightObject()
@@ -348,22 +378,25 @@ inline void omp::LightObject<omp::SpotLight>::onSceneLoad(JsonParser<>& parser, 
 }
 
 template<>
-inline std::string omp::LightObject<omp::SpotLight>::getClassName() const { return "SpotLight"; }
+inline std::string omp::LightObject<omp::SpotLight>::getClassName() const
+{
+    return "SpotLight";
+}
 
 template<>
-inline omp::ELightType omp::LightObject<omp::GlobalLight>::getType() const 
+inline omp::ELightType omp::LightObject<omp::GlobalLight>::getType() const
 {
     return ELightType::GLOBAL;
 }
 
 template<>
-inline omp::ELightType omp::LightObject<omp::PointLight>::getType() const 
+inline omp::ELightType omp::LightObject<omp::PointLight>::getType() const
 {
     return ELightType::POINT;
 }
 
 template<>
-inline omp::ELightType omp::LightObject<omp::SpotLight>::getType() const 
+inline omp::ELightType omp::LightObject<omp::SpotLight>::getType() const
 {
     return ELightType::SPOT;
 }

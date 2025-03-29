@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include <vulkan/vulkan_core.h>
 #include <vector>
@@ -33,6 +37,9 @@ namespace omp
         void addDependency(VkSubpassDependency&& dependency);
         bool endConfiguration();
 
-        VkRenderPass getRenderPass() const { return m_VulkanRenderPass; }
+        VkRenderPass getRenderPass() const
+        {
+            return m_VulkanRenderPass;
+        }
     };
 }

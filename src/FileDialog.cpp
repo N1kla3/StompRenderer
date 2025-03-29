@@ -1,10 +1,14 @@
-#if 0 //WIN32
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 
-#include <windows.h>
-#include <shobjidl.h>
-#include <optional>
-#include <sstream>
+#if 0 // WIN32
+
 #include "FileDialog.h"
+#include <optional>
+#include <shobjidl.h>
+#include <sstream>
+#include <windows.h>
 
 // USE ONLY LATIN LETTER PATH NAMES
 std::optional<std::string> FileDialog::openDir()

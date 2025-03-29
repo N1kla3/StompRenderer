@@ -1,9 +1,13 @@
-#include "Scene.h"
-#include "imgui.h"
-#include "Core/Profiling.h"
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
+#include "SceneEntity.h"
 #include <memory>
 #include "Core/CoreLib.h"
-#include "SceneEntity.h"
+#include "Core/Profiling.h"
+#include "Scene.h"
+#include "imgui.h"
 
 omp::SceneEntity::SceneEntity()
     : SceneEntity("None", nullptr)
@@ -117,9 +121,10 @@ void omp::SceneEntity::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
         }
     }
 
-    bool have_material = m_ModelInstance && m_ModelInstance->getMaterialInstance() && m_ModelInstance->getMaterialInstance()->getStaticMaterial().lock().get();
+    bool have_material = m_ModelInstance && m_ModelInstance->getMaterialInstance() &&
+                         m_ModelInstance->getMaterialInstance()->getStaticMaterial().lock().get();
     parser.writeValue("have_material", have_material);
-    if (have_material) 
+    if (have_material)
     {
         glm::vec4 ambient = m_ModelInstance->getMaterialInstance()->getAmbient();
         parser.writeValue("ambient_x", ambient.x);
@@ -139,9 +144,10 @@ void omp::SceneEntity::onSceneSave(JsonParser<>& parser, omp::Scene* scene)
         parser.writeValue("specular_z", specualr.z);
         parser.writeValue("specular_w", specualr.w);
 
-        parser.writeValue("material_id", scene->serializeDependency(m_ModelInstance->getMaterialInstance()->getStaticMaterial().lock().get()));
+        parser.writeValue(
+                "material_id",
+                scene->serializeDependency(m_ModelInstance->getMaterialInstance()->getStaticMaterial().lock().get()));
     }
-
 }
 
 void omp::SceneEntity::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
@@ -208,7 +214,8 @@ void omp::SceneEntity::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
         specular.y = parser.readValue<float>("specular_y").value();
         specular.z = parser.readValue<float>("specular_z").value();
         specular.w = parser.readValue<float>("specular_w").value();
-        std::shared_ptr<omp::Material> mat_casted = std::dynamic_pointer_cast<omp::Material>(scene->getDependency(mat_id_opt.value()));
+        std::shared_ptr<omp::Material> mat_casted =
+                std::dynamic_pointer_cast<omp::Material>(scene->getDependency(mat_id_opt.value()));
 
         if (mat_casted)
         {
@@ -220,4 +227,3 @@ void omp::SceneEntity::onSceneLoad(JsonParser<>& parser, omp::Scene* scene)
         }
     }
 }
-

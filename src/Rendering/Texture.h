@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <string>
@@ -19,6 +23,7 @@ namespace omp
             LOADED_TO_GPU = 1 << 1,
             LOADED_TO_UI = 1 << 2
         };
+
         // Vulkan //
         // ====== //
         VkImage m_TextureImage;
@@ -43,14 +48,22 @@ namespace omp
         void fullLoad();
 
         void specifyVulkanContext(const std::shared_ptr<VulkanContext>& inHelper);
-        bool hasVulkanContext() const { return !m_VulkanContext.expired(); }
+
+        bool hasVulkanContext() const
+        {
+            return !m_VulkanContext.expired();
+        }
 
         void destroyVkObjects();
         VkDescriptorSet getTextureId();
         VkImageView getImageView();
         VkImage getImage();
         VkSampler getSampler();
-        TextureSrc* getTextureSrc() const { return m_TextureSource.get(); }
+
+        TextureSrc* getTextureSrc() const
+        {
+            return m_TextureSource.get();
+        }
 
     protected:
         // Subroutines //

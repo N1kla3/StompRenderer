@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -15,12 +19,18 @@ namespace omp
         uint32_t m_KHRNum;
 
     public:
-        UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext, uint32_t khrImageCount, VkDeviceSize bufferSize, VkBufferUsageFlagBits flags);
+        UniformBuffer(const std::shared_ptr<omp::VulkanContext>& inVulkanContext,
+                      uint32_t khrImageCount,
+                      VkDeviceSize bufferSize,
+                      VkBufferUsageFlagBits flags);
         UniformBuffer(UniformBuffer&& rhs);
         UniformBuffer& operator=(UniformBuffer&& rhs);
         ~UniformBuffer();
 
-        VkBuffer getBuffer(uint32_t khr) const { return m_Buffer.at(khr); }
+        VkBuffer getBuffer(uint32_t khr) const
+        {
+            return m_Buffer.at(khr);
+        }
 
         template<class T>
         void mapMemory(T& memory, uint32_t imageIndex, uint32_t offset = 0)

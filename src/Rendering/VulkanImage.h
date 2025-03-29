@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include "vulkan/vulkan.h"
 #include "VulkanContext.h"
@@ -14,9 +18,16 @@ namespace omp
         VulkanImage(VulkanImage&& image) = delete;
         ~VulkanImage();
 
-        void createImage(uint32_t width, uint32_t height, uint32_t, VkFormat format, VkImageTiling tiling,
-                         VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkSampleCountFlagBits numSamples,
-                        VkImageCreateFlags flags, uint32_t arrayLayers);
+        void createImage(uint32_t width,
+                         uint32_t height,
+                         uint32_t,
+                         VkFormat format,
+                         VkImageTiling tiling,
+                         VkImageUsageFlags usage,
+                         VkMemoryPropertyFlags properties,
+                         VkSampleCountFlagBits numSamples,
+                         VkImageCreateFlags flags,
+                         uint32_t arrayLayers);
         void createImageView(VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
         void createSampler(const VkSamplerCreateInfo& info);
@@ -36,11 +47,26 @@ namespace omp
         VkSampler m_Sample = VK_NULL_HANDLE;
         VkDeviceMemory m_Memory = VK_NULL_HANDLE;
         VkDescriptorSet m_ImguiImage = VK_NULL_HANDLE;
+
     public:
-        const VkImage getImage() const { return m_Image; }
-        const VkImageView getImageView() const { return m_ImageView; }
-        const VkSampler getSampler() const { return m_Sample; }
-        const VkDescriptorSet getImguiImage() const { return m_ImguiImage; }
+        const VkImage getImage() const
+        {
+            return m_Image;
+        }
+
+        const VkImageView getImageView() const
+        {
+            return m_ImageView;
+        }
+
+        const VkSampler getSampler() const
+        {
+            return m_Sample;
+        }
+
+        const VkDescriptorSet getImguiImage() const
+        {
+            return m_ImguiImage;
+        }
     };
 }
-

@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <memory>
@@ -21,17 +25,41 @@ namespace omp
     public:
         MaterialInstance(const std::shared_ptr<Material>& materialCreateFrom);
 
-        std::weak_ptr<Material> getStaticMaterial() const { return m_StaticMaterial; }
+        std::weak_ptr<Material> getStaticMaterial() const
+        {
+            return m_StaticMaterial;
+        }
 
-        void setAmbient(glm::vec4 new_ambient){ m_Ambient = new_ambient; }
-        glm::vec4 getAmbient() const { return m_Ambient; }
+        void setAmbient(glm::vec4 new_ambient)
+        {
+            m_Ambient = new_ambient;
+        }
 
-        void setDiffusive(glm::vec4 new_diffusive){ m_Ambient = new_diffusive; }
-        glm::vec4 getDiffusive() const { return m_Diffusive; }
+        glm::vec4 getAmbient() const
+        {
+            return m_Ambient;
+        }
 
-        void setSpecular(glm::vec4 new_specular){ m_Ambient = new_specular; }
-        glm::vec4 getSpecular() const { return m_Specular; }
+        void setDiffusive(glm::vec4 new_diffusive)
+        {
+            m_Ambient = new_diffusive;
+        }
+
+        glm::vec4 getDiffusive() const
+        {
+            return m_Diffusive;
+        }
+
+        void setSpecular(glm::vec4 new_specular)
+        {
+            m_Ambient = new_specular;
+        }
+
+        glm::vec4 getSpecular() const
+        {
+            return m_Specular;
+        }
 
         friend class MaterialPanel;
     };
-}
+} // namespace omp

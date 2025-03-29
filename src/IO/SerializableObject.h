@@ -1,15 +1,20 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include "IO/JsonParser.h"
 
-namespace omp 
+namespace omp
 {
     class Asset;
 
-    class SerializableObject 
+    class SerializableObject
     {
     public:
         using SerializationId = uint64_t;
+
     private:
         SerializationId m_SerializationId;
         Asset* m_Asset = nullptr;
@@ -18,8 +23,8 @@ namespace omp
 
     public:
         SerializableObject() = default;
-        virtual void serialize(JsonParser<> &parser) = 0;
-        virtual void deserialize(JsonParser<> &parser) = 0;
+        virtual void serialize(JsonParser<>& parser) = 0;
+        virtual void deserialize(JsonParser<>& parser) = 0;
         virtual ~SerializableObject() = default;
 
         SerializationId serializeDependency(SerializableObject* object);

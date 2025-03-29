@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "gtest/gtest.h"
 #include <future>
 #include "Logs.h"
@@ -7,7 +11,6 @@
 class JsonAsyncSuite : public ::testing::Test
 {
 protected:
-
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
@@ -22,60 +25,60 @@ const std::string g_PathFour = "../../../tests/testAssets/four.json";
 TEST_F(JsonAsyncSuite, JsonAsync_one)
 {
     {
-    omp::ThreadPool pool{};
-    std::promise<void> start, one, two, three;
-    std::shared_future<void> ready = start.get_future();
-    std::future<int> res1, res2, res3;
+        omp::ThreadPool pool{};
+        std::promise<void> start, one, two, three;
+        std::shared_future<void> ready = start.get_future();
+        std::future<int> res1, res2, res3;
 
-    res1 = pool.submit([ready, &one]() -> int
-                {
-                    one.set_value();
-                    ready.wait();
+        res1 = pool.submit([ready, &one]() -> int
+        {
+            one.set_value();
+            ready.wait();
 
-                    omp::JsonParser parser;
-                    parser.writeValue("name", "firstname");
-                    parser.writeValue("age", 5);
-                    EXPECT_TRUE(parser.writeToFile(g_PathOne));
-                    INFO(LogTesting, "one done");
+            omp::JsonParser parser;
+            parser.writeValue("name", "firstname");
+            parser.writeValue("age", 5);
+            EXPECT_TRUE(parser.writeToFile(g_PathOne));
+            INFO(LogTesting, "one done");
 
-                    return 1;
-                });
+            return 1;
+        });
 
-    res2 = pool.submit([ready, &two]() -> int
-                {
-                    two.set_value();
-                    ready.wait();
+        res2 = pool.submit([ready, &two]() -> int
+        {
+            two.set_value();
+            ready.wait();
 
-                    omp::JsonParser parser;
-                    parser.writeValue("name", "firstname");
-                    parser.writeValue("age", 5);
-                    EXPECT_TRUE(parser.writeToFile(g_PathTwo));
-                    INFO(LogTesting, "two done");
-                    return 1;
-                });
+            omp::JsonParser parser;
+            parser.writeValue("name", "firstname");
+            parser.writeValue("age", 5);
+            EXPECT_TRUE(parser.writeToFile(g_PathTwo));
+            INFO(LogTesting, "two done");
+            return 1;
+        });
 
-    res3 = pool.submit([ready, &three]() -> int
-                {
-                    three.set_value();
-                    ready.wait();
+        res3 = pool.submit([ready, &three]() -> int
+        {
+            three.set_value();
+            ready.wait();
 
-                    omp::JsonParser parser;
-                    parser.writeValue("name", "firstname");
-                    parser.writeValue("age", 5);
-                    EXPECT_TRUE(parser.writeToFile(g_PathThree));
-                    INFO(LogTesting, "three done");
-                    return 1;
-                });
+            omp::JsonParser parser;
+            parser.writeValue("name", "firstname");
+            parser.writeValue("age", 5);
+            EXPECT_TRUE(parser.writeToFile(g_PathThree));
+            INFO(LogTesting, "three done");
+            return 1;
+        });
 
-    one.get_future().wait();
-    two.get_future().wait();
-    three.get_future().wait();
-    start.set_value();
+        one.get_future().wait();
+        two.get_future().wait();
+        three.get_future().wait();
+        start.set_value();
 
-    // wait testing
-    EXPECT_NO_THROW(res1.get());
-    EXPECT_NO_THROW(res2.get());
-    EXPECT_NO_THROW(res3.get());
+        // wait testing
+        EXPECT_NO_THROW(res1.get());
+        EXPECT_NO_THROW(res2.get());
+        EXPECT_NO_THROW(res3.get());
     }
     ASSERT_TRUE(true);
 }
@@ -89,43 +92,43 @@ TEST_F(JsonAsyncSuite, JsonAsync_two)
         std::future<int> res1, res2, res3;
 
         res1 = pool.submit([ready, &one]()-> int
-                    {
-                        one.set_value();
-                        ready.wait();
+        {
+            one.set_value();
+            ready.wait();
 
-                        omp::JsonParser parser;
-                        EXPECT_TRUE(parser.populateFromFile(g_PathOne));
-                        EXPECT_STREQ(parser.readValue<std::string>("name").value_or("dd").c_str(), "firstname");
-                        EXPECT_EQ(parser.readValue<int>("age").value_or(1), 5);
-                        INFO(LogTesting, "one done");
-                        return 1;
-                    });
+            omp::JsonParser parser;
+            EXPECT_TRUE(parser.populateFromFile(g_PathOne));
+            EXPECT_STREQ(parser.readValue<std::string>("name").value_or("dd").c_str(), "firstname");
+            EXPECT_EQ(parser.readValue<int>("age").value_or(1), 5);
+            INFO(LogTesting, "one done");
+            return 1;
+        });
 
         res2 = pool.submit([ready, &two]()-> int
-                    {
-                        two.set_value();
-                        ready.wait();
+        {
+            two.set_value();
+            ready.wait();
 
-                        omp::JsonParser parser;
-                        EXPECT_TRUE(parser.populateFromFile(g_PathTwo));
-                        EXPECT_STREQ(parser.readValue<std::string>("name").value_or("dd").c_str(), "firstname");
-                        EXPECT_EQ(parser.readValue<int>("age").value_or(1), 5);
-                        INFO(LogTesting, "two done");
-                        return 1;
-                    });
+            omp::JsonParser parser;
+            EXPECT_TRUE(parser.populateFromFile(g_PathTwo));
+            EXPECT_STREQ(parser.readValue<std::string>("name").value_or("dd").c_str(), "firstname");
+            EXPECT_EQ(parser.readValue<int>("age").value_or(1), 5);
+            INFO(LogTesting, "two done");
+            return 1;
+        });
 
         res3 = pool.submit([ready, &three]() -> int
-                    {
-                        three.set_value();
-                        ready.wait();
+        {
+            three.set_value();
+            ready.wait();
 
-                        omp::JsonParser parser;
-                        EXPECT_TRUE(parser.populateFromFile(g_PathThree));
-                        EXPECT_STREQ(parser.readValue<std::string>("name").value_or("dd").c_str(), "firstname");
-                        EXPECT_EQ(parser.readValue<int>("age").value_or(1), 5);
-                        INFO(LogTesting, "three done");
-                        return 1;
-                    });
+            omp::JsonParser parser;
+            EXPECT_TRUE(parser.populateFromFile(g_PathThree));
+            EXPECT_STREQ(parser.readValue<std::string>("name").value_or("dd").c_str(), "firstname");
+            EXPECT_EQ(parser.readValue<int>("age").value_or(1), 5);
+            INFO(LogTesting, "three done");
+            return 1;
+        });
 
         one.get_future().wait();
         two.get_future().wait();
@@ -154,7 +157,7 @@ TEST_F(JsonAsyncSuite, JsonAsync_three)
     EXPECT_NO_THROW(parser.writeValue("six", 4.5f));
     EXPECT_NO_THROW(parser.writeValue("seven", 3.4));
     EXPECT_NO_THROW(parser.writeValue("eight", 'd'));
-    std::array<float, 4> arr{ 4.f, 5.f, 6.f, 7.f};
+    std::array<float, 4> arr{4.f, 5.f, 6.f, 7.f};
     EXPECT_NO_THROW(parser.writeValue("nine", arr));
     omp::JsonParser nested;
     EXPECT_NO_THROW(nested.writeValue("four", true));

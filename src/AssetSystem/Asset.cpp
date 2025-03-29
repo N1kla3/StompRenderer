@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include <cstdint>
 #include <mutex>
 #include "AssetSystem/Asset.h"
@@ -14,7 +18,8 @@ bool omp::Asset::loadMetadata()
     m_Metadata.path_on_disk = metadata_parser.readValue<std::string>(PATH_KEY).value();
     m_Metadata.class_id = metadata_parser.readValue<std::string>(CLASS_NAME_KEY).value();
     m_Metadata.asset_name = metadata_parser.readValue<std::string>(ASSET_NAME_KEY).value();
-    m_Metadata.dependencies = metadata_parser.readValue<std::unordered_set<AssetHandle::handle_type>>(DEPENDENCIES_KEY).value();
+    m_Metadata.dependencies = metadata_parser.readValue<std::unordered_set<AssetHandle::handle_type>>(DEPENDENCIES_KEY).
+                                              value();
     return m_Metadata.IsValid();
 }
 
@@ -209,4 +214,3 @@ void omp::Asset::addMetadataToObject(omp::Asset* asset, omp::SerializableObject:
         m_Object->m_Asset = asset;
     }
 }
-

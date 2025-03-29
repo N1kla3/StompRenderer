@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include <string>
 #include "Renderer.h"
@@ -18,11 +22,30 @@ namespace omp
         void requestExit();
         void requestSceneChange(const std::string& relativePath);
 
-        Renderer* getRenderer() const { return m_Renderer.get(); }
-        omp::AssetManager* getAssetManager() const { return m_AssetManager.get(); }
-        omp::ThreadPool* getThreadPool() const { return m_ThreadPool.get(); }
-        omp::Scene* getCurrentScene() const { return m_CurrentScene.get(); }
-        GLFWwindow* getWindow() const { return m_Window; }
+        Renderer* getRenderer() const
+        {
+            return m_Renderer.get();
+        }
+
+        omp::AssetManager* getAssetManager() const
+        {
+            return m_AssetManager.get();
+        }
+
+        omp::ThreadPool* getThreadPool() const
+        {
+            return m_ThreadPool.get();
+        }
+
+        omp::Scene* getCurrentScene() const
+        {
+            return m_CurrentScene.get();
+        }
+
+        GLFWwindow* getWindow() const
+        {
+            return m_Window;
+        }
 
         static std::string wrapPath(const std::string& path);
 
@@ -35,8 +58,8 @@ namespace omp
         void changeProject(const std::string& newProjectPath);
         void changeScene(const std::string& relativePath);
 
-    // Data //
-    // ==== //
+        // Data //
+        // ==== //
         std::unordered_map<std::string, std::string> m_Flags;
 
         UIController m_UIController{};
@@ -50,11 +73,11 @@ namespace omp
         int m_Width = 1280;
         int m_Height = 720;
         int m_FrameLimit = -1;
-        int m_ThreadCount = 5;//-1;
+        int m_ThreadCount = 5; //-1;
         bool m_RequestExit = false;
         bool m_RequestSceneLoad = false;
         std::future<bool> m_SceneLoadRequest;
-        
+
         void initWindow();
         void parseFlags(const std::vector<std::string>& commands);
         inline static void windowResizeCallback(GLFWwindow* window, int width, int height);

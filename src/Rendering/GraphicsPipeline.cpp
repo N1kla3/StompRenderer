@@ -1,10 +1,14 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include <stdexcept>
 #include "GraphicsPipeline.h"
 #include "Model.h"
 #include "Shader.h"
 
 omp::GraphicsPipeline::GraphicsPipeline(VkDevice inLogicalDevice)
-        : m_LogicalDevice(inLogicalDevice)
+    : m_LogicalDevice(inLogicalDevice)
 {
 
 }
@@ -72,7 +76,7 @@ void omp::GraphicsPipeline::createViewport(VkExtent2D scissorExtent)
 
     VkRect2D scissor{};
     scissor.offset = {0, 0};
-    scissor.extent = scissorExtent;//m_SwapChainExtent;
+    scissor.extent = scissorExtent; //m_SwapChainExtent;
     m_Scissor = scissor;
 
     VkPipelineViewportStateCreateInfo viewport_state{};

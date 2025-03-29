@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "Core/CoreLib.h"
 #include <chrono>
 #include <cstdint>
@@ -18,7 +22,7 @@ uint32_t omp::CoreLib::generateId32()
     uint32_t thread_id = static_cast<uint32_t>(std::hash<std::thread::id>{}(std::this_thread::get_id()));
     uint32_t result = 0;
     msec = msec << 20;
-    uint32_t mask =  0x0FF000F0;
+    uint32_t mask = 0x0FF000F0;
     uint32_t mask2 = 0x00FF0000;
     uint32_t mask3 = 0xFF000000;
     uint32_t mask4 = 0x0000FF00;

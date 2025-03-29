@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "ViewPort.h"
 #include "Camera.h"
 #include "Scene.h"
@@ -32,7 +36,7 @@ void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, VkDescripto
 
     ImVec2 viewport_cursor = ImGui::GetMousePos();
     auto window_pos = ImGui::GetWindowPos();
-    auto content_min= ImGui::GetWindowContentRegionMin();
+    auto content_min = ImGui::GetWindowContentRegionMin();
     auto content_max = ImGui::GetWindowContentRegionMax();
 
     viewport_cursor.x = viewport_cursor.x - window_pos.x - content_min.x;
@@ -56,11 +60,17 @@ void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, VkDescripto
         float h = ImGui::GetWindowHeight();
         m_Info.model = entity->getModelInstance()->getTransform();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, w, h);
-        bool manipulated = ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()), glm::value_ptr(m_Info.projection),
-                             m_Operation, ImGuizmo::LOCAL, glm::value_ptr(m_Info.model));
+        bool manipulated = ImGuizmo::Manipulate(glm::value_ptr(camera->getViewMatrix()),
+                                                glm::value_ptr(m_Info.projection),
+                                                m_Operation,
+                                                ImGuizmo::LOCAL,
+                                                glm::value_ptr(m_Info.model));
 
         glm::vec3 matrixTranslation, matrixRotation, matrixScale;
-        ImGuizmo::DecomposeMatrixToComponents(value_ptr(m_Info.model), &matrixTranslation[0], &matrixRotation[0], &matrixScale[0]);
+        ImGuizmo::DecomposeMatrixToComponents(value_ptr(m_Info.model),
+                                              &matrixTranslation[0],
+                                              &matrixRotation[0],
+                                              &matrixScale[0]);
 
         if (ImGuizmo::IsUsingAny())
         {
@@ -156,9 +166,9 @@ void omp::ViewPort::updateUi(omp::Scene* scene, omp::Camera* camera, VkDescripto
         m_Info.isPicked = true;
         m_Info.projection = glm::perspective(glm::radians(camera->getViewAngle()),
                                              m_Size.x / m_Size.y,
-                                             camera->getNearClipping(), camera->getFarClipping());
+                                             camera->getNearClipping(),
+                                             camera->getFarClipping());
     }
 
     ImGui::End();
 }
-

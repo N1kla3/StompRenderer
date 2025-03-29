@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "gtest/gtest.h"
 #include <memory>
 #include "AssetSystem/AssetManager.h"
@@ -16,13 +20,13 @@ public:
     std::unique_ptr<omp::AssetManager> manager;
 
 protected:
-
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
 
         pool = std::make_unique<omp::ThreadPool>(4);
     }
+
     static void TearDownTestSuite()
     {
         pool.reset(nullptr);
@@ -65,7 +69,9 @@ TEST_F(AssetSuite, AssetSystem__test__CreatingAssets)
         model->setPath("../../../models/cube2.obj");
     }
 
-    omp::AssetHandle material_handle = manager->createAsset("def_mat", g_TestProjectPath + "/def_material.json", "Material");
+    omp::AssetHandle material_handle = manager->createAsset("def_mat",
+                                                            g_TestProjectPath + "/def_material.json",
+                                                            "Material");
     auto material = manager->getAsset(material_handle).lock()->getObjectAs<omp::Material>();
     material->addSpecularTexture(texture);
     material->addTexture(texture);
@@ -142,4 +148,3 @@ TEST_F(AssetSuite, AssetManager__test__AssetUnload)
     omp::AssetHandle scene_handle = manager->createAsset("main_scene", g_TestProjectPath + "/main_scene.json", "Scene");
     ASSERT_TRUE(scene_handle.isValid());
 }
-

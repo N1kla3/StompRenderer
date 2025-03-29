@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "LightSystem.h"
 #include "Light.h"
 #include "LightObject.h"
@@ -15,28 +19,21 @@ omp::LightSystem::LightSystem(const std::shared_ptr<omp::VulkanContext>& inVulka
 void omp::LightSystem::tryRecreatePointLights()
 {
     m_PointBuffer = omp::UniformBuffer(
-            m_VulkanContext,
-            m_KHRnum,
-            getPointLightBufferSize(),
-            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-    );
+            m_VulkanContext, m_KHRnum, getPointLightBufferSize(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 }
 
 void omp::LightSystem::tryRecreateSpotLights()
 {
-    m_SpotBuffer = omp::UniformBuffer(
-            m_VulkanContext,
-            m_KHRnum,
-            getSpotLightBufferSize(),
-            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-    );
+    m_SpotBuffer =
+            omp::UniformBuffer(m_VulkanContext, m_KHRnum, getSpotLightBufferSize(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 }
 
 void omp::LightSystem::update()
 {
-    if (!m_CurrentScene) return;
+    if (!m_CurrentScene)
+        return;
 
-    for (auto& light : m_CurrentScene->getLights())
+    for (auto& light: m_CurrentScene->getLights())
     {
         light->updateLightObject();
     }
@@ -44,10 +41,11 @@ void omp::LightSystem::update()
 
 void omp::LightSystem::mapMemory(uint32_t khrImage)
 {
-    if (!m_CurrentScene) return;
+    if (!m_CurrentScene)
+        return;
 
     uint32_t offset_p = 0, offset_s = 0;
-    for (auto& light : m_CurrentScene->getLights())
+    for (auto& light: m_CurrentScene->getLights())
     {
         if (light->getType() == omp::ELightType::GLOBAL)
         {
@@ -79,7 +77,7 @@ void omp::LightSystem::onSceneChanged(omp::Scene* scene)
 
     if (m_CurrentScene)
     {
-        for (auto& light : m_CurrentScene->getLights())
+        for (auto& light: m_CurrentScene->getLights())
         {
             if (light->getType() == omp::ELightType::GLOBAL)
             {
@@ -119,4 +117,3 @@ VkBuffer omp::LightSystem::getSpotLightBuffer(uint32_t khr)
 {
     return m_SpotBuffer.getBuffer(khr);
 }
-

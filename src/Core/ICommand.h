@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include <deque>
 #include <memory>
@@ -11,25 +15,24 @@ namespace omp
         virtual void execute() = 0;
         virtual void undo() = 0;
         virtual ~ICommand() = default;
+
     protected:
         ICommand() = default;
     };
-        
+
     template<typename T>
-    concept BaseOfCommand =
-    std::is_base_of_v<omp::ICommand, T>;
+    concept BaseOfCommand = std::is_base_of_v<omp::ICommand, T>;
 
     class CommandStack
     {
     private:
         std::deque<std::unique_ptr<ICommand>> m_MainStack;
         std::deque<std::unique_ptr<ICommand>> m_ReverseStack;
-        
+
         const size_t m_MaxStackSize = 20;
 
     public:
-
-        template<BaseOfCommand T, typename ...Arg>
+        template<BaseOfCommand T, typename... Arg>
         void execute(Arg&&... arg)
         {
             // TODO: maybe thinkg of custom memory realloc
@@ -63,7 +66,8 @@ namespace omp
         }
 
     private:
-        void swapBetweenStacks(std::deque<std::unique_ptr<ICommand>>& fromRef, std::deque<std::unique_ptr<ICommand>>& toRef)
+        void swapBetweenStacks(std::deque<std::unique_ptr<ICommand>>& fromRef,
+                               std::deque<std::unique_ptr<ICommand>>& toRef)
         {
             // TODO: add assert
             auto& command = fromRef.front();
@@ -85,15 +89,15 @@ namespace omp
     {
     private:
         std::weak_ptr<CommandStack> m_Proxy;
+
     public:
         CommandStackProxy() = delete;
-        CommandStackProxy(const std::shared_ptr<CommandStack>& proxy)
-            : m_Proxy(proxy)
+
+        CommandStackProxy(const std::shared_ptr<CommandStack>& proxy) : m_Proxy(proxy)
         {
-            
         }
 
-        template< typename T, typename ...Arg >
+        template<typename T, typename... Arg>
         bool execute(Arg&&... arg)
         {
             if (m_Proxy.expired())
@@ -104,5 +108,4 @@ namespace omp
             return true;
         }
     };
-}
-
+} // namespace omp

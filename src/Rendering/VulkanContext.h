@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <vector>
@@ -5,9 +9,9 @@
 
 namespace omp
 {
-/**
- * Class to help with vulkan routine functions
- */
+    /**
+     * Class to help with vulkan routine functions
+     */
     class VulkanContext
     {
     public:
@@ -19,21 +23,36 @@ namespace omp
         VulkanContext(VkDevice device, VkPhysicalDevice physDevice, VkCommandPool pool, VkQueue graphicsQueue);
 
         void createBuffer(
-                VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer,
+                VkDeviceSize size,
+                VkBufferUsageFlags usage,
+                VkMemoryPropertyFlags properties,
+                VkBuffer& buffer,
                 VkDeviceMemory& bufferMemory);
         uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
         void createImage(
-                uint32_t width, uint32_t height, uint32_t mipLevels,
-                VkFormat format, VkImageTiling tiling,
-                VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-                VkImage& image, VkDeviceMemory& imageMemory,
+                uint32_t width,
+                uint32_t height,
+                uint32_t mipLevels,
+                VkFormat format,
+                VkImageTiling tiling,
+                VkImageUsageFlags usage,
+                VkMemoryPropertyFlags properties,
+                VkImage& image,
+                VkDeviceMemory& imageMemory,
                 VkSampleCountFlagBits numSamples,
                 VkImageCreateFlags flags = 0,
                 uint32_t arrayLayers = 1
-        );
-        void createImage(const VkImageCreateInfo& imageInfo, VkImage& image, VkDeviceMemory& imageMemory,VkMemoryPropertyFlags properties);
+                );
+        void createImage(const VkImageCreateInfo& imageInfo,
+                         VkImage& image,
+                         VkDeviceMemory& imageMemory,
+                         VkMemoryPropertyFlags properties);
         void transitionImageLayout(
-                VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
+                VkImage image,
+                VkFormat format,
+                VkImageLayout oldLayout,
+                VkImageLayout newLayout,
+                uint32_t mipLevels);
         void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
         void copyBufferToImage(VkBuffer buffer, VkImage image, const std::vector<VkBufferImageCopy>& regions);
         void generateMipmaps(
@@ -52,7 +71,10 @@ namespace omp
         VkShaderModule createShaderModule(const std::vector<char>& code);
         void destroyShaderModule(VkShaderModule inModule);
 
-        void setCommandPool(VkCommandPool pool) { command_pools = pool; }
+        void setCommandPool(VkCommandPool pool)
+        {
+            command_pools = pool;
+        }
 
         void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 

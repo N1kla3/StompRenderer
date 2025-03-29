@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "Scene.h"
 #include "Logs.h"
 #include "SceneEntityFactory.h"
@@ -39,12 +43,12 @@ void omp::Scene::loadToGPU(const std::shared_ptr<omp::VulkanContext>& context)
 {
     m_VulkanContext = context;
 
-    for (auto& entity : m_Entities)
+    for (auto& entity: m_Entities)
     {
         entity->tryLoadToGpu(context);
     }
 
-    for (auto& camera : m_Cameras)
+    for (auto& camera: m_Cameras)
     {
         camera->tryLoadToGpu(context);
     }
@@ -54,7 +58,7 @@ void omp::Scene::serialize(JsonParser<>& parser)
 {
     std::vector<std::string> names;
     names.reserve(m_Entities.size());
-    for (std::unique_ptr<omp::SceneEntity>& entity : m_Entities)
+    for (std::unique_ptr<omp::SceneEntity>& entity: m_Entities)
     {
         names.push_back(entity->getName());
 
@@ -67,7 +71,7 @@ void omp::Scene::serialize(JsonParser<>& parser)
     parser.writeValue("EntityNames", names);
 
     names.clear();
-    for (std::unique_ptr<omp::Camera>& camera : m_Cameras)
+    for (std::unique_ptr<omp::Camera>& camera: m_Cameras)
     {
         names.push_back(camera->getName());
 
@@ -80,7 +84,7 @@ void omp::Scene::serialize(JsonParser<>& parser)
     parser.writeValue("CameraNames", names);
 
     names.clear();
-    for (std::unique_ptr<omp::LightBase>& light : m_Lights)
+    for (std::unique_ptr<omp::LightBase>& light: m_Lights)
     {
         names.push_back(light->getName());
 
@@ -100,7 +104,7 @@ void omp::Scene::deserialize(JsonParser<>& parser)
 
     if (entities_opt.has_value())
     {
-         names = entities_opt.value();
+        names = entities_opt.value();
     }
     size_t entities_num = names.size();
     for (size_t i = 0; i < entities_num; i++)
@@ -127,7 +131,7 @@ void omp::Scene::deserialize(JsonParser<>& parser)
         camera->onSceneLoad(local_entity, this);
         m_Cameras.push_back(std::move(camera));
     }
-    
+
     auto light_ops = parser.readValue<std::vector<std::string>>("LightNames");
 
     if (light_ops.has_value())
@@ -148,7 +152,7 @@ void omp::Scene::deserialize(JsonParser<>& parser)
 omp::SceneEntity* omp::Scene::getEntity(const std::string& inName) const
 {
     omp::SceneEntity* result = nullptr;
-    for (const std::unique_ptr<omp::SceneEntity>& ptr : m_Entities)
+    for (const std::unique_ptr<omp::SceneEntity>& ptr: m_Entities)
     {
         if (inName.compare(ptr->getName()) == 0)
         {
@@ -162,7 +166,7 @@ omp::SceneEntity* omp::Scene::getEntity(const std::string& inName) const
 omp::SceneEntity* omp::Scene::getEntity(uint32_t inId) const
 {
     omp::SceneEntity* result = nullptr;
-    for (const std::unique_ptr<omp::SceneEntity>& ptr : m_Entities)
+    for (const std::unique_ptr<omp::SceneEntity>& ptr: m_Entities)
     {
         if (inId == ptr->getId())
         {

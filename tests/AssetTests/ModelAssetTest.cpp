@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "gtest/gtest.h"
 #include <memory>
 #include "AssetSystem/AssetManager.h"
@@ -11,11 +15,11 @@ public:
     std::unique_ptr<omp::AssetManager> manager;
 
 protected:
-
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
     }
+
     static void TearDownTestSuite()
     {
     }
@@ -57,4 +61,3 @@ TEST_F(ModelAssetSuite, ModelAsset__Test__Serialization)
 
     ASSERT_STREQ(raw_data.c_str(), laststr.c_str());
 }
-

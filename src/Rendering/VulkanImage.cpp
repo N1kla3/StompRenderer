@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "VulkanImage.h"
 #include "Logs.h"
 #include "imgui_impl_vulkan.h"
@@ -43,11 +47,16 @@ void omp::VulkanImage::destroyAll()
     }
 }
 
-void omp::VulkanImage::createImage(uint32_t width, uint32_t height, uint32_t mipLevels,
-                 VkFormat format, VkImageTiling tiling,
-                 VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-                 VkSampleCountFlagBits numSamples,
-                 VkImageCreateFlags flags, uint32_t arrayLayers)
+void omp::VulkanImage::createImage(uint32_t width,
+                                   uint32_t height,
+                                   uint32_t mipLevels,
+                                   VkFormat format,
+                                   VkImageTiling tiling,
+                                   VkImageUsageFlags usage,
+                                   VkMemoryPropertyFlags properties,
+                                   VkSampleCountFlagBits numSamples,
+                                   VkImageCreateFlags flags,
+                                   uint32_t arrayLayers)
 {
     m_ImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     m_ImageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -107,4 +116,3 @@ void omp::VulkanImage::recreateImage(uint32_t width, uint32_t height)
     m_ViewInfo.image = m_Image;
     m_ImageView = m_Context->createImageView(m_ViewInfo);
 }
-

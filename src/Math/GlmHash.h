@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include "glm/vec2.hpp"
 #include "glm/vec3.hpp"
@@ -8,7 +12,7 @@
 namespace std
 {
     template<>
-    struct hash<glm::vec2 >
+    struct hash<glm::vec2>
     {
         size_t operator()(glm::vec2 const& v) const
         {
@@ -18,7 +22,7 @@ namespace std
     };
 
     template<>
-    struct hash<glm::vec3 >
+    struct hash<glm::vec3>
     {
         size_t operator()(glm::vec3 const& v) const
         {

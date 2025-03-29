@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include "glm/glm.hpp"
 
@@ -48,4 +52,4 @@ namespace omp
         glm::vec3 unu;
         float quadratic = 0.017f;
     };
-}
+} // namespace omp

@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include "LightObject.h"
 #include "Rendering/UniformBuffer.h"
@@ -26,13 +30,31 @@ namespace omp
         // METHODS //
         // ======= //
     public:
-        size_t getGlobalLightSize() const { return m_GlobalLightNum; }
-        size_t getPointLightSize() const { return m_PointLightNum; }
-        size_t getSpotLightSize() const { return m_SpotLightNum; }
+        size_t getGlobalLightSize() const
+        {
+            return m_GlobalLightNum;
+        }
+        size_t getPointLightSize() const
+        {
+            return m_PointLightNum;
+        }
+        size_t getSpotLightSize() const
+        {
+            return m_SpotLightNum;
+        }
 
-        size_t getGlobalLightBufferSize() const { return sizeof(GlobalLight); }
-        size_t getPointLightBufferSize() const { return std::max(sizeof(PointLight), sizeof(PointLight) * m_PointLightNum); }
-        size_t getSpotLightBufferSize() const { return std::max(sizeof(SpotLight), sizeof(SpotLight) * m_SpotLightNum); }
+        size_t getGlobalLightBufferSize() const
+        {
+            return sizeof(GlobalLight);
+        }
+        size_t getPointLightBufferSize() const
+        {
+            return std::max(sizeof(PointLight), sizeof(PointLight) * m_PointLightNum);
+        }
+        size_t getSpotLightBufferSize() const
+        {
+            return std::max(sizeof(SpotLight), sizeof(SpotLight) * m_SpotLightNum);
+        }
 
         VkBuffer getGlobalLightBuffer(uint32_t khr);
         VkBuffer getPointLightBuffer(uint32_t khr);
@@ -44,4 +66,4 @@ namespace omp
         void mapMemory(uint32_t khrImage);
         void onSceneChanged(omp::Scene* scene);
     };
-}
+} // namespace omp

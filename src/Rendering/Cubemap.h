@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 #include "IO/SerializableObject.h"
 #include "Rendering/TextureSrc.h"
@@ -35,7 +39,8 @@ namespace omp
     public:
         Cubemap() = default;
         explicit Cubemap(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures);
-        Cubemap(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures, const std::shared_ptr<VulkanContext>& helper);
+        Cubemap(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures,
+                const std::shared_ptr<VulkanContext>& helper);
 
         // Serializable //
         // ============ //
@@ -45,7 +50,12 @@ namespace omp
         void fullLoad();
 
         void specifyVulkanContext(const std::shared_ptr<VulkanContext>& inHelper);
-        bool hasVulkanContext() const { return !m_VulkanContext.expired(); }
+
+        bool hasVulkanContext() const
+        {
+            return !m_VulkanContext.expired();
+        }
+
         void setTextures(const std::vector<std::shared_ptr<omp::TextureSrc>>& inTextures);
 
         void destroyVkObjects();

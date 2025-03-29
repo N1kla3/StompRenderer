@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include "vulkan/vulkan.h"
@@ -31,9 +35,15 @@ namespace omp
         void setDepthStencil(VkPipelineDepthStencilStateCreateInfo info);
         void confirmCreation(const std::shared_ptr<omp::RenderPass>& renderPass);
 
-        VkPipeline getGraphicsPipeline() { return m_GraphicsPipeline; }
+        VkPipeline getGraphicsPipeline()
+        {
+            return m_GraphicsPipeline;
+        }
 
-        VkPipelineLayout getPipelineLayout() { return m_PipelineLayout; }
+        VkPipelineLayout getPipelineLayout()
+        {
+            return m_PipelineLayout;
+        }
 
     private:
         bool m_IsCreated = false;
@@ -73,7 +83,7 @@ void omp::GraphicsPipeline::definePushConstant(VkShaderStageFlags stageFlags)
     VkPushConstantRange constant_range{};
     constant_range.size = sizeof(T);
     constant_range.offset = 0;
-    constant_range.stageFlags = stageFlags;// TODO: better with ranges to save space in shader
+    constant_range.stageFlags = stageFlags; // TODO: better with ranges to save space in shader
     m_ConstantRange = constant_range;
 
     m_PipelineLayoutInfo.pushConstantRangeCount = 1;

@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "IO/SerializableObject.h"
 #include "AssetSystem/Asset.h"
 
@@ -17,7 +21,8 @@ omp::SerializableObject::SerializationId omp::SerializableObject::serializeDepen
     return object->m_SerializationId;
 }
 
-std::shared_ptr<omp::SerializableObject> omp::SerializableObject::getDependency(omp::SerializableObject::SerializationId id)
+std::shared_ptr<omp::SerializableObject> omp::SerializableObject::getDependency(
+        omp::SerializableObject::SerializationId id)
 {
     if (!m_Asset)
     {
@@ -31,4 +36,3 @@ std::shared_ptr<omp::SerializableObject> omp::SerializableObject::getDependency(
     }
     return nullptr;
 }
-

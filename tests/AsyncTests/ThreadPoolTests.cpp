@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "gtest/gtest.h"
 #include <iostream>
 #include <future>
@@ -7,7 +11,6 @@
 class ThreadPoolSuite : public ::testing::Test
 {
 protected:
-
     static void SetUpTestSuite()
     {
         omp::InitializeTestLogs();
@@ -17,22 +20,47 @@ protected:
 class testmember
 {
 public:
-    void func(std::shared_future<void> fut) { fut.wait();}
-    float funcret(std::shared_future<void> fut) { fut.wait(); return 5.f; }
-    float withparam(std::shared_future<void> fut, float a, float b) { fut.wait(); return a + b; }
-    void consfunc(std::shared_future<void> fut) const { fut.wait();}
+    void func(std::shared_future<void> fut)
+    {
+        fut.wait();
+    }
+
+    float funcret(std::shared_future<void> fut)
+    {
+        fut.wait();
+        return 5.f;
+    }
+
+    float withparam(std::shared_future<void> fut, float a, float b)
+    {
+        fut.wait();
+        return a + b;
+    }
+
+    void consfunc(std::shared_future<void> fut) const
+    {
+        fut.wait();
+    }
 };
 
-void myfunc(std::shared_future<void> fut) { fut.wait();  }
-void ues() { int i = 4; i++;}
+void myfunc(std::shared_future<void> fut)
+{
+    fut.wait();
+}
+
+void ues()
+{
+    int i = 4;
+    i++;
+}
 
 TEST_F(ThreadPoolSuite, ThreadPool_one)
 {
     std::promise<void> start;
     std::shared_future<void> ready(start.get_future());
-    std::future<void> a,b, z, x;
-    std::future<int> first_done, q,w,e,r,t,y,u;
-    std::future<float> second_done,s,d,f,g,h,j,k;
+    std::future<void> a, b, z, x;
+    std::future<int> first_done, q, w, e, r, t, y, u;
+    std::future<float> second_done, s, d, f, g, h, j, k;
 
     omp::ThreadPool pool{};
 
@@ -45,12 +73,14 @@ TEST_F(ThreadPoolSuite, ThreadPool_one)
         s = pool.submit(&testmember::funcret, member, ready);
         d = pool.submit(&testmember::withparam, member, ready, 3.f, 5.f);
         x = pool.submit(&testmember::consfunc, member, ready);
-        auto lymd = [ready]() -> int {
+        auto lymd = [ready]() -> int
+        {
             ready.wait();
             return 2;
         };
         first_done = pool.submit(lymd);
-        auto lamd = [ready]() -> float {
+        auto lamd = [ready]() -> float
+        {
             ready.wait();
 
             return 0.f;
@@ -97,7 +127,7 @@ TEST_F(ThreadPoolSuite, ThreadPool_one)
         EXPECT_EQ(j.get(), 0.f);
         EXPECT_EQ(k.get(), 0.f);
     }
-    catch ( ... )
+    catch (...)
     {
         ERROR(LogAssetManager, "this is EXCEPTION");
     }

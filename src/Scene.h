@@ -1,9 +1,13 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <memory>
 #include <vector>
-#include "IO/SerializableObject.h"
 #include "Camera.h"
+#include "IO/SerializableObject.h"
 #include "LightObject.h"
 #include "SceneEntity.h"
 
@@ -50,8 +54,14 @@ namespace omp
         void addCameraToScene(std::unique_ptr<omp::Camera>&& camera);
         void addLightToScene(std::unique_ptr<omp::LightBase>&& light);
 
-        void setCurrentId(uint32_t inId) { m_CurrentEntityId = inId; }
-        uint32_t getCurrentId() const { return m_CurrentEntityId; }
+        void setCurrentId(uint32_t inId)
+        {
+            m_CurrentEntityId = inId;
+        }
+        uint32_t getCurrentId() const
+        {
+            return m_CurrentEntityId;
+        }
 
         bool isDirty() const
         {
@@ -63,4 +73,4 @@ namespace omp
             m_StateDirty = true;
         };
     };
-} // omp
+} // namespace omp

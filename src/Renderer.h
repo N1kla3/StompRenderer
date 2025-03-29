@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include "Rendering/VulkanImage.h"
@@ -10,32 +14,32 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
 
-#include <iostream>
-#include "fstream"
-#include <stdexcept>
 #include <cstdlib>
-#include <vector>
-#include <unordered_map>
-#include <optional>
 #include <glm/glm.hpp>
+#include <iostream>
+#include <optional>
+#include <stdexcept>
+#include <unordered_map>
+#include <vector>
+#include "fstream"
 #include "imgui.h"
 
-#include "Scene.h"
+#include "LightSystem.h"
+#include "Logs.h"
+#include "Rendering/FrameBuffer.h"
 #include "Rendering/GraphicsPipeline.h"
 #include "Rendering/RenderPass.h"
-#include "Rendering/FrameBuffer.h"
-#include "Logs.h"
-#include "LightSystem.h"
+#include "Scene.h"
 
 namespace
 {
-    VkResult CreateDebugUtilsMessengerEXT(
-            VkInstance instance,
-            const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-            const VkAllocationCallbacks* pAllocator,
-            VkDebugUtilsMessengerEXT* pDebugMessenger)
+    VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
+                                          const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+                                          const VkAllocationCallbacks* pAllocator,
+                                          VkDebugUtilsMessengerEXT* pDebugMessenger)
     {
-        auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+        auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+                vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
         if (func != nullptr)
         {
             return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
@@ -46,18 +50,18 @@ namespace
         }
     }
 
-    void DestroyDebugUtilsMessengerEXT(
-            VkInstance instance,
-            VkDebugUtilsMessengerEXT debugMessenger,
-            const VkAllocationCallbacks* pAllocator)
+    void DestroyDebugUtilsMessengerEXT(VkInstance instance,
+                                       VkDebugUtilsMessengerEXT debugMessenger,
+                                       const VkAllocationCallbacks* pAllocator)
     {
-        auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+        auto func = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+                vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
         if (func != nullptr)
         {
             func(instance, debugMessenger, pAllocator);
         }
     }
-}
+} // namespace
 
 namespace omp
 {
@@ -149,10 +153,12 @@ namespace omp
 
         void onWindowResize(int width, int height);
         void cleanup();
-        VkDescriptorSet getViewportDescriptor() { return m_ViewportImage->getImguiImage(); }
+        VkDescriptorSet getViewportDescriptor()
+        {
+            return m_ViewportImage->getImguiImage();
+        }
 
     private:
-
         void resizeInternal();
         void pickPhysicalDevice();
 
@@ -170,7 +176,7 @@ namespace omp
         void createSwapChain();
 
         void postSwapChainInitialize();
-        
+
         void prepareSceneForRendering();
 
         void createImageViews();
@@ -186,12 +192,11 @@ namespace omp
 
         void prepareCommandBuffer(CommandBufferScope& bufferScope, VkCommandPool inCommandPool);
         void setViewport(VkCommandBuffer inCommandBuffer);
-        void beginRenderPass(
-                omp::RenderPass* inRenderPass,
-                VkCommandBuffer inCommandBuffer,
-                omp::FrameBuffer& inFrameBuffer,
-                const std::vector<VkClearValue>& clearValues,
-                VkRect2D rect = VkRect2D());
+        void beginRenderPass(omp::RenderPass* inRenderPass,
+                             VkCommandBuffer inCommandBuffer,
+                             omp::FrameBuffer& inFrameBuffer,
+                             const std::vector<VkClearValue>& clearValues,
+                             VkRect2D rect = VkRect2D());
         void endRenderPass(omp::RenderPass* inRenderPass, VkCommandBuffer inCommandBuffer);
 
         void createUniformBuffers();
@@ -247,10 +252,9 @@ namespace omp
 
         bool isDeviceSuitable(VkPhysicalDevice device);
 
-        VkFormat findSupportedFormat(
-                const std::vector<VkFormat>& candidates,
-                VkImageTiling tiling,
-                VkFormatFeatureFlags features);
+        VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates,
+                                     VkImageTiling tiling,
+                                     VkFormatFeatureFlags features);
         VkFormat findDepthFormat();
 
         QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
@@ -263,11 +267,10 @@ namespace omp
 
         omp::GraphicsPipeline* findGraphicsPipeline(const std::string& name);
 
-        static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-                VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-                VkDebugUtilsMessageTypeFlagsEXT /*messageType*/,
-                const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                void* /*pUserData*/
+        static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                                            VkDebugUtilsMessageTypeFlagsEXT /*messageType*/,
+                                                            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                            void* /*pUserData*/
         )
         {
             if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
@@ -388,13 +391,12 @@ namespace omp
 
         VkSampleCountFlagBits m_MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-        uint32_t m_ViewportSize[2]{110,110};
-        uint32_t m_RequestedViewportSize[2]{110,110};
+        uint32_t m_ViewportSize[2]{110, 110};
+        uint32_t m_RequestedViewportSize[2]{110, 110};
         bool m_ShouldResize = false;
         int m_CurrentWidth = 0;
         int m_CurrentHeight = 0;
         uint32_t m_CurrentImage = 0;
         const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-
     };
-}
+} // namespace omp

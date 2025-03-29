@@ -1,5 +1,9 @@
-#include <stdexcept>
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "RenderPass.h"
+#include <stdexcept>
 
 bool omp::RenderPass::startConfiguration()
 {
@@ -20,6 +24,7 @@ bool omp::RenderPass::endConfiguration()
     render_pass_info.dependencyCount = static_cast<uint32_t>(m_Dependencies.size());
     render_pass_info.pDependencies = m_Dependencies.data();
 
+    int Pas;
     if (vkCreateRenderPass(m_LogicalDevice, &render_pass_info, nullptr, &m_VulkanRenderPass) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create render pass!");
@@ -31,7 +36,6 @@ bool omp::RenderPass::endConfiguration()
 omp::RenderPass::RenderPass(VkDevice inLogicalDevice)
     : m_LogicalDevice(inLogicalDevice)
 {
-
 }
 
 void omp::RenderPass::addAttachment(VkAttachmentDescription&& attachment)

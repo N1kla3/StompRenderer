@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <string>
@@ -14,14 +18,20 @@ namespace omp
     public:
         Shader() = default;
         Shader(
-            const std::shared_ptr<VulkanContext>& context,
-            const std::string& vertexPath,
-            const std::string& fragmentPath);
+                const std::shared_ptr<VulkanContext>& context,
+                const std::string& vertexPath,
+                const std::string& fragmentPath);
         virtual ~Shader();
 
-        std::vector<VkPipelineShaderStageCreateInfo>& getShaderStages() { return m_ShaderStages; }
+        std::vector<VkPipelineShaderStageCreateInfo>& getShaderStages()
+        {
+            return m_ShaderStages;
+        }
 
-        constexpr static uint32_t getStagesCount() { return STAGE_COUNT; }
+        constexpr static uint32_t getStagesCount()
+        {
+            return STAGE_COUNT;
+        }
 
         void setVertexPath(const std::string& inPath);
         void setFragmentPath(const std::string& inPath);
@@ -32,7 +42,6 @@ namespace omp
         virtual void deserialize(JsonParser<>& parser) override;
 
     private:
-
         static constexpr uint32_t STAGE_COUNT = 2;
         std::vector<VkPipelineShaderStageCreateInfo> m_ShaderStages;
 

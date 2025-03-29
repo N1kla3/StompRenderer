@@ -1,14 +1,18 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "Model.h"
 #include "Rendering/ModelStatics.h"
 
 omp::Model::Model()
-        : m_Name("NONE")
+    : m_Name("NONE")
 {
 
 }
 
 omp::Model::Model(const std::string& path)
-        : m_Name("NONE")
+    : m_Name("NONE")
 {
     m_Loaded = omp::ModelImporter::loadModel(this, path);
 }
@@ -67,7 +71,8 @@ void omp::Model::loadVertexToMemory()
             buffer_size,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            staging_buffer, staging_memory);
+            staging_buffer,
+            staging_memory);
 
     void* data;
     vkMapMemory(context->logical_device, staging_memory, 0, buffer_size, 0, &data);
@@ -78,7 +83,8 @@ void omp::Model::loadVertexToMemory()
             buffer_size,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            m_VertexBuffer, m_VertexMemory);
+            m_VertexBuffer,
+            m_VertexMemory);
 
     context->copyBuffer(staging_buffer, m_VertexBuffer, buffer_size);
 
@@ -100,7 +106,8 @@ void omp::Model::loadIndexToMemory()
             buffer_size,
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-            staging_buffer, staging_memory);
+            staging_buffer,
+            staging_memory);
 
     void* data;
     vkMapMemory(context->logical_device, staging_memory, 0, buffer_size, 0, &data);
@@ -111,7 +118,8 @@ void omp::Model::loadIndexToMemory()
             buffer_size,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-            m_IndexBuffer, m_IndexMemory);
+            m_IndexBuffer,
+            m_IndexMemory);
 
     context->copyBuffer(staging_buffer, m_IndexBuffer, buffer_size);
 
@@ -163,4 +171,3 @@ void omp::Model::loadToGpuMemory(const std::shared_ptr<omp::VulkanContext>& cont
         ERROR(LogIO, "Cant load Model to GPU, because 3D model file not loaded");
     }
 }
-

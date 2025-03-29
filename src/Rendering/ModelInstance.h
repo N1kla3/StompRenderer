@@ -1,3 +1,7 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #pragma once
 
 #include <string>
@@ -21,22 +25,39 @@ namespace omp
 
         std::shared_ptr<MaterialInstance> m_MaterialInstance = nullptr;
         std::shared_ptr<Model> m_Model;
+
     public:
         ModelInstance();
         ModelInstance(const std::shared_ptr<omp::Model>& inModel);
         ModelInstance(const std::shared_ptr<omp::MaterialInstance>& inInstance);
-        ModelInstance(const std::shared_ptr<omp::Model>& inModel, const std::shared_ptr<omp::MaterialInstance>& inInstance);
+        ModelInstance(const std::shared_ptr<omp::Model>& inModel,
+                      const std::shared_ptr<omp::MaterialInstance>& inInstance);
         ModelInstance(const std::shared_ptr<omp::Model>& inModel, const std::shared_ptr<omp::Material>& inMat);
 
         void tryLoad(const std::shared_ptr<omp::VulkanContext>& context, bool forceUpdate);
 
-        std::string getName() const { return m_Name; }
-        void setName(const std::string& inName) { m_Name = inName; }
+        std::string getName() const
+        {
+            return m_Name;
+        }
+
+        void setName(const std::string& inName)
+        {
+            m_Name = inName;
+        }
 
         void setMaterialInstance(const std::shared_ptr<MaterialInstance>& inInstance);
-        std::shared_ptr<MaterialInstance>& getMaterialInstance() { return m_MaterialInstance; }
 
-        std::weak_ptr<omp::Model> getModel() const { return m_Model; }
+        std::shared_ptr<MaterialInstance>& getMaterialInstance()
+        {
+            return m_MaterialInstance;
+        }
+
+        std::weak_ptr<omp::Model> getModel() const
+        {
+            return m_Model;
+        }
+
         void setModel(const std::shared_ptr<omp::Model>& inModel);
 
         glm::mat4 getTransform() const;

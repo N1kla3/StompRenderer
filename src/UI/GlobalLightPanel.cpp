@@ -1,10 +1,14 @@
+// Copyright (C) 2021-2025 by Nikolay Vladimirskiy - kolya.vladimirsky@gmail.com
+//
+// This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
+
 #include "GlobalLightPanel.h"
 #include "Light.h"
 #include "imgui.h"
 
 omp::GlobalLightPanel::GlobalLightPanel(const std::shared_ptr<omp::LightObject<omp::GlobalLight>>& inLight)
-        : ImguiUnit()
-        , m_LightRef(inLight)
+    : ImguiUnit()
+      , m_LightRef(inLight)
 {
 
 }
@@ -43,4 +47,3 @@ void omp::GlobalLightPanel::setLightRef(const std::shared_ptr<omp::LightObject<o
 {
     m_LightRef = lightPtr;
 }
-
