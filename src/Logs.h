@@ -4,9 +4,12 @@
 
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable : 4459)
 #include <spdlog/sinks/basic_file_sink.h>
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
+#pragma warning(pop)
 
 namespace omp
 {
