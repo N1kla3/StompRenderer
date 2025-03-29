@@ -38,9 +38,7 @@ namespace
     const std::vector<const char*> g_DeviceExtensions{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 } // namespace
 
-omp::Renderer::Renderer()
-{
-}
+omp::Renderer::Renderer() {}
 
 void omp::Renderer::initVulkan(GLFWwindow* window, int initWidth, int initHeight)
 {
@@ -164,10 +162,7 @@ void omp::Renderer::cleanup()
     cleanupSwapChain();
 
     vkFreeDescriptorSets(
-            m_LogicalDevice,
-            m_DescriptorPool,
-            static_cast<uint32_t>(m_MaterialSets.size()),
-            m_MaterialSets.data());
+            m_LogicalDevice, m_DescriptorPool, static_cast<uint32_t>(m_MaterialSets.size()), m_MaterialSets.data());
     m_MaterialSets.clear();
 
     destroyAllCommandBuffers();
@@ -1902,9 +1897,10 @@ void omp::Renderer::initializeImgui(GLFWwindow* window)
     init_info.Allocator = VK_NULL_HANDLE;
     init_info.MinImageCount = 2;
     init_info.ImageCount = m_PresentKHRImagesNum;
+    init_info.RenderPass = m_ImguiRenderPass->getRenderPass();
 
     // Imgui render pass should be created before call of this method
-    ImGui_ImplVulkan_Init(&init_info, m_ImguiRenderPass->getRenderPass());
+    ImGui_ImplVulkan_Init(&init_info);
 
     ImGui_ImplVulkan_CreateFontsTexture();
 

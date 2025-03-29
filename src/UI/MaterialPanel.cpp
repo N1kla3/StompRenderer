@@ -3,10 +3,10 @@
 // This code is licensed under the MIT license (MIT) (http://opensource.org/licenses/MIT)
 
 #include "MaterialPanel.h"
-#include "imgui.h"
-#include "Rendering/Material.h"
 #include "Logs.h"
 #include "MaterialInstance.h"
+#include "Rendering/Material.h"
+#include "imgui.h"
 
 void omp::MaterialPanel::renderUi(float /*deltaTime*/)
 {
@@ -20,7 +20,8 @@ void omp::MaterialPanel::renderUi(float /*deltaTime*/)
             if (ImGui::TreeNode(texture.name.c_str()))
             {
                 ImGui::BulletText("%s", "TODO TEXTURE PATH, or something");
-                if (ImGui::ImageButton(reinterpret_cast<ImTextureID>(texture.texture->getTextureId()), {100, 100}))
+                if (ImGui::ImageButton(
+                            "material", reinterpret_cast<ImTextureID>(texture.texture->getTextureId()), {100, 100}))
                 {
                     INFO(LogRendering, "Pressed");
                 }
