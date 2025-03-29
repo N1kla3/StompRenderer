@@ -58,7 +58,7 @@ namespace omp
         void initWindow();
         void parseFlags(const std::vector<std::string>& commands);
         inline static void windowResizeCallback(GLFWwindow* window, int width, int height);
-        static std::string m_ProjectPath;
+        inline static std::string m_ProjectPath = "../";
 
         void debug_createSceneManually();
         void debug_addLightToScene();
